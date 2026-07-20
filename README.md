@@ -50,6 +50,34 @@ Open any YouTube video or Short. You will see the new **Download** button direct
 
 ---
 
+## Building from Source (For Developers)
+
+This repository is completely open-source and transparent. You can easily compile both the browser extension and the Windows companion server installer directly from the source scripts included in this repository.
+
+### Prerequisites
+- **Python 3.10+** (with `pip installed`)
+- **PyInstaller**: `pip install pyinstaller`
+- **Inno Setup 6+** (to compile the Windows `.exe` installer)
+- **PowerShell 5.1+** (included natively in Windows)
+
+### 1. Build the Companion Server (`Setup_YT_Downloader.exe`)
+The local backend service is driven by `scripts/ytdl_host.py` alongside local video processing tools.
+1. Place the required binaries (`ffmpeg.exe`, `ffprobe.exe`, `yt-dlp.exe`) inside the `tools/` directory.
+2. Run the automated PowerShell build script from the root of the repository:
+   ```powershell
+   .\scripts\build_installer.ps1
+   ```
+   *This script automatically compiles `ytdl_host.py` into a standalone native Windows binary (`native-host/YTDownloader.exe`) using `PyInstaller`, embeds version metadata (`scripts/version_info.txt`), and then invokes `Inno Setup` (`scripts/installer.iss`) to package the complete standalone installer `Setup_YT_Downloader.exe`.*
+
+### 2. Build the WebExtension ZIP
+To package the clean browser extension into a POSIX-compliant archive (`YT-Media-Downloader-v1.1.6.zip`) ready for Chrome Web Store or Mozilla Add-ons:
+```powershell
+python pack_extension.py
+```
+*The packaging script guarantees strict UNIX forward-slash entry headers (`create_system = 3`) and automatically excludes backend server scripts (`scripts/`, `.py`, `.ps1`, `.iss`) from the browser extension ZIP.*
+
+---
+
 ## Frequently Asked Questions (FAQ)
 
 #### Server disconnected or not responding
