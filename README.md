@@ -3,9 +3,9 @@
 
 <p align="center">
   <img src="https://img.shields.io/badge/Version-v1.1.5-3ea6ff?style=for-the-badge&logo=youtube&logoColor=white" alt="Version v1.1.5" />
-  <img src="https://img.shields.io/badge/Platform-Chrome%n%20%7C%20Firefox%20%7C%20Edge-2b2b2b?style=for-the-badge" alt="Supported Browsers" />
+  <img src="https://img.shields.io/badge/Browsers-Chrome%20%7C%20Firefox%20%7C%20Edge-2b2b2b?style=for-the-badge&logo=googlechrome&logoColor=white" alt="Supported Browsers" />
   <img src="https://img.shields.io/badge/Backend-Local%20Port%2019836-107c41?style=for-the-badge" alt="Local Backend" />
-  <a href="https://ko-fi.com/blaxdev"><img src="https://img.shields.io/badge/Support-Buy%20me%20a%20Ko--Fi-ff5e5b?style=for-the-badge" alt="Ko-Fi" /></a>
+  <a href="https://ko-fi.com/blaxdev"><img src="https://img.shields.io/badge/Support-Buy%20me%20a%20Ko--Fi-ff5e5b?style=for-the-badge&logo=kofi&logoColor=white" alt="Ko-Fi" /></a>
 </p>
 
 ---
@@ -73,7 +73,7 @@ This project is licensed under the [MIT License](LICENSE) — see the LICENSE fi
 
 If **YT Downloader** saves you time and enhances your workflow, consider supporting its ongoing development and ad-free maintenance!
 
-[![Buy Me A Coffee](https://img.shields.io/badge/Support%20BlaxDEV-Buy%20Me%20A%20Ko--Fi-ff5e5b?style=for-the-badge&font-size=18)](https://ko-fi.com/blaxdev)
+[![Buy Me A Coffee](https://img.shields.io/badge/Support%20BlaxDEV-Buy%20Me%20A%20Ko--Fi-ff5e5b?style=for-the-badge&logo=kofi&logoColor=white)](https://ko-fi.com/blaxdev)
 
 ---
 *Created by BlaxDEV — Video & Audio Downloader Pro v1.1.5*
