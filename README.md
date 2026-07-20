@@ -1,4 +1,4 @@
-# YT Media Downloader — Video & Audio Downloader Pro
+# YT Media Downloader — Video & Audio Downloader
 **Created by [BlaxDEV](https://github.com/BlaxDEV)** · *Version v1.1.5 (Release)*
 
 <p align="center">
