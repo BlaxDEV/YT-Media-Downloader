@@ -235,7 +235,7 @@
         }
 
         // Apply to panel sliders
-        applyScissorsToPanel();
+        applyScissorsToPanel(scissorsState === 0);
 
         // Auto-activate preview mode if panel is open
         if (scissorsState > 0) {
@@ -274,36 +274,55 @@
     }
   }
 
-  function applyScissorsToPanel() {
+  function resetScissorsTool() {
+    if (scissorsState === 0 && scissorsTrimA === null && scissorsTrimB === null) return;
+    scissorsState = 0;
+    scissorsTrimA = null;
+    scissorsTrimB = null;
+    const label = document.getElementById("ytdl-scissors-label");
+    if (label) label.textContent = "";
+    const scissorsBtn = document.getElementById("ytdl-scissors-btn");
+    if (scissorsBtn) {
+      const svg = scissorsBtn.querySelector("svg");
+      if (svg) svg.setAttribute("fill", "#bbb");
+    }
+  }
+
+  let isApplyingScissors = false;
+  function applyScissorsToPanel(resetToDefault = false) {
     const popup = document.getElementById("ytdl-popup-panel");
     if (!popup) return;
+    isApplyingScissors = true;
+    try {
+      ["v", "a"].forEach(prefix => {
+        const startInput = popup.querySelector(`#ytdl-${prefix}-start`);
+        const endInput = popup.querySelector(`#ytdl-${prefix}-end`);
+        if (!startInput || !endInput) return;
 
-    ["v", "a"].forEach(prefix => {
-      const startInput = popup.querySelector(`#ytdl-${prefix}-start`);
-      const endInput = popup.querySelector(`#ytdl-${prefix}-end`);
-      if (!startInput || !endInput) return;
-
-      if (scissorsTrimA !== null && scissorsTrimB !== null) {
-        startInput.value = scissorsTrimA;
-        endInput.value = scissorsTrimB;
-        startInput.dispatchEvent(new Event("input"));
-      } else if (scissorsTrimA !== null) {
-        startInput.value = scissorsTrimA;
-        startInput.dispatchEvent(new Event("input"));
-      } else {
-        startInput.value = 0;
-        endInput.value = 1000;
-        startInput.dispatchEvent(new Event("input"));
-      }
-
-      if (scissorsState > 0) {
-        const previewCb = popup.querySelector(`#ytdl-${prefix}-preview-cb`);
-        if (previewCb && !previewCb.checked) {
-          previewCb.checked = true;
-          previewCb.dispatchEvent(new Event("change"));
+        if (scissorsTrimA !== null && scissorsTrimB !== null) {
+          startInput.value = scissorsTrimA;
+          endInput.value = scissorsTrimB;
+          startInput.dispatchEvent(new Event("input"));
+        } else if (scissorsTrimA !== null) {
+          startInput.value = scissorsTrimA;
+          startInput.dispatchEvent(new Event("input"));
+        } else if (resetToDefault) {
+          startInput.value = 0;
+          endInput.value = 1000;
+          startInput.dispatchEvent(new Event("input"));
         }
-      }
-    });
+
+        if (scissorsState > 0) {
+          const previewCb = popup.querySelector(`#ytdl-${prefix}-preview-cb`);
+          if (previewCb && !previewCb.checked) {
+            previewCb.checked = true;
+            previewCb.dispatchEvent(new Event("change"));
+          }
+        }
+      });
+    } finally {
+      isApplyingScissors = false;
+    }
   }
 
   // ─── Create Panel ──────────────────────────────────────────
@@ -314,16 +333,16 @@
     panel.innerHTML = `
       <div class="ytdl-popup-inner">
         <div class="ytdl-popup-header" id="ytdl-header-drag" title="Haz clic y arrastra para mover la ventana">
-          <div class="ytdl-popup-title" style="display: flex; align-items: center; gap: 6px;">
-            <svg viewBox="0 0 24 24" width="20" height="20" fill="#ff4444"><path d="M17 10.5V7c0-.55-.45-1-1-1H4c-.55 0-1 .45-1 1v10c0 .55.45 1 1 1h12c.55 0 1-.45 1-1v-3.5l4 4v-11l-4 4z"/></svg>
-            <span>YT Media Downloader</span>
-            <span class="ytdl-grip-handle" style="color: #666; font-size: 14px; margin-left: 4px; letter-spacing: -2px; user-select: none;">⋮⋮</span>
+          <div class="ytdl-popup-title" style="display: flex; align-items: center; gap: 6px; white-space: nowrap; flex-shrink: 0;">
+            <svg viewBox="0 0 24 24" width="22" height="22" fill="#ff4444" style="flex-shrink: 0;"><path d="M17 10.5V7c0-.55-.45-1-1-1H4c-.55 0-1 .45-1 1v10c0 .55.45 1 1 1h12c.55 0 1-.45 1-1v-3.5l4 4v-11l-4 4z"/></svg>
+            <span style="font-weight: 600; font-size: 15px;">YT Media Downloader</span>
+            <span class="ytdl-grip-handle" style="color: #999; font-size: 20px; font-weight: bold; margin-left: 8px; letter-spacing: -3px; user-select: none; display: inline-flex; align-items: center; cursor: grab; line-height: 1;" title="Haz clic y arrastra para mover la ventana">⋮⋮</span>
           </div>
-          <div>
+          <div style="text-align: right; margin-left: auto; margin-right: 8px; flex-shrink: 0;">
             <div class="ytdl-popup-subtitle" id="i18n-subtitleCreator">creado por BlaxDEV</div>
             <a href="https://ko-fi.com/blaxdev" target="_blank" class="ytdl-kofi-subtitle" id="i18n-buyMeKofi">☕ Buy me a Ko-Fi!</a>
           </div>
-          <button class="ytdl-popup-close" id="ytdl-close-btn">
+          <button class="ytdl-popup-close" id="ytdl-close-btn" style="flex-shrink: 0;">
             <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
           </button>
         </div>
@@ -1098,11 +1117,21 @@
         }
       }
 
-      start.addEventListener("input", () => update(false));
-      end.addEventListener("input", () => update(false));
+      const handleSliderInput = (e) => {
+        if (!isApplyingScissors && e && e.isTrusted && (scissorsState > 0 || scissorsTrimA !== null || scissorsTrimB !== null)) {
+          resetScissorsTool();
+        }
+        update(false);
+      };
+
+      start.addEventListener("input", handleSliderInput);
+      end.addEventListener("input", handleSliderInput);
       
       const handleInputEdit = (e) => {
         if (e.type === 'blur' || (e.type === 'keydown' && e.key === 'Enter')) {
+          if (!isApplyingScissors && e && e.isTrusted && (scissorsState > 0 || scissorsTrimA !== null || scissorsTrimB !== null)) {
+            resetScissorsTool();
+          }
           update(true);
         }
       };
@@ -1117,8 +1146,8 @@
       update();
 
       trimUpdateHandlers.push({ destroy: () => {
-        start.removeEventListener("input", () => update(false));
-        end.removeEventListener("input", () => update(false));
+        start.removeEventListener("input", handleSliderInput);
+        end.removeEventListener("input", handleSliderInput);
         if (timeA && timeB) {
             timeA.removeEventListener("blur", handleInputEdit);
             timeA.removeEventListener("keydown", handleInputEdit);

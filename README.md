@@ -25,16 +25,27 @@
 
 ## Architecture & Setup (Option A — Hybrid Model)
 
-To guarantee maximum download speeds, bypass rate limits, and cleanly merge 4K video and audio streams, **YT Media Downloader works in tandem with a lightweight local companion server (`YTDownloader.exe`)** running on Windows (port `19836`).
+To guarantee maximum download speeds, bypass rate limits, and cleanly merge 4K video and audio streams, **YT Media Downloader works in tandem with a lightweight local companion server (`YTDownloader.exe` on Windows / `YTDownloader` on Linux)** listening on port `19836`.
 
-### Step 1: Download the Companion Server (`Setup_YT_Downloader.exe`)
+### Step 1: Download & Start the Companion Server
+#### For Windows (`Setup_YT_Downloader-Win-v1.1.6.exe`)
 1. Go to the [**Releases Tab**](../../releases) of this GitHub repository.
-2. Download `Setup_YT_Downloader.exe`.
+2. Download `Setup_YT_Downloader-Win-v1.1.6.exe` (or `Setup_YT_Downloader.exe`).
 3. Run the installer to start the local backend (`YTDownloader.exe` on port `19836`).
 
 > **Note about Windows SmartScreen:**  
 > Since our companion server is free, open, and distributed independently without a commercial corporate code-signing certificate, Windows Defender SmartScreen might show a blue warning saying *"Windows protected your PC"*.  
 > **How to proceed safely:** Click **"More info"** and then **"Run anyway"**. The software is 100% safe, clean, and communicates strictly on your local loopback address (`127.0.0.1:19836`).
+
+#### For Linux (`YT-Downloader-Companion-Linux-v1.1.6.tar.gz`)
+1. Download `YT-Downloader-Companion-Linux-v1.1.6.tar.gz` from the [**Releases Tab**](../../releases).
+2. Extract the archive and run the automated installation script:
+   ```bash
+   tar -xzf YT-Downloader-Companion-Linux-v1.1.6.tar.gz
+   cd YT-Downloader-Companion-Linux-v1.1.6
+   ./install.sh
+   ```
+   *This automatically installs the standalone companion binary (`YTDownloader`) to `~/.local/bin/` and registers a **systemd user service** (`yt-downloader.service`) so that the local backend runs continuously and silently in the background on port `19836`.*
 
 ### Step 2: Install the Browser Extension
 - **Chrome / Edge / Brave (Unpacked Mode):**
@@ -60,14 +71,25 @@ This repository is completely open-source and transparent. You can easily compil
 - **Inno Setup 6+** (to compile the Windows `.exe` installer)
 - **PowerShell 5.1+** (included natively in Windows)
 
-### 1. Build the Companion Server (`Setup_YT_Downloader.exe`)
-The local backend service is driven by `scripts/ytdl_host.py` alongside local video processing tools.
+### 1. Build the Companion Server
+#### For Windows (`Setup_YT_Downloader.exe`)
+The local backend service for Windows is driven by `scripts/ytdl_host.py` alongside local video processing tools.
 1. Place the required binaries (`ffmpeg.exe`, `ffprobe.exe`, `yt-dlp.exe`) inside the `tools/` directory.
 2. Run the automated PowerShell build script from the root of the repository:
    ```powershell
    .\scripts\build_installer.ps1
    ```
    *This script automatically compiles `ytdl_host.py` into a standalone native Windows binary (`native-host/YTDownloader.exe`) using `PyInstaller`, embeds version metadata (`scripts/version_info.txt`), and then invokes `Inno Setup` (`scripts/installer.iss`) to package the complete standalone installer `Setup_YT_Downloader.exe`.*
+
+#### For Linux (`YT-Downloader-Companion-Linux.tar.gz`)
+The native Linux companion server environment is completely isolated inside the `linux-host/` directory.
+1. Ensure `python3` and `pyinstaller` (`pip install --user pyinstaller`) are installed on your Linux build machine.
+2. Run the automated bash build script inside the `linux-host/` directory:
+   ```bash
+   cd linux-host
+   ./build_linux.sh
+   ```
+   *This script compiles `ytdl_host.py` into a standalone POSIX ELF binary (`YTDownloader`) using `PyInstaller --onefile`, packages it alongside `install_linux.sh` and the `systemd` user service unit (`yt-downloader.service`), and creates the final release archive (`release-linux/YT-Downloader-Companion-Linux-v1.1.6.tar.gz`).*
 
 ### 2. Build the WebExtension ZIP
 To package the clean browser extension into a POSIX-compliant archive (`YT-Media-Downloader-v1.1.6.zip`) ready for Chrome Web Store or Mozilla Add-ons:
@@ -81,7 +103,7 @@ python pack_extension.py
 ## Frequently Asked Questions (FAQ)
 
 #### Server disconnected or not responding
-- **Solution:** Ensure `YTDownloader.exe` is running on your PC and listening on port `19836`. Check your antivirus or firewall settings if the local connection is blocked.
+- **Solution:** Ensure `YTDownloader.exe` (on Windows) or the `yt-downloader.service` systemd service (on Linux: check with `systemctl --user status yt-downloader.service`) is running on your PC and listening on port `19836`. Check your antivirus or firewall settings if the local loopback connection is blocked.
 
 #### Rate limit errors during heavy downloads
 - **Solution:** If you download dozens of videos in rapid succession, YouTube may temporarily throttle requests. Wait a few minutes or switch to a different quality setting.

@@ -1,0 +1,12 @@
+[Unit]
+Description=YT Media Downloader Companion Server (Port 19836)
+After=network.target
+
+[Service]
+Type=simple
+ExecStart=%h/.local/bin/YTDownloader
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=default.target
