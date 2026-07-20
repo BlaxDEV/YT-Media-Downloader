@@ -1,5 +1,5 @@
 /*
- * Internationalization (i18n) Dictionary for YT Downloader
+ * Internationalization (i18n) Dictionary for YT Media Downloader
  * Supports: English (en - Default), Spanish (es), Portuguese (pt), French (fr),
  * German (de), Italian (it), Russian (ru), Japanese (ja), Chinese (zh).
  */
@@ -7,7 +7,7 @@
 window.YTDL_I18N = {
   en: {
     // Header & Common
-    appTitle: "YT Downloader",
+    appTitle: "YT Media Downloader",
     appSubtitle: "Video & Audio Downloader Pro",
     subtitleCreator: "created by BlaxDEV",
     buyMeKofi: "☕ Buy me a Ko-Fi!",
@@ -77,7 +77,7 @@ window.YTDL_I18N = {
     popupFooter: "Advanced settings are located in the ⚙️ icon inside the YouTube video panel.",
 
     // Welcome Page
-    welcomeTitle: "Thank you for downloading YT Downloader!",
+    welcomeTitle: "Thank you for downloading YT Media Downloader!",
     welcomeSubtitle: "Your powerful, ad-free 1080p/4K video & audio downloader.",
     welcomeSelectLang: "Language:",
     welcomeTabHow: "How does it work?",
@@ -102,11 +102,11 @@ window.YTDL_I18N = {
     faq4Title: "4K/1080p video & audio merging",
     faq4Desc: "Solution: The local companion server automatically handles high-res video and separate audio streams, merging them cleanly at maximum speed.",
     welcomeKoFiTitle: "Support Free & Ad-Free Software!",
-    welcomeKoFiDesc: "YT Downloader is 100% free with no paywalls or ads. If it saves you time and frustration, consider treating BlaxDEV to a coffee on Ko-Fi!"
+    welcomeKoFiDesc: "YT Media Downloader is 100% free with no paywalls or ads. If it saves you time and frustration, consider treating BlaxDEV to a coffee on Ko-Fi!"
   },
 
   es: {
-    appTitle: "YT Downloader",
+    appTitle: "YT Media Downloader",
     appSubtitle: "Descargador & Recortador Pro",
     subtitleCreator: "creado por BlaxDEV",
     buyMeKofi: "☕ ¡Buy me a Ko-Fi!",
@@ -170,7 +170,7 @@ window.YTDL_I18N = {
     popupServerOff: "Servidor local apagado o no responde",
     popupFooter: "Las preferencias avanzadas están en el icono ⚙️ en el panel del video dentro de YouTube.",
 
-    welcomeTitle: "¡Muchas gracias por descargar YT Downloader!",
+    welcomeTitle: "¡Muchas gracias por descargar YT Media Downloader!",
     welcomeSubtitle: "Tu descargador potente y sin publicidad para videos 1080p/4K y audio.",
     welcomeSelectLang: "Language:",
     welcomeTabHow: "¿Cómo funciona?",
@@ -195,11 +195,11 @@ window.YTDL_I18N = {
     faq4Title: "Fusión de video 4K/1080p con audio",
     faq4Desc: "Solución: El servidor local acopla automáticamente las transmisiones de video en alta definición y audio sin pérdida de calidad y a máxima velocidad.",
     welcomeKoFiTitle: "¡Apoya el software libre y sin publicidad!",
-    welcomeKoFiDesc: "YT Downloader es 100% gratis, sin paywalls ni anuncios. Si te ahorra tiempo y dolores de cabeza, ¡considera invitar un café a BlaxDEV en Ko-Fi!"
+    welcomeKoFiDesc: "YT Media Downloader es 100% gratis, sin paywalls ni anuncios. Si te ahorra tiempo y dolores de cabeza, ¡considera invitar un café a BlaxDEV en Ko-Fi!"
   },
 
   pt: {
-    appTitle: "YT Downloader",
+    appTitle: "YT Media Downloader",
     appSubtitle: "Baixador e Recortador Pro",
     subtitleCreator: "criado por BlaxDEV",
     buyMeKofi: "☕ Buy me a Ko-Fi!",
@@ -263,7 +263,7 @@ window.YTDL_I18N = {
     popupServerOff: "Servidor local desligado ou sem resposta",
     popupFooter: "As configurações avançadas estão no ícone ⚙️ no painel do vídeo no YouTube.",
 
-    welcomeTitle: "Muito obrigado por baixar o YT Downloader!",
+    welcomeTitle: "Muito obrigado por baixar o YT Media Downloader!",
     welcomeSubtitle: "Seu baixador potente e sem anúncios para vídeos 1080p/4K e áudio.",
     welcomeSelectLang: "Language:",
     welcomeTabHow: "Como funciona?",
@@ -288,11 +288,11 @@ window.YTDL_I18N = {
     faq4Title: "Fusão de vídeo 4K/1080p e áudio",
     faq4Desc: "Solução: O servidor local processa automaticamente a união de fluxos de vídeo de alta resolução e áudio em velocidade máxima.",
     welcomeKoFiTitle: "Apoie Software Livre e Sem Anúncios!",
-    welcomeKoFiDesc: "O YT Downloader é 100% gratuito e sem paywalls. Se ele economizar seu tempo, considere pagar um café para o BlaxDEV no Ko-Fi!"
+    welcomeKoFiDesc: "O YT Media Downloader é 100% gratuito e sem paywalls. Se ele economizar seu tempo, considere pagar um café para o BlaxDEV no Ko-Fi!"
   },
 
   fr: {
-    appTitle: "YT Downloader",
+    appTitle: "YT Media Downloader",
     appSubtitle: "Téléchargeur & Découpeur Pro",
     subtitleCreator: "créé par BlaxDEV",
     buyMeKofi: "☕ Buy me a Ko-Fi!",
@@ -356,7 +356,7 @@ window.YTDL_I18N = {
     popupServerOff: "Serveur local éteint ou ne répond pas",
     popupFooter: "Les paramètres avancés se trouvent dans l'icône ⚙️ du panneau vidéo sur YouTube.",
 
-    welcomeTitle: "Merci d'avoir téléchargé YT Downloader !",
+    welcomeTitle: "Merci d'avoir téléchargé YT Media Downloader !",
     welcomeSubtitle: "Votre téléchargeur puissant et sans publicité pour vidéos 1080p/4K et audio.",
     welcomeSelectLang: "Language:",
     welcomeTabHow: "Comment ça marche ?",
@@ -381,11 +381,11 @@ window.YTDL_I18N = {
     faq4Title: "Fusion vidéo et audio 4K/1080p",
     faq4Desc: "Solution : Le serveur local gère automatiquement et rapidement l'assemblage des flux vidéo haute définition avec l'audio.",
     welcomeKoFiTitle: "Soutenez le logiciel gratuit et sans pub !",
-    welcomeKoFiDesc: "YT Downloader est 100 % gratuit, sans paywall ni publicité. S'il vous fait gagner du temps, offrez un café à BlaxDEV sur Ko-Fi !"
+    welcomeKoFiDesc: "YT Media Downloader est 100 % gratuit, sans paywall ni publicité. S'il vous fait gagner du temps, offrez un café à BlaxDEV sur Ko-Fi !"
   },
 
   de: {
-    appTitle: "YT Downloader",
+    appTitle: "YT Media Downloader",
     appSubtitle: "Video & Audio Downloader Pro",
     subtitleCreator: "erstellt von BlaxDEV",
     buyMeKofi: "☕ Buy me a Ko-Fi!",
@@ -449,7 +449,7 @@ window.YTDL_I18N = {
     popupServerOff: "Lokaler Server ausgeschaltet oder reagiert nicht",
     popupFooter: "Erweiterte Einstellungen finden Sie über das ⚙️-Symbol im Video-Panel auf YouTube.",
 
-    welcomeTitle: "Vielen Dank für den Download von YT Downloader!",
+    welcomeTitle: "Vielen Dank für den Download von YT Media Downloader!",
     welcomeSubtitle: "Ihr leistungsstarker, werbefreier Downloader für 1080p/4K-Videos und Audio.",
     welcomeSelectLang: "Language:",
     welcomeTabHow: "Wie funktioniert es?",
@@ -474,11 +474,11 @@ window.YTDL_I18N = {
     faq4Title: "4K/1080p Video- und Audio-Zusammenführung",
     faq4Desc: "Lösung: Der lokale Server übernimmt automatisch das schnelle und saubere Zusammenführen von hochauflösendem Video und Audio.",
     welcomeKoFiTitle: "Unterstützen Sie werbefreie Software!",
-    welcomeKoFiDesc: "YT Downloader ist 100% kostenlos und ohne Paywalls. Wenn er Ihnen Zeit spart, spendieren Sie BlaxDEV einen Kaffee auf Ko-Fi!"
+    welcomeKoFiDesc: "YT Media Downloader ist 100% kostenlos und ohne Paywalls. Wenn er Ihnen Zeit spart, spendieren Sie BlaxDEV einen Kaffee auf Ko-Fi!"
   },
 
   it: {
-    appTitle: "YT Downloader",
+    appTitle: "YT Media Downloader",
     appSubtitle: "Downloader & Ritagliatore Pro",
     subtitleCreator: "creato da BlaxDEV",
     buyMeKofi: "☕ Buy me a Ko-Fi!",
@@ -542,7 +542,7 @@ window.YTDL_I18N = {
     popupServerOff: "Server locale spento o non risponde",
     popupFooter: "Le impostazioni avanzate si trovano nell'icona ⚙️ nel pannello video su YouTube.",
 
-    welcomeTitle: "Grazie per aver scaricato YT Downloader!",
+    welcomeTitle: "Grazie per aver scaricato YT Media Downloader!",
     welcomeSubtitle: "Il tuo downloader potente e senza pubblicità per video 1080p/4K e audio.",
     welcomeSelectLang: "Language:",
     welcomeTabHow: "Come funziona?",
@@ -567,11 +567,11 @@ window.YTDL_I18N = {
     faq4Title: "Unione video 4K/1080p e audio",
     faq4Desc: "Soluzione: Il server locale gestisce automaticamente l'unione dei flussi video ad alta risoluzione e audio separato alla massima velocità.",
     welcomeKoFiTitle: "Supporta il software libero e senza pubblicità!",
-    welcomeKoFiDesc: "YT Downloader è 100% gratuito e senza paywall. Se ti fa risparmiare tempo, offri un caffè a BlaxDEV su Ko-Fi!"
+    welcomeKoFiDesc: "YT Media Downloader è 100% gratuito e senza paywall. Se ti fa risparmiare tempo, offri un caffè a BlaxDEV su Ko-Fi!"
   },
 
   ru: {
-    appTitle: "YT Downloader",
+    appTitle: "YT Media Downloader",
     appSubtitle: "Про загрузчик и обрезчик",
     subtitleCreator: "создано BlaxDEV",
     buyMeKofi: "☕ Buy me a Ko-Fi!",
@@ -635,7 +635,7 @@ window.YTDL_I18N = {
     popupServerOff: "Локальный сервер выключен или не отвечает",
     popupFooter: "Расширенные настройки находятся по иконке ⚙️ в панели видео на YouTube.",
 
-    welcomeTitle: "Спасибо за установку YT Downloader!",
+    welcomeTitle: "Спасибо за установку YT Media Downloader!",
     welcomeSubtitle: "Мощный загрузчик видео 1080p/4K и аудио без рекламы.",
     welcomeSelectLang: "Language:",
     welcomeTabHow: "Как это работает?",
@@ -660,11 +660,11 @@ window.YTDL_I18N = {
     faq4Title: "Объединение 4K/1080p видео и аудио",
     faq4Desc: "Решение: Локальный сервер автоматически выполняет быструю сборку видео высокого разрешения и аудиодорожек без потери качества.",
     welcomeKoFiTitle: "Поддержите свободное ПО без рекламы!",
-    welcomeKoFiDesc: "YT Downloader 100% бесплатен, без платных подписок и рекламы. Если он помог вам, угостите BlaxDEV кофе на Ko-Fi!"
+    welcomeKoFiDesc: "YT Media Downloader 100% бесплатен, без платных подписок и рекламы. Если он помог вам, угостите BlaxDEV кофе на Ko-Fi!"
   },
 
   ja: {
-    appTitle: "YT Downloader",
+    appTitle: "YT Media Downloader",
     appSubtitle: "プロ動画＆音声ダウンローダー",
     subtitleCreator: "作成者: BlaxDEV",
     buyMeKofi: "☕ Buy me a Ko-Fi!",
@@ -728,7 +728,7 @@ window.YTDL_I18N = {
     popupServerOff: "ローカルサーバーが停止または応答なし",
     popupFooter: "詳細設定はYouTubeの動画パネル内の⚙️アイコンから変更できます。",
 
-    welcomeTitle: "YT Downloaderをダウンロードいただきありがとうございます！",
+    welcomeTitle: "YT Media Downloaderをダウンロードいただきありがとうございます！",
     welcomeSubtitle: "広告なし、高画質1080p/4K対応の強力な動画＆音声ダウンローダー。",
     welcomeSelectLang: "Language:",
     welcomeTabHow: "使い方",
@@ -753,11 +753,11 @@ window.YTDL_I18N = {
     faq4Title: "4K/1080p高画質動画と音声の結合",
     faq4Desc: "解決策: ローカルサーバーが高解像度映像と分離音声の高速合流を自動的かつスムーズに処理します。",
     welcomeKoFiTitle: "広告なし・無料のツールを応援しよう！",
-    welcomeKoFiDesc: "YT Downloaderは完全無料・広告なしです。お役に立ちましたら、ぜひKo-FiでBlaxDEVにコーヒーをご馳走してください！"
+    welcomeKoFiDesc: "YT Media Downloaderは完全無料・広告なしです。お役に立ちましたら、ぜひKo-FiでBlaxDEVにコーヒーをご馳走してください！"
   },
 
   zh: {
-    appTitle: "YT Downloader",
+    appTitle: "YT Media Downloader",
     appSubtitle: "专业视频 & 音频下载与剪辑器",
     subtitleCreator: "作者: BlaxDEV",
     buyMeKofi: "☕ Buy me a Ko-Fi!",
@@ -821,7 +821,7 @@ window.YTDL_I18N = {
     popupServerOff: "本地服务器未启动或无响应",
     popupFooter: "高级设置位于 YouTube 视频面板内的 ⚙️ 图标中。",
 
-    welcomeTitle: "非常感谢下载使用 YT Downloader！",
+    welcomeTitle: "非常感谢下载使用 YT Media Downloader！",
     welcomeSubtitle: "强大且无广告的 1080p/4K 视频与高音质音频下载器。",
     welcomeSelectLang: "Language:",
     welcomeTabHow: "如何使用？",
@@ -846,7 +846,7 @@ window.YTDL_I18N = {
     faq4Title: "4K/1080p 高清画音合并",
     faq4Desc: "解决方法：本地服务器可全程自动且高速地无损合并超高清视频流与独立音轨。",
     welcomeKoFiTitle: "支持无广告免费开源工具！",
-    welcomeKoFiDesc: "YT Downloader 100% 免费且无付费限制。如果它为您节省了时间，欢迎在 Ko-Fi 上为 BlaxDEV 买杯咖啡！"
+    welcomeKoFiDesc: "YT Media Downloader 100% 免费且无付费限制。如果它为您节省了时间，欢迎在 Ko-Fi 上为 BlaxDEV 买杯咖啡！"
   }
 };
 

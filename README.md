@@ -1,4 +1,4 @@
-# YT Downloader — Video & Audio Downloader Pro
+# YT Media Downloader — Video & Audio Downloader Pro
 **Created by [BlaxDEV](https://github.com/BlaxDEV)** · *Version v1.1.5 (Release)*
 
 <p align="center">
@@ -12,7 +12,7 @@
 
 ## Features
 
-**YT Downloader** is a powerful, ad-free, high-performance browser extension designed to give you complete control over your YouTube downloads and precision clips directly from the video player.
+**YT Media Downloader** is a powerful, ad-free, high-performance browser extension designed to give you complete control over your YouTube downloads and precision clips directly from the video player.
 
 - **1080p, 4K & 60FPS Video Downloads**: Automatically merges high-definition video streams and standalone audio tracks without quality loss or watermarks.
 - **Precision Trimming Mode**: Click the scissors icon right inside the YouTube player controls to mark exact start (**Point A**) and end (**Point B**) timestamps and export customized clips instantly.
@@ -25,7 +25,7 @@
 
 ## Architecture & Setup (Option A — Hybrid Model)
 
-To guarantee maximum download speeds, bypass rate limits, and cleanly merge 4K video and audio streams, **YT Downloader works in tandem with a lightweight local companion server (`YTDownloader.exe`)** running on Windows (port `19836`).
+To guarantee maximum download speeds, bypass rate limits, and cleanly merge 4K video and audio streams, **YT Media Downloader works in tandem with a lightweight local companion server (`YTDownloader.exe`)** running on Windows (port `19836`).
 
 ### Step 1: Download the Companion Server (`Setup_YT_Downloader.exe`)
 1. Go to the [**Releases Tab**](../../releases) of this GitHub repository.
@@ -71,7 +71,7 @@ This project is licensed under the [MIT License](LICENSE) — see the LICENSE fi
 
 ## Support BlaxDEV
 
-If **YT Downloader** saves you time and enhances your workflow, consider supporting its ongoing development and ad-free maintenance!
+If **YT Media Downloader** saves you time and enhances your workflow, consider supporting its ongoing development and ad-free maintenance!
 
 [![Buy Me A Coffee](https://img.shields.io/badge/Support%20BlaxDEV-Buy%20Me%20A%20Ko--Fi-ff5e5b?style=for-the-badge&logo=kofi&logoColor=white)](https://ko-fi.com/blaxdev)
 
