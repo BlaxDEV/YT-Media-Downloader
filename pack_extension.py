@@ -37,12 +37,8 @@ if __name__ == '__main__':
         ext_dir = os.path.join(base_dir, 'YT-Downloader-Extension')
         out_dir = base_dir
     
-    zip_v = os.path.join(out_dir, 'YT-Downloader-Extension-v1.1.6.zip')
-    zip_gen = os.path.join(out_dir, 'YT-Downloader-Extension.zip')
     zip_media_v = os.path.join(out_dir, 'YT-Media-Downloader-v1.1.6.zip')
     zip_media_gen = os.path.join(out_dir, 'YT-Media-Downloader.zip')
     
-    create_posix_zip(ext_dir, zip_v)
-    create_posix_zip(ext_dir, zip_gen)
     create_posix_zip(ext_dir, zip_media_v)
     create_posix_zip(ext_dir, zip_media_gen)

@@ -39,7 +39,7 @@ python3 -m pyinstaller --onefile --clean \
 echo "✅ Standalone binary created at: ${DIST_DIR}/YTDownloader"
 
 # Create clean release package directory
-PACKAGE_NAME="YT-Downloader-Companion-Linux-v${VERSION}"
+PACKAGE_NAME="Setup_YT_Downloader-Linux-v${VERSION}"
 STAGE_DIR="${RELEASE_DIR}/${PACKAGE_NAME}"
 rm -rf "${STAGE_DIR}"
 mkdir -p "${STAGE_DIR}/bin" "${STAGE_DIR}/systemd"
