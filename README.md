@@ -76,4 +76,4 @@ If **YT Media Downloader** saves you time and enhances your workflow, consider s
 [![Buy Me A Coffee](https://img.shields.io/badge/Support%20BlaxDEV-Buy%20Me%20A%20Ko--Fi-ff5e5b?style=for-the-badge&logo=kofi&logoColor=white)](https://ko-fi.com/blaxdev)
 
 ---
-*Created by BlaxDEV — Video & Audio Downloader Pro v1.1.5*
+*Created by BlaxDEV — Video & Audio Downloader Pro v1.1.6*
