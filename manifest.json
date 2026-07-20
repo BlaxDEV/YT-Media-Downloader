@@ -2,7 +2,7 @@
   "name": "YT Downloader",
   "version": "1.1.5",
   "version_name": "v.1.1.5-release",
-  "description": "Descarga videos y audio de YouTube con yt-dlp",
+  "description": "Download YouTube videos and audio locally in high definition without ads",
   "manifest_version": 3,
   "browser_specific_settings": {
     "gecko": {
@@ -11,7 +11,7 @@
       "data_collection_permissions": {
         "isExempt": true,
         "required": ["none"],
-        "description": "Esta extensión se comunica únicamente con un servidor local (127.0.0.1:19836) para descargar videos. No recopila ni envía datos a terceros."
+        "description": "This extension communicates strictly with a local companion server (127.0.0.1:19836) to process downloads. It does not collect or transmit any user data to third parties."
       }
     }
   },
