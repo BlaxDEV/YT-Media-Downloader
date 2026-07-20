@@ -570,7 +570,7 @@
               Guardar
             </button>
             <div class="ytdl-cfg-msg" id="ytdl-cfg-msg"></div>
-            <div class="ytdl-version" style="margin-top:16px;font-size:11px;color:#666;text-align:center;">v1.1.5</div>
+            <div class="ytdl-version" style="margin-top:16px;font-size:11px;color:#666;text-align:center;">v1.1.6</div>
           </div>
         </div>
       </div>
