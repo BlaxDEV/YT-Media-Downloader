@@ -30,7 +30,7 @@ To guarantee maximum download speeds, bypass rate limits, and cleanly merge 4K v
 ### Step 1: Download & Start the Companion Server
 #### For Windows (`Setup_YT_Downloader-Win-v1.1.6.exe`)
 1. Go to the [**Releases Tab**](../../releases) of this GitHub repository.
-2. Download `Setup_YT_Downloader-Win-v1.1.6.exe` (or `Setup_YT_Downloader.exe`).
+2. Download `Setup_YT_Downloader-Win-v1.1.6.exe`.
 3. Run the installer to start the local backend (`YTDownloader.exe` on port `19836`).
 
 > **Note about Windows SmartScreen:**  
@@ -49,7 +49,7 @@ To guarantee maximum download speeds, bypass rate limits, and cleanly merge 4K v
 
 ### Step 2: Install the Browser Extension
 - **Chrome / Edge / Brave (Unpacked Mode):**
-  1. Download `YT-Media-Downloader-v1.1.6.zip` from the [Releases](../../releases) tab and extract it.
+  1. Download `YT-Media-Downloader-Extension-v1.1.6.zip` from the [Releases](../../releases) tab and extract it.
   2. Open `chrome://extensions` in your browser.
   3. Enable **Developer mode** in the top right corner.
   4. Click **Load unpacked** and select the extracted folder.
@@ -92,11 +92,14 @@ The native Linux companion server environment is completely isolated inside the 
    *This script compiles `ytdl_host.py` into a standalone POSIX ELF binary (`YTDownloader`) using `PyInstaller --onefile`, packages it alongside `install_linux.sh` and the `systemd` user service unit (`yt-downloader.service`), and creates the final release archive (`release-linux/Setup_YT_Downloader-Linux-v1.1.6.tar.gz`).*
 
 ### 2. Build the WebExtension ZIP
-To package the clean browser extension into a POSIX-compliant archive (`YT-Media-Downloader-v1.1.6.zip`) ready for Chrome Web Store or Mozilla Add-ons:
+To package the clean browser extension into a POSIX-compliant archive (`YT-Media-Downloader-Extension-v1.1.6.zip`) ready for Chrome Web Store or Mozilla Add-ons:
 ```powershell
-python pack_extension.py
+python scripts/pack_extension.py
 ```
-*The packaging script guarantees strict UNIX forward-slash entry headers (`create_system = 3`) and automatically excludes backend server scripts (`scripts/`, `.py`, `.ps1`, `.iss`) from the browser extension ZIP.*
+*The packaging script (`scripts/pack_extension.py`) guarantees strict UNIX forward-slash entry headers (`create_system = 3`) and strictly enforces official release naming rules:*
+- `Setup_YT_Downloader-Linux-<version>.tar.gz`
+- `Setup_YT_Downloader-Win-<version>.exe` (or `.tar.gz`)
+- `YT-Media-Downloader-Extension-<version>.zip`
 
 ---
 

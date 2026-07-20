@@ -1,5 +1,6 @@
 import os
 import zipfile
+import json
 
 def create_posix_zip(source_dir, output_zip):
     print(f"Packing {source_dir} -> {output_zip} (POSIX forward-slash format)...")
@@ -29,6 +30,10 @@ def create_posix_zip(source_dir, output_zip):
 
 if __name__ == '__main__':
     base_dir = os.path.dirname(os.path.abspath(__file__))
+    # If located inside 'scripts', go up one level first
+    if os.path.basename(base_dir) == 'scripts':
+        base_dir = os.path.dirname(base_dir)
+        
     # Check if we are running inside YT-Downloader-Extension or root directory
     if os.path.basename(base_dir) == 'YT-Downloader-Extension':
         ext_dir = base_dir
@@ -37,5 +42,15 @@ if __name__ == '__main__':
         ext_dir = os.path.join(base_dir, 'YT-Downloader-Extension')
         out_dir = base_dir
     
-    zip_media_v = os.path.join(out_dir, 'YT-Media-Downloader-v1.1.6.zip')
+    # Dynamically read version from manifest.json inside ext_dir
+    manifest_path = os.path.join(ext_dir, 'manifest.json')
+    version = "1.1.6"
+    if os.path.exists(manifest_path):
+        with open(manifest_path, 'r', encoding='utf-8') as mf:
+            data = json.load(mf)
+            if 'version' in data:
+                version = data['version']
+    
+    # Enforce exact naming rule: YT-Media-Downloader-Extension-<version>.zip
+    zip_media_v = os.path.join(out_dir, f'YT-Media-Downloader-Extension-v{version}.zip')
     create_posix_zip(ext_dir, zip_media_v)
