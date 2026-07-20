@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>YT Downloader - Welcome!</title>
+  <link rel="stylesheet" href="welcome.css">
+</head>
+<body>
+  <!-- Ambient background lighting and waves -->
+  <div class="bg-waves"></div>
+  <div class="bg-glow-1"></div>
+  <div class="bg-glow-2"></div>
+
+  <div class="welcome-container">
+    <!-- Header -->
+    <header class="welcome-header">
+      <div class="header-content">
+        <div class="logo-box">
+          <svg viewBox="0 0 24 24" width="46" height="46" fill="#ff2a2a"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></svg>
+        </div>
+        <div class="header-titles">
+          <h1 id="i18n-welcomeTitle">Thank you for downloading YT Downloader!</h1>
+          <p class="welcome-subtitle" id="i18n-welcomeSubtitle">Your powerful, ad-free 1080p/4K video & audio downloader.</p>
+          <div class="creator-badge">
+            <span id="i18n-subtitleCreator">created by BlaxDEV</span>
+          </div>
+        </div>
+      </div>
+      <!-- Language Selector Bar -->
+      <div class="lang-bar">
+        <label id="i18n-welcomeSelectLang">Language:</label>
+        <select id="langSelect" class="lang-select">
+          <option value="en">English (Default)</option>
+          <option value="es">Español (Spanish)</option>
+          <option value="pt">Português (Portuguese)</option>
+          <option value="fr">Français (French)</option>
+          <option value="de">Deutsch (German)</option>
+          <option value="it">Italiano (Italian)</option>
+          <option value="ru">Русский (Russian)</option>
+          <option value="ja">日本語 (Japanese)</option>
+          <option value="zh">中文 (Chinese)</option>
+        </select>
+      </div>
+    </header>
+
+    <!-- How it works & FAQ Section -->
+    <section class="how-section">
+      <div class="carousel-wrapper" id="carouselWrapper">
+        <!-- Two-Tab Top Bar -->
+        <div class="carousel-top-bar">
+          <div class="welcome-tabs">
+            <button class="welcome-tab-btn active" id="tabHowBtn" data-tab="how">
+              <span id="i18n-welcomeTabHow">How does it work?</span>
+            </button>
+            <button class="welcome-tab-btn" id="tabFaqBtn" data-tab="faq">
+              <span id="i18n-welcomeTabFaq">Common Issues</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Tab 1: How does it work (Carousel) -->
+        <div class="tab-pane active" id="paneHow">
+          <div class="carousel-track" id="carouselTrack">
+            <!-- Card 1 -->
+            <div class="step-card active" data-step="0">
+              <div class="step-number">01</div>
+              <div class="step-icon">🖥️</div>
+              <h3 id="i18n-welcomeStep1Title">Local Server Required</h3>
+              <p id="i18n-welcomeStep1Desc">Make sure the companion installer (YTDownloader.exe) is running locally on port 19836 to handle high-speed downloads cleanly.</p>
+            </div>
+            <!-- Card 2 -->
+            <div class="step-card" data-step="1">
+              <div class="step-number">02</div>
+              <div class="step-icon">📥</div>
+              <h3 id="i18n-welcomeStep2Title">Native Download Button</h3>
+              <p id="i18n-welcomeStep2Desc">Open any YouTube video or Short. Click the elegant Download button inside the action bar right below the video.</p>
+            </div>
+            <!-- Card 3 -->
+            <div class="step-card" data-step="2">
+              <div class="step-number">03</div>
+              <div class="step-icon">⚙️</div>
+              <h3 id="i18n-welcomeStep3Title">Customized Downloads</h3>
+              <p id="i18n-welcomeStep3Desc">Select or set your preferred default quality and format; export as video or standalone audio, and choose your download destination folder.</p>
+            </div>
+            <!-- Card 4 -->
+            <div class="step-card" data-step="3">
+              <div class="step-number">04</div>
+              <div class="step-icon">✨</div>
+              <h3 id="i18n-welcomeStep4Title">Rich Feature Set</h3>
+              <p id="i18n-welcomeStep4Desc">The Options tab includes the ability to download thumbnails, subtitles, and even multi-language audio tracks.</p>
+            </div>
+            <!-- Card 5 -->
+            <div class="step-card" data-step="4">
+              <div class="step-number">05</div>
+              <div class="step-icon">✂️</div>
+              <h3 id="i18n-welcomeStep5Title">Precision Scissors Mode</h3>
+              <p id="i18n-welcomeStep5Desc">Click the scissors icon in the player controls to mark exact start (Point A) and end (Point B) timestamps for fast trimming.</p>
+            </div>
+          </div>
+
+          <!-- Navigation Controls -->
+          <div class="carousel-controls">
+            <button class="carousel-btn prev-btn" id="prevBtn" title="Previous">
+              <svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor"><path d="M15.41 7.41L14 6l-6 6 6 6 1.41-1.41L10.83 12z"/></svg>
+            </button>
+            <div class="carousel-dots" id="carouselDots">
+              <button class="dot active" data-dot="0"></button>
+              <button class="dot" data-dot="1"></button>
+              <button class="dot" data-dot="2"></button>
+              <button class="dot" data-dot="3"></button>
+              <button class="dot" data-dot="4"></button>
+            </div>
+            <button class="carousel-btn next-btn" id="nextBtn" title="Next">
+              <svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"/></svg>
+            </button>
+          </div>
+        </div>
+
+        <!-- Tab 2: Common Issues (Troubleshoot Grid) -->
+        <div class="tab-pane" id="paneFaq">
+          <div class="faq-grid">
+            <div class="faq-item">
+              <div class="faq-icon">⚠️</div>
+              <div class="faq-text">
+                <h4 id="i18n-faq1Title">Server off or not responding</h4>
+                <p id="i18n-faq1Desc">Solution: Make sure YTDownloader.exe is running on your PC on port 19836. Check your antivirus or firewall if the local server is blocked.</p>
+              </div>
+            </div>
+            <div class="faq-item">
+              <div class="faq-icon">⏳</div>
+              <div class="faq-text">
+                <h4 id="i18n-faq2Title">Download errors or rate limits</h4>
+                <p id="i18n-faq2Desc">Solution: If downloading many videos quickly, YouTube may temporarily throttle requests. Wait a few minutes or retry with a different quality.</p>
+              </div>
+            </div>
+            <div class="faq-item">
+              <div class="faq-icon">🔍</div>
+              <div class="faq-text">
+                <h4 id="i18n-faq3Title">Download button missing on YouTube</h4>
+                <p id="i18n-faq3Desc">Solution: Refresh the YouTube page (F5). Ensure the extension is active and enabled in your browser extensions manager.</p>
+              </div>
+            </div>
+            <div class="faq-item">
+              <div class="faq-icon">⚡</div>
+              <div class="faq-text">
+                <h4 id="i18n-faq4Title">4K/1080p video & audio merging</h4>
+                <p id="i18n-faq4Desc">Solution: The local companion server automatically handles high-res video and separate audio streams, merging them cleanly at maximum speed.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Ko-Fi Section -->
+    <section class="kofi-section">
+      <div class="kofi-card">
+        <div class="kofi-left">
+          <h3 id="i18n-welcomeKoFiTitle">Support Free & Ad-Free Software!</h3>
+          <p id="i18n-welcomeKoFiDesc">YT Downloader is 100% free with no paywalls or ads. If it saves you time and frustration, consider treating BlaxDEV to a coffee on Ko-Fi!</p>
+        </div>
+        <div class="kofi-right">
+          <a href="https://ko-fi.com/blaxdev" target="_blank" class="kofi-btn">
+            <span>☕ Buy me a Ko-Fi!</span>
+          </a>
+        </div>
+      </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="welcome-footer">
+      <p>YT Downloader v1.1.5 — <span id="i18n-footerCreator">created by BlaxDEV</span></p>
+    </footer>
+  </div>
+
+  <script src="../i18n.js"></script>
+  <script src="welcome.js"></script>
+</body>
+</html>

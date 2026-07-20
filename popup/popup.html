@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>YT Downloader - Información</title>
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <div class="popup-container">
+    <div class="popup-header">
+      <div class="popup-logo">
+        <svg viewBox="0 0 24 24" width="28" height="28" fill="#ff4444"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></svg>
+      </div>
+      <div>
+        <h1>YT Downloader</h1>
+        <span class="popup-subtitle" id="i18n-popupSubtitle">Video & Audio Downloader Pro</span>
+      </div>
+    </div>
+
+    <div class="info-card">
+      <div class="info-row">
+        <span class="info-label" id="i18n-popupVersionLabel">Version:</span>
+        <span class="info-val badge-version">v1.1.5</span>
+      </div>
+      <div class="info-row">
+        <span class="info-label" id="i18n-popupUpdatedLabel">Last Updated:</span>
+        <span class="info-val">20/7/2026</span>
+      </div>
+    </div>
+
+    <div class="engines-card">
+      <div class="engines-title" id="i18n-popupEnginesTitle">Compatible with:</div>
+      <div class="engines-list">
+        <div class="engine-item" title="Chromium (Google Chrome, Microsoft Edge, Brave, Opera, Vivaldi)">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="#3ea6ff"><circle cx="12" cy="12" r="4"/><path d="M12 2a10 10 0 0 0-8.66 5h7.32a4 4 0 0 1 3.84 2.8L18.34 3A10 10 0 0 0 12 2zm8.66 5a10 10 0 0 1 .34 5 10 10 0 0 1-8.66 8.66l3.66-6.34A4 4 0 0 0 18.66 12a4 4 0 0 0-1.34-2.8l3.34-2.2zM3.34 7a10 10 0 0 0 .34 13.66l3.66-6.34A4 4 0 0 1 6 12c0-1.1.45-2.1 1.18-2.8L3.34 7z"/></svg>
+          <span>Chromium</span>
+        </div>
+        <div class="engine-item" title="Quantum (Mozilla Firefox, Zen, LibreWolf)">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="#ff8800"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm6.93 6c-.44-.9-1.12-1.68-1.93-2.31-.22-.17-.46-.32-.71-.46a8.03 8.03 0 0 1 2.64 2.77zm-2.07 11.38c-1.42.94-3.1 1.62-4.86 1.62-4.41 0-8-3.59-8-8 0-1.8.59-3.46 1.58-4.81.18 1.45 1.05 2.76 2.37 3.39.81.39 1.76.43 2.62.15.54-.18 1.05-.48 1.48-.91.73-.73 1.15-1.72 1.15-2.75 0-.41-.07-.81-.19-1.19a5.95 5.95 0 0 1 3.42 4.43c.12.72.15 1.46.06 2.19-.18 1.41-.89 2.7-1.95 3.63-.56.49-1.18.88-1.85 1.16-.14.06-.29.11-.44.16.89-.37 1.7-.93 2.37-1.63.09-.09.17-.19.24-.29z"/></svg>
+          <span>Quantum</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="server-status-card" id="statusCard">
+      <div class="status-header">
+        <span class="status-label" id="i18n-popupStatusLabel">Server Status:</span>
+        <div class="status-indicator" id="statusIndicator">
+          <span class="status-dot"></span>
+          <span id="statusText">Checking...</span>
+        </div>
+      </div>
+      <div class="status-sub" id="statusSub">Localhost on port 19836</div>
+      <button class="status-retry-btn" id="retryBtn" style="display:none;">Retry connection</button>
+    </div>
+
+    <div class="popup-footer">
+      <small id="i18n-popupFooter">Advanced settings are located in the ⚙️ icon inside the YouTube video panel.</small>
+    </div>
+  </div>
+
+  <script src="../i18n.js"></script>
+  <script src="popup.js"></script>
+</body>
+</html>

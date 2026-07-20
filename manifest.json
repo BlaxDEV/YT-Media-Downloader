@@ -1,0 +1,49 @@
+{
+  "name": "YT Downloader",
+  "version": "1.1.5",
+  "version_name": "v.1.1.5-release",
+  "description": "Descarga videos y audio de YouTube con yt-dlp",
+  "manifest_version": 3,
+  "browser_specific_settings": {
+    "gecko": {
+      "id": "yt-downloader@blaxvt",
+      "strict_min_version": "142.0",
+      "data_collection_permissions": {
+        "isExempt": true,
+        "required": ["none"],
+        "description": "Esta extensión se comunica únicamente con un servidor local (127.0.0.1:19836) para descargar videos. No recopila ni envía datos a terceros."
+      }
+    }
+  },
+  "permissions": [
+    "storage"
+  ],
+  "host_permissions": [
+    "http://127.0.0.1:19836/*"
+  ],
+  "background": {
+    "service_worker": "background.js",
+    "scripts": ["background.js"]
+  },
+  "content_scripts": [
+    {
+      "matches": ["*://*.youtube.com/*"],
+      "js": ["i18n.js", "content/content.js"],
+      "css": ["content/content.css"],
+      "run_at": "document_idle"
+    }
+  ],
+  "action": {
+    "default_popup": "popup/popup.html",
+    "default_icon": {
+      "16": "icons/icon16.png",
+      "48": "icons/icon48.png",
+      "128": "icons/icon128.png"
+    }
+  },
+  "icons": {
+    "16": "icons/icon16.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  }
+}
