@@ -6,11 +6,11 @@ def create_posix_zip(source_dir, output_zip, target_browser='chrome'):
     print(f"Packing {source_dir} -> {output_zip} ({target_browser.upper()} format)...")
     with zipfile.ZipFile(output_zip, 'w', compression=zipfile.ZIP_DEFLATED) as zf:
         for root, dirs, files in os.walk(source_dir):
-            # Skip hidden folders like .git and the scripts folder containing backend scripts
-            dirs[:] = [d for d in dirs if not d.startswith('.') and d != 'scripts']
+            # Skip hidden folders like .git, and backend/build directories that do not belong inside the extension ZIP
+            dirs[:] = [d for d in dirs if not d.startswith('.') and d not in ('scripts', 'linux-host', 'native-host', 'tools', 'build', 'dist')]
             for file in sorted(files):
-                # Skip hidden files, zips, python scripts, powershell scripts, inno setup scripts, exe binaries, and icon.ico inside the zip
-                if file.startswith('.') or file.endswith('.zip') or file.endswith('.py') or file.endswith('.ps1') or file.endswith('.iss') or file.endswith('.exe') or file == 'icon.ico':
+                # Skip hidden files, zips, python/powershell/bash scripts, inno setup scripts, binaries, systemd units, and icon.ico inside the zip
+                if file.startswith('.') or file.endswith(('.zip', '.py', '.ps1', '.iss', '.exe', '.sh', '.service')) or file == 'icon.ico':
                     continue
                 
                 # Browser-specific manifest filtering
