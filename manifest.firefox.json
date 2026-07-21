@@ -22,7 +22,7 @@
     "http://127.0.0.1:19836/*"
   ],
   "background": {
-    "service_worker": "background.js"
+    "scripts": ["background.js"]
   },
   "content_scripts": [
     {

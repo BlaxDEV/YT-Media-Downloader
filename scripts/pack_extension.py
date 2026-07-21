@@ -2,8 +2,8 @@ import os
 import zipfile
 import json
 
-def create_posix_zip(source_dir, output_zip):
-    print(f"Packing {source_dir} -> {output_zip} (POSIX forward-slash format)...")
+def create_posix_zip(source_dir, output_zip, target_browser='chrome'):
+    print(f"Packing {source_dir} -> {output_zip} ({target_browser.upper()} format)...")
     with zipfile.ZipFile(output_zip, 'w', compression=zipfile.ZIP_DEFLATED) as zf:
         for root, dirs, files in os.walk(source_dir):
             # Skip hidden folders like .git and the scripts folder containing backend scripts
@@ -12,10 +12,21 @@ def create_posix_zip(source_dir, output_zip):
                 # Skip hidden files, zips, python scripts, powershell scripts, inno setup scripts, exe binaries, and icon.ico inside the zip
                 if file.startswith('.') or file.endswith('.zip') or file.endswith('.py') or file.endswith('.ps1') or file.endswith('.iss') or file.endswith('.exe') or file == 'icon.ico':
                     continue
+                
+                # Browser-specific manifest filtering
+                if target_browser == 'chrome' and file == 'manifest.firefox.json':
+                    continue
+                if target_browser == 'firefox' and file == 'manifest.json':
+                    continue
+                
                 file_path = os.path.join(root, file)
                 rel_path = os.path.relpath(file_path, source_dir)
                 # FORCE POSIX forward slashes regardless of Windows OS
                 arc_name = rel_path.replace('\\', '/')
+                
+                # For Firefox build, rename manifest.firefox.json to manifest.json inside the zip
+                if target_browser == 'firefox' and arc_name == 'manifest.firefox.json':
+                    arc_name = 'manifest.json'
                 
                 # Create ZipInfo with UNIX system flag (3) so validators on Linux/Mozilla AMO never see backslashes
                 zinfo = zipfile.ZipInfo.from_file(file_path, arc_name)
@@ -44,7 +55,7 @@ if __name__ == '__main__':
     
     # Dynamically read version from manifest.json inside ext_dir
     manifest_path = os.path.join(ext_dir, 'manifest.json')
-    version = "1.1.6"
+    version = "1.1.7"
     if os.path.exists(manifest_path):
         with open(manifest_path, 'r', encoding='utf-8') as mf:
             data = json.load(mf)
@@ -52,5 +63,12 @@ if __name__ == '__main__':
                 version = data['version']
     
     # Enforce exact naming rule: YT-Media-Downloader-Extension-<version>.zip
-    zip_media_v = os.path.join(out_dir, f'YT-Media-Downloader-Extension-v{version}.zip')
-    create_posix_zip(ext_dir, zip_media_v)
+    # We output dedicated zips for Chrome & Firefox, as well as universal fallback zip
+    zip_chrome = os.path.join(out_dir, f'YT-Media-Downloader-Extension-Chrome-v{version}.zip')
+    zip_firefox = os.path.join(out_dir, f'YT-Media-Downloader-Extension-Firefox-v{version}.zip')
+    zip_universal = os.path.join(out_dir, f'YT-Media-Downloader-Extension-v{version}.zip')
+    
+    create_posix_zip(ext_dir, zip_chrome, target_browser='chrome')
+    if os.path.exists(os.path.join(ext_dir, 'manifest.firefox.json')):
+        create_posix_zip(ext_dir, zip_firefox, target_browser='firefox')
+    create_posix_zip(ext_dir, zip_universal, target_browser='chrome')
