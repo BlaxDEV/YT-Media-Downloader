@@ -51,7 +51,7 @@ To guarantee maximum download speeds, bypass rate limits, and cleanly merge 4K v
 > **v1.1.7 Bugfix & Browser Compatibility Notice:** Manifest V3 strictly enforces `"service_worker"` on Chrome/Edge (rejecting `"scripts"`), while Firefox strictly requires `"scripts"` (warning on `"service_worker"`). In `v1.1.7`, we separate the build targets into dedicated packages for each browser engine (`manifest.json` for Chrome and `manifest.firefox.json` for Firefox) to eliminate all manifest validation warnings and errors (`background.scripts requires manifest version of 2 or lower` on Chrome and `unsupported service_worker` on Firefox).
 
 - **Chrome / Edge / Brave (Unpacked Mode):**
-  1. Download `YT-Media-Downloader-Extension-Chrome-v1.1.7.zip` (or `YT-Media-Downloader-Extension-v1.1.7.zip`) from the [Releases](../../releases) tab and extract it.
+  1. Download `YT-Media-Downloader-Extension-Chrome-v1.1.7.zip` from the [Releases](../../releases) tab and extract it.
   2. Open `chrome://extensions` in your browser.
   3. Enable **Developer mode** in the top right corner.
   4. Click **Load unpacked** and select the extracted folder.
