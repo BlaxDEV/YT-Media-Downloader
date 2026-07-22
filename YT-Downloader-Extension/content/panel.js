@@ -11,7 +11,7 @@ window.YTDL.panel = {
     const panel = document.createElement("div");
     panel.id = "ytdl-popup-panel";
     panel.className = "ytdl-popup";
-    panel.innerHTML = `
+    const htmlStr = `
       <div class="ytdl-popup-inner">
         <div class="ytdl-popup-header" id="ytdl-header-drag" title="Haz clic y arrastra para mover la ventana">
           <div class="ytdl-popup-title" style="display: flex; align-items: center; gap: 6px; white-space: nowrap; flex-shrink: 0;">
@@ -332,6 +332,8 @@ window.YTDL.panel = {
         </div>
       </div>
     `;
+    const doc = new DOMParser().parseFromString(htmlStr, "text/html");
+    panel.replaceChildren(...doc.body.childNodes);
     return panel;
   },
 

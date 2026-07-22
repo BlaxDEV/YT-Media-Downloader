@@ -133,12 +133,12 @@ window.YTDL.preview = {
 
     const overlay = document.createElement("div");
     overlay.id = "ytdl-trim-overlay";
-    overlay.innerHTML = `
-      <div class="ytdl-ov-dim ytdl-ov-dim-left"></div>
-      <div class="ytdl-ov-played"></div>
-      <div class="ytdl-ov-unplayed"></div>
-      <div class="ytdl-ov-dim ytdl-ov-dim-right"></div>
-    `;
+    overlay.textContent = "";
+    ["ytdl-ov-dim ytdl-ov-dim-left", "ytdl-ov-played", "ytdl-ov-unplayed", "ytdl-ov-dim ytdl-ov-dim-right"].forEach(cls => {
+      const div = document.createElement("div");
+      div.className = cls;
+      overlay.appendChild(div);
+    });
     progressBar.insertBefore(overlay, progressBar.firstChild);
   },
 

@@ -20,11 +20,22 @@ window.YTDL.buttons = {
       tooltipEl.className = "ytdl-custom-tooltip";
       tooltipEl.style.cssText = "position:absolute; background:rgba(0,0,0,0.3); border-radius:8px; padding:6px 10px; font-size:13px; font-weight:400; font-family:'YouTube Noto',Roboto,Arial,sans-serif; color:#fff; z-index:9999; pointer-events:none; white-space:nowrap; transition:opacity 0.15s; line-height:1; backdrop-filter:blur(4px);";
       
-      let html = `<span style="display:inline-block; vertical-align:middle; text-shadow: 0 0 2px rgba(0,0,0,0.3);">${text === 'undefined' || !text ? 'Tomar captura' : text}</span>`;
+      tooltipEl.textContent = "";
+      const wrapper = document.createElement("div");
+      wrapper.className = "ytp-tooltip-text-wrapper";
+
+      const txtSpan = document.createElement("span");
+      txtSpan.style.cssText = "display:inline-block; vertical-align:middle; text-shadow: 0 0 2px rgba(0,0,0,0.3);";
+      txtSpan.textContent = (text === 'undefined' || !text) ? 'Tomar captura' : text;
+      wrapper.appendChild(txtSpan);
+
       if (shortcut) {
-        html += `<span style="display:inline-block; vertical-align:middle; margin-left:8px; padding:2px 4px; border:1px solid rgba(255,255,255,0.2); border-radius:4px; font-size:11px; font-weight:500; color:#fff; font-family:Roboto,Arial,sans-serif;">${shortcut}</span>`;
+        const scSpan = document.createElement("span");
+        scSpan.style.cssText = "display:inline-block; vertical-align:middle; margin-left:8px; padding:2px 4px; border:1px solid rgba(255,255,255,0.2); border-radius:4px; font-size:11px; font-weight:500; color:#fff; font-family:Roboto,Arial,sans-serif;";
+        scSpan.textContent = shortcut;
+        wrapper.appendChild(scSpan);
       }
-      tooltipEl.innerHTML = `<div class="ytp-tooltip-text-wrapper">${html}</div>`;
+      tooltipEl.appendChild(wrapper);
       
       player.appendChild(tooltipEl);
       
@@ -102,16 +113,40 @@ window.YTDL.buttons = {
       btn.setAttribute("title", "YT Media Downloader");
 
       if (isShorts) {
-        btn.innerHTML = `<svg viewBox="0 0 24 24" width="24" height="24" fill="currentColor"><circle cx="12" cy="12" r="3.2"/><path d="M9 2L7.17 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2h-3.17L15 2H9zm3 15c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5z"/></svg>`;
+        btn.textContent = "";
+        const svgNS = "http://www.w3.org/2000/svg";
+        const svg = document.createElementNS(svgNS, "svg");
+        svg.setAttribute("viewBox", "0 0 24 24");
+        svg.setAttribute("width", "24");
+        svg.setAttribute("height", "24");
+        svg.setAttribute("fill", "currentColor");
+        const circle = document.createElementNS(svgNS, "circle");
+        circle.setAttribute("cx", "12");
+        circle.setAttribute("cy", "12");
+        circle.setAttribute("r", "3.2");
+        const path = document.createElementNS(svgNS, "path");
+        path.setAttribute("d", "M9 2L7.17 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2h-3.17L15 2H9zm3 15c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5z");
+        svg.appendChild(circle);
+        svg.appendChild(path);
+        btn.appendChild(svg);
       } else {
-        const getLang = () => window.YTDL?.state?.defaultSettings?.defLang || "en";
-        const t = (k) => typeof window.YTDL_I18N_get === "function" ? window.YTDL_I18N_get(getLang(), k) : k;
-        btn.innerHTML = `
-          <svg viewBox="0 0 24 24" width="24" height="24" fill="currentColor">
-            <path d="M17 10.5V7c0-.55-.45-1-1-1H4c-.55 0-1 .45-1 1v10c0 .55.45 1 1 1h12c.55 0 1-.45 1-1v-3.5l4 4v-11l-4 4z"/>
-          </svg>
-          <span style="font-family: 'Roboto', 'Arial', sans-serif; font-size: 14px; font-weight: 500;">${t("ytDownloadBtn")}</span>
-        `;
+        btn.textContent = "";
+        const svgNS = "http://www.w3.org/2000/svg";
+        const svg = document.createElementNS(svgNS, "svg");
+        svg.setAttribute("viewBox", "0 0 24 24");
+        svg.setAttribute("width", "24");
+        svg.setAttribute("height", "24");
+        svg.setAttribute("fill", "currentColor");
+        const path = document.createElementNS(svgNS, "path");
+        path.setAttribute("d", "M17 10.5V7c0-.55-.45-1-1-1H4c-.55 0-1 .45-1 1v10c0 .55.45 1 1 1h12c.55 0 1-.45 1-1v-3.5l4 4v-11l-4 4z");
+        svg.appendChild(path);
+
+        const labelSpan = document.createElement("span");
+        labelSpan.style.cssText = "font-family: 'Roboto', 'Arial', sans-serif; font-size: 14px; font-weight: 500;";
+        labelSpan.textContent = t("ytDownloadBtn");
+
+        btn.appendChild(svg);
+        btn.appendChild(labelSpan);
       }
 
       btn.addEventListener("click", (e) => {
@@ -167,7 +202,17 @@ window.YTDL.buttons = {
       const title = typeof YTDL_I18N_get === "function" ? YTDL_I18N_get("cameraGrabTitle") : "Tomar captura";
       this.bindTooltip(cameraBtn, title);
       cameraBtn.style.cssText = "width:48px; height:100%; opacity:0.9; display:none; align-items:center; justify-content:center; position:relative; border:none; background:none; cursor:pointer; padding:0;";
-      cameraBtn.innerHTML = `<svg viewBox="0 0 24 24" width="24" height="24" fill="#bbb"><path d="M20 4h-3.17L15 2H9L7.17 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 14H4V6h4.05l1.83-2h4.24l1.83 2H20v12zM12 7c-2.76 0-5 2.24-5 5s2.24 5 5 5 5-2.24 5-5-2.24-5-5-5zm0 8c-1.65 0-3-1.35-3-3s1.35-3 3-3 3 1.35 3 3-1.35 3-3 3z"/></svg>`;
+      cameraBtn.textContent = "";
+      const svgNS = "http://www.w3.org/2000/svg";
+      const camSvg = document.createElementNS(svgNS, "svg");
+      camSvg.setAttribute("viewBox", "0 0 24 24");
+      camSvg.setAttribute("width", "24");
+      camSvg.setAttribute("height", "24");
+      camSvg.setAttribute("fill", "#bbb");
+      const camPath = document.createElementNS(svgNS, "path");
+      camPath.setAttribute("d", "M20 4h-3.17L15 2H9L7.17 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 14H4V6h4.05l1.83-2h4.24l1.83 2H20v12zM12 7c-2.76 0-5 2.24-5 5s2.24 5 5 5 5-2.24 5-5-2.24-5-5-5zm0 8c-1.65 0-3-1.35-3-3s1.35-3 3-3 3 1.35 3 3-1.35 3-3 3z");
+      camSvg.appendChild(camPath);
+      cameraBtn.appendChild(camSvg);
 
       cameraBtn.addEventListener("click", async (e) => {
         e.preventDefault();
@@ -242,7 +287,23 @@ window.YTDL.buttons = {
       scissorsBtn.className = "ytp-button";
       this.bindTooltip(scissorsBtn, "Modo Recorte");
       scissorsBtn.style.cssText = "width:48px; height:100%; opacity:0.9; display:none; align-items:center; justify-content:center; position:relative; border:none; background:none; cursor:pointer; padding:0;";
-      scissorsBtn.innerHTML = `<svg viewBox="0 0 24 24" width="24" height="24" fill="#bbb"><path d="M9.64 7.64c.23-.5.36-1.05.36-1.64 0-2.21-1.79-4-4-4S2 3.79 2 6s1.79 4 4 4c.59 0 1.14-.13 1.64-.36L10 12l-2.36 2.36C7.14 14.13 6.59 14 6 14c-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4c0-.59-.13-1.14-.36-1.64L12 14l7 7h3v-1.09l-9.91-9.91zM6 8c-1.1 0-2-.89-2-2s.9-2 2-2 2 .89 2 2-.9 2-2 2zm0 12c-1.1 0-2-.89-2-2s.9-2 2-2 2 .89 2 2-.9 2-2 2zm6-7.5c-.28 0-.5-.22-.5-.5s.22-.5.5-.5.5.22.5.5-.22.5-.5.5zM19 3l-6 6 2 2 7-7V3h-3z"/></svg><span id="ytdl-scissors-label" style="font-size:12px; font-weight:bold; color:#fff; position:absolute; bottom:6px; right:4px; text-shadow: 1px 1px 2px #000;"></span>`;
+      scissorsBtn.textContent = "";
+      const svgNS = "http://www.w3.org/2000/svg";
+      const scisSvg = document.createElementNS(svgNS, "svg");
+      scisSvg.setAttribute("viewBox", "0 0 24 24");
+      scisSvg.setAttribute("width", "24");
+      scisSvg.setAttribute("height", "24");
+      scisSvg.setAttribute("fill", "#bbb");
+      const scisPath = document.createElementNS(svgNS, "path");
+      scisPath.setAttribute("d", "M9.64 7.64c.23-.5.36-1.05.36-1.64 0-2.21-1.79-4-4-4S2 3.79 2 6s1.79 4 4 4c.59 0 1.14-.13 1.64-.36L10 12l-2.36 2.36C7.14 14.13 6.59 14 6 14c-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4c0-.59-.13-1.14-.36-1.64L12 14l7 7h3v-1.09l-9.91-9.91zM6 8c-1.1 0-2-.89-2-2s.9-2 2-2 2 .89 2 2-.9 2-2 2zm0 12c-1.1 0-2-.89-2-2s.9-2 2-2 2 .89 2 2-.9 2-2 2zm6-7.5c-.28 0-.5-.22-.5-.5s.22-.5.5-.5.5.22.5.5-.22.5-.5.5zM19 3l-6 6 2 2 7-7V3h-3z");
+      scisSvg.appendChild(scisPath);
+
+      const scisLbl = document.createElement("span");
+      scisLbl.id = "ytdl-scissors-label";
+      scisLbl.style.cssText = "font-size:12px; font-weight:bold; color:#fff; position:absolute; bottom:6px; right:4px; text-shadow: 1px 1px 2px #000;";
+
+      scissorsBtn.appendChild(scisSvg);
+      scissorsBtn.appendChild(scisLbl);
 
       scissorsBtn.addEventListener("click", (e) => {
         e.preventDefault();

@@ -35,7 +35,7 @@ window.YTDL.sliders = {
     if (!panel) return;
     const container = panel.querySelector(`#ytdl-${prefix}-multi-trims`);
     if (!container) return;
-    container.innerHTML = "";
+    container.textContent = "";
     if (!window.YTDL.state.scissorsTrims || window.YTDL.state.scissorsTrims.length === 0) return;
 
     const dur = window.YTDL.state.videoInfo?.duration || window.YTDL.preview?.getYouTubeVideo()?.duration || 600;
@@ -50,14 +50,42 @@ window.YTDL.sliders = {
       }
       const startStr = trim.startStr || window.YTDL.formatTime((trim.start / 1000) * dur);
       const endStr = trim.endStr || window.YTDL.formatTime((trim.end / 1000) * dur);
-      row.innerHTML = `
-        <span style="color: #ffffff !important; font-weight: 500;">Corte ${idx + 1}: <b style="color: #ffffff !important;">${startStr} - ${endStr}</b><span class="ytdl-trim-progress" id="ytdl-trim-progress-${idx}" style="color: #4caf50; font-size: 11px; margin-left: 8px;"></span></span>
-        <div style="display: flex; align-items: center; gap: 6px;">
-          <button class="ytdl-multi-trim-edit ${isEditing ? 'active' : ''}" title="Editar este corte en tiempo real">${isEditing ? '✅ Editando' : '✏️ Editar'}</button>
-          <button class="ytdl-multi-trim-del" title="Eliminar">✖</button>
-        </div>
-      `;
-      row.querySelector(".ytdl-multi-trim-edit").addEventListener("click", (e) => {
+      row.textContent = "";
+
+      const span = document.createElement("span");
+      span.style.cssText = "color: #ffffff !important; font-weight: 500;";
+      span.textContent = `Corte ${idx + 1}: `;
+
+      const b = document.createElement("b");
+      b.style.cssText = "color: #ffffff !important;";
+      b.textContent = `${startStr} - ${endStr}`;
+      span.appendChild(b);
+
+      const progSpan = document.createElement("span");
+      progSpan.className = "ytdl-trim-progress";
+      progSpan.id = `ytdl-trim-progress-${idx}`;
+      progSpan.style.cssText = "color: #4caf50; font-size: 11px; margin-left: 8px;";
+      span.appendChild(progSpan);
+
+      const divBtn = document.createElement("div");
+      divBtn.style.cssText = "display: flex; align-items: center; gap: 6px;";
+
+      const editBtn = document.createElement("button");
+      editBtn.className = `ytdl-multi-trim-edit ${isEditing ? 'active' : ''}`;
+      editBtn.title = "Editar este corte en tiempo real";
+      editBtn.textContent = isEditing ? '✅ Editando' : '✏️ Editar';
+
+      const delBtn = document.createElement("button");
+      delBtn.className = "ytdl-multi-trim-del";
+      delBtn.title = "Eliminar";
+      delBtn.textContent = "✖";
+
+      divBtn.appendChild(editBtn);
+      divBtn.appendChild(delBtn);
+
+      row.appendChild(span);
+      row.appendChild(divBtn);
+      editBtn.addEventListener("click", (e) => {
         e.preventDefault();
         if (window.YTDL.state.editingTrimIndex === idx) {
           window.YTDL.state.editingTrimIndex = null;
@@ -105,7 +133,7 @@ window.YTDL.sliders = {
         }
         this.renderMultiTrimList(prefix);
       });
-      row.querySelector(".ytdl-multi-trim-del").addEventListener("click", (e) => {
+      delBtn.addEventListener("click", (e) => {
         e.preventDefault();
         if (window.YTDL.state.editingTrimIndex === idx) {
           window.YTDL.state.editingTrimIndex = null;

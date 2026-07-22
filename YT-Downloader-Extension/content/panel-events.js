@@ -131,16 +131,27 @@ window.YTDL.panelEvents = {
             window.YTDL.state[`selectedChapters_${prefix}`].push({ range: chSel.value, text: opt.textContent });
           }
           const renderCh = () => {
-            selCont.innerHTML = "";
+            selCont.textContent = "";
             window.YTDL.state[`selectedChapters_${prefix}`].forEach((item, idx) => {
               const row = document.createElement("div");
-              row.className = "ytdl-multi-trim-row";
-              row.style.borderLeftColor = "#00e676";
-              row.innerHTML = `<span><b>Cap:</b> ${item.text}</span><button class="ytdl-multi-trim-del">✖</button>`;
-              row.querySelector("button").addEventListener("click", () => {
+              row.textContent = "";
+              const span = document.createElement("span");
+              span.style.cssText = "color: #ffffff !important;";
+              const capB = document.createElement("b");
+              capB.textContent = "Cap: ";
+              span.appendChild(capB);
+              span.appendChild(document.createTextNode(item.text));
+
+              const delBtn = document.createElement("button");
+              delBtn.className = "ytdl-multi-trim-del";
+              delBtn.textContent = "✖";
+              delBtn.addEventListener("click", () => {
                 window.YTDL.state[`selectedChapters_${prefix}`].splice(idx, 1);
                 renderCh();
               });
+
+              row.appendChild(span);
+              row.appendChild(delBtn);
               selCont.appendChild(row);
             });
           };

@@ -14,7 +14,11 @@ window.YTDL.history = {
     if (!listEl) return;
     const getLang = () => window.YTDL?.state?.defaultSettings?.defLang || "en";
     const t = (k) => typeof window.YTDL_I18N_get === "function" ? window.YTDL_I18N_get(getLang(), k) : k;
-    listEl.innerHTML = `<div class="ytdl-history-empty">${t("histLoading")}</div>`;
+    listEl.textContent = "";
+    const loadingDiv = document.createElement("div");
+    loadingDiv.className = "ytdl-history-empty";
+    loadingDiv.textContent = t("histLoading");
+    listEl.appendChild(loadingDiv);
 
     const res = await window.YTDL.serverRequest("/history");
     let items = res?.downloads || res?.history || [];
@@ -33,7 +37,11 @@ window.YTDL.history = {
     }
 
     if (!items || items.length === 0) {
-      listEl.innerHTML = `<div class="ytdl-history-empty">${t("histEmpty")}</div>`;
+      listEl.textContent = "";
+      const emptyDiv = document.createElement("div");
+      emptyDiv.className = "ytdl-history-empty";
+      emptyDiv.textContent = t("histEmpty");
+      listEl.appendChild(emptyDiv);
       return;
     }
 
@@ -104,7 +112,9 @@ window.YTDL.history = {
           const missingBtn = document.createElement("button");
           missingBtn.className = "ytdl-hist-missing-btn";
           missingBtn.setAttribute("title", t("histMissingNotice"));
-          missingBtn.innerHTML = `<span>?</span>`;
+          const questionSpan = document.createElement("span");
+          questionSpan.textContent = "?";
+          missingBtn.appendChild(questionSpan);
           missingBtn.addEventListener("click", () => {
             alert(t("histMissingNotice"));
           });

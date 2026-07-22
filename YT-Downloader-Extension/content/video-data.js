@@ -20,8 +20,17 @@ window.YTDL.videoData = {
     
     const loadEl = document.getElementById("ytdl-loading");
     const container = document.getElementById("ytdl-qualities");
-    if (loadEl) { loadEl.style.display = "flex"; loadEl.innerHTML = `<div class="ytdl-spinner"></div><span id="i18n-loading">Cargando calidades...</span>`; }
-    if (container) container.innerHTML = "";
+    if (loadEl) { 
+      loadEl.style.display = "flex"; 
+      loadEl.textContent = "";
+      const spinner = document.createElement("div");
+      spinner.className = "ytdl-spinner";
+      const span = document.createElement("span");
+      span.id = "i18n-loading";
+      span.textContent = "Cargando calidades...";
+      loadEl.append(spinner, span);
+    }
+    if (container) container.textContent = "";
 
     const info = await window.YTDL.serverRequest(`/info?url=${encodeURIComponent(window.YTDL.state.currentVideoUrl)}`);
     if (info.error) {
@@ -69,7 +78,7 @@ window.YTDL.videoData = {
       fmtGroups[resKey][extKey].push(fmt);
     });
 
-    if (container) container.innerHTML = "";
+    if (container) container.textContent = "";
     targetRes.forEach(res => {
       const exts = fmtGroups[res];
       if (!exts) return;
@@ -117,13 +126,16 @@ window.YTDL.videoData = {
       const optSub = panel.querySelector("#ytdl-opt-sub");
       const selSub = panel.querySelector("#ytdl-sel-sub");
       if (optSub && selSub) {
-        selSub.innerHTML = "";
+        selSub.textContent = "";
         const allSubs = [
           ...(window.YTDL.state.formatsData?.subtitles || []),
           ...(window.YTDL.state.formatsData?.automatic_captions || [])
         ];
         if (allSubs.length === 0) {
-          selSub.innerHTML = `<option value="">No hay subtítulos</option>`;
+          const noSubOpt = document.createElement("option");
+          noSubOpt.value = "";
+          noSubOpt.textContent = "No hay subtítulos";
+          selSub.appendChild(noSubOpt);
         } else {
           allSubs.forEach(s => {
             const opt = document.createElement("option");
@@ -140,9 +152,12 @@ window.YTDL.videoData = {
         const optAudio = panel.querySelector(`#ytdl-opt-${prefix === "v" ? "v" : "a"}-audio`);
         const selAudio = panel.querySelector(`#ytdl-sel-${prefix === "v" ? "v" : "a"}-audio`);
         if (optAudio && selAudio) {
-          selAudio.innerHTML = "";
+          selAudio.textContent = "";
           if (audioTracks.length === 0) {
-            selAudio.innerHTML = `<option value="">Pista estándar únicamente</option>`;
+            const noAudioOpt = document.createElement("option");
+            noAudioOpt.value = "";
+            noAudioOpt.textContent = "Pista estándar únicamente";
+            selAudio.appendChild(noAudioOpt);
           } else {
             audioTracks.forEach(at => {
               const opt = document.createElement("option");
@@ -164,7 +179,17 @@ window.YTDL.videoData = {
         if (chBox && chSel) {
           if (chapters.length > 0) {
             chBox.style.display = "block";
-            chSel.innerHTML = chapters.map((c, i) => `<option value="${window.YTDL.formatTime(c.start_time)}-${window.YTDL.formatTime(c.end_time)}">${i+1}. ${c.title} (${window.YTDL.formatTime(c.start_time)} - ${window.YTDL.formatTime(c.end_time)})</option>`).join("") + `<option value="all">📚 Descargar todos los capítulos</option>`;
+            chSel.textContent = "";
+            chapters.forEach((c, i) => {
+              const opt = document.createElement("option");
+              opt.value = `${window.YTDL.formatTime(c.start_time)}-${window.YTDL.formatTime(c.end_time)}`;
+              opt.textContent = `${i+1}. ${c.title} (${window.YTDL.formatTime(c.start_time)} - ${window.YTDL.formatTime(c.end_time)})`;
+              chSel.appendChild(opt);
+            });
+            const allOpt = document.createElement("option");
+            allOpt.value = "all";
+            allOpt.textContent = "📚 Descargar todos los capítulos";
+            chSel.appendChild(allOpt);
             if (chCb) chCb.onchange = () => { if (chRow) chRow.style.display = chCb.checked ? "flex" : "none"; };
           } else {
             chBox.style.display = "none";
