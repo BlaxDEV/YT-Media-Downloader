@@ -1,11 +1,11 @@
 [Setup]
 AppId=YT Downloader
 AppName=YT Media Downloader Companion
-AppVersion=1.2.0
+AppVersion=1.2.1
 AppPublisher=Gabriel
 DefaultDirName={localappdata}\YT-Downloader
 DefaultGroupName=YT Media Downloader
-OutputBaseFilename=Setup_YT_Downloader-Win-v1.2.0
+OutputBaseFilename=Setup_YT_Downloader-Win-v1.2.1
 OutputDir=..\
 Compression=lzma2
 SolidCompression=yes

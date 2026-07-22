@@ -327,7 +327,7 @@ window.YTDL.panel = {
               Guardar
             </button>
             <div class="ytdl-cfg-msg" id="ytdl-cfg-msg"></div>
-            <div class="ytdl-version" style="margin-top:16px;font-size:11px;color:#666;text-align:center;">v1.2.0</div>
+            <div class="ytdl-version" style="margin-top:16px;font-size:11px;color:#666;text-align:center;">v1.2.1</div>
           </div>
         </div>
       </div>
