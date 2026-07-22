@@ -55,7 +55,7 @@ if __name__ == '__main__':
     
     # Dynamically read version from manifest.json inside ext_dir
     manifest_path = os.path.join(ext_dir, 'manifest.json')
-    version = "1.2.0"
+    version = "1.2.2"
     if os.path.exists(manifest_path):
         with open(manifest_path, 'r', encoding='utf-8') as mf:
             data = json.load(mf)

@@ -4,7 +4,7 @@
 # ==============================================================================
 set -e
 
-VERSION="1.2.0"
+VERSION="1.2.2"
 BASE_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 DIST_DIR="${BASE_DIR}/dist"
 BUILD_DIR="${BASE_DIR}/build"

@@ -20,7 +20,7 @@ from socketserver import ThreadingMixIn
 
 HOST = "127.0.0.1"
 PORT = 19836
-VERSION = "1.2.0"
+VERSION = "1.2.2"
 
 # Determine base directory and tools path
 if getattr(sys, 'frozen', False):

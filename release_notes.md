@@ -1,10 +1,10 @@
-# YT Media Downloader v1.2.1
+# YT Media Downloader v1.2.2
 
-## 🚀 Bugfix & Release Notes (v1.2.1)
+## 🚀 Bugfix & Release Notes (v1.2.2)
 
-### 🐛 Hotfix & Compatibility Updates
-- **YouTube Premium Action Bar Fix**: Resolved button injection failure caused by ReferenceError in `injectDownloadButton()` and added support for YouTube Premium metadata layouts (`ytd-watch-metadata #top-level-buttons-computed`).
-- **Manifest V3 Specification**: Updated version tags to `v1.2.1` across Chrome (`manifest.json`) and Firefox (`manifest.firefox.json`) builds for immediate Web Store & AMO submission.
+### 🐛 Hotfix & Firefox / Zen Compatibility Updates
+- **Firefox & Zen Browser Icon Fix (`web_accessible_resources`)**: Added missing `web_accessible_resources` declaration in `manifest.firefox.json` allowing content scripts to render extension icons (`audio.png`, `no-audio.png`, `delete.png`) without browser CORS / CSP security blocks.
+- **Global Version Synchronization**: Synchronized version number `v1.2.2` across `manifest.json`, `manifest.firefox.json`, Extension Popup (`popup.html`), Welcome Page (`welcome.html`), YouTube injected Panel (`panel.js`), Python helper scripts, Windows Installer, and Linux build manifests.
 
 ---
 
