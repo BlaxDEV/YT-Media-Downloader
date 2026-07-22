@@ -8,7 +8,7 @@ VERSION="1.2.0"
 BASE_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 DIST_DIR="${BASE_DIR}/dist"
 BUILD_DIR="${BASE_DIR}/build"
-RELEASE_DIR="${BASE_DIR}/.."
+RELEASE_DIR="${BASE_DIR}/../release-linux"
 
 echo "===================================================================="
 echo " Building YT Media Downloader Companion Server (Linux v${VERSION})"

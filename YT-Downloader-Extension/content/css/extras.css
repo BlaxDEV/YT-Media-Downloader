@@ -1,0 +1,270 @@
+/* ═══════════════════════════════════════════════════════════════
+   Extras, History & Success Button - YT Media Downloader
+   ═══════════════════════════════════════════════════════════════ */
+
+/* ─── Extras & Checkboxes ────────────────────────────────────── */
+.ytdl-opt-extras {
+  margin-bottom: 12px;
+}
+
+.ytdl-checkbox-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: #ddd;
+  cursor: pointer;
+  margin-bottom: 6px;
+  user-select: none;
+}
+.ytdl-checkbox-label:hover {
+  color: #fff;
+}
+.ytdl-checkbox-label input[type="checkbox"] {
+  accent-color: #ff4444;
+  cursor: pointer;
+  width: 14px;
+  height: 14px;
+}
+
+.ytdl-def-checkboxes {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 6px;
+}
+
+/* ─── Open Folder Button ─────────────────────────────────────── */
+.ytdl-open-folder-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  width: 100%;
+  padding: 8px 14px;
+  margin-top: 8px;
+  border-radius: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  background: #2a2a2a;
+  color: #fff;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.ytdl-open-folder-btn:hover {
+  background: #3a3a3a;
+  border-color: rgba(255, 255, 255, 0.3);
+}
+
+/* ─── Success Button ─────────────────────────────────────────── */
+.ytdl-btn-success {
+  background: #2ba640 !important;
+  color: #fff !important;
+  box-shadow: 0 0 12px rgba(43, 166, 64, 0.5) !important;
+}
+
+/* ─── History Tab ────────────────────────────────────────────── */
+#ytdl-tab-history {
+  max-height: 380px;
+  overflow-y: auto;
+}
+
+.ytdl-history-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 14px;
+  font-weight: 600;
+  color: #fff;
+  margin-bottom: 12px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+#ytdl-hist-refresh {
+  background: none;
+  border: none;
+  color: #aaa;
+  font-size: 16px;
+  cursor: pointer;
+  padding: 2px 6px;
+  border-radius: 4px;
+  transition: all 0.2s;
+}
+#ytdl-hist-refresh:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: #fff;
+}
+
+.ytdl-history-empty {
+  text-align: center;
+  color: #888;
+  font-size: 13px;
+  padding: 24px 0;
+}
+
+.ytdl-hist-item {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 6px;
+  padding: 10px;
+  margin-bottom: 8px;
+}
+
+.ytdl-hist-info {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 13px;
+  margin-bottom: 6px;
+}
+
+.ytdl-hist-title {
+  color: #fff;
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 190px;
+}
+
+.ytdl-hist-status {
+  font-size: 11px;
+  font-weight: 600;
+  padding: 2px 6px;
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.1);
+  color: #ccc;
+}
+.ytdl-hist-status.complete {
+  background: rgba(43, 166, 64, 0.2);
+  color: #4cd162;
+}
+.ytdl-hist-status.processing {
+  background: rgba(255, 184, 0, 0.2);
+  color: #ffb800;
+}
+.ytdl-hist-status.error {
+  background: rgba(244, 67, 54, 0.2);
+  color: #f44336;
+}
+
+.ytdl-hist-bar {
+  height: 4px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 2px;
+  overflow: hidden;
+  margin-top: 4px;
+}
+
+.ytdl-hist-bar-fill {
+  height: 100%;
+  background: #ff4444;
+  border-radius: 2px;
+  transition: width 0.3s ease;
+}
+
+.ytdl-hist-open-btn {
+  margin-top: 8px;
+  width: 100%;
+  padding: 6px;
+  font-size: 12px;
+  background: #2a2a2a;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 4px;
+  color: #ddd;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.ytdl-hist-open-btn:hover {
+  background: #3a3a3a;
+  color: #fff;
+  border-color: rgba(255, 255, 255, 0.25);
+}
+
+/* ─── History Pagination & Actions ───────────────────────────── */
+.ytdl-hist-action-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 8px;
+}
+
+.ytdl-hist-missing-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  background: #d32f2f;
+  border: 1px solid #ff5252;
+  border-radius: 50%;
+  color: #fff;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: transform 0.2s, background 0.2s;
+  box-shadow: 0 2px 6px rgba(211, 47, 47, 0.4);
+}
+.ytdl-hist-missing-btn:hover {
+  background: #f44336;
+  transform: scale(1.1);
+}
+
+.ytdl-hist-pagination {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 14px;
+  padding-top: 10px;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  font-size: 12px;
+  color: #bbb;
+}
+.ytdl-hist-page-btn {
+  background: #2a2a2a;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 4px;
+  color: #fff;
+  padding: 5px 12px;
+  font-size: 11px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.ytdl-hist-page-btn:hover:not(:disabled) {
+  background: #3a3a3a;
+  border-color: rgba(255, 255, 255, 0.35);
+}
+.ytdl-hist-page-btn:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+/* ─── Chapters & Additional Options ──────────────────────────── */
+.ytdl-chapters-box {
+  margin-top: 12px;
+}
+.ytdl-chapters-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.ytdl-chapters-select-row {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+.ytdl-chapters-select-row select {
+  flex: 1;
+}
+.ytdl-opt-section-title {
+  font-size: 12px;
+  font-weight: 700;
+  color: #3ea6ff;
+  margin-top: 12px;
+  margin-bottom: 6px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}

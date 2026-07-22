@@ -1,0 +1,74 @@
+/* ═══════════════════════════════════════════════════════════════
+   Download Button & Progress Styles - YT Media Downloader
+   ═══════════════════════════════════════════════════════════════ */
+
+.ytdl-dl-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  padding: 10px;
+  background: #ff4444;
+  border: none;
+  border-radius: 20px;
+  color: #fff;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s;
+  font-family: inherit;
+}
+
+.ytdl-dl-btn:hover:not(:disabled) {
+  background: #ff5555;
+  box-shadow: 0 2px 8px rgba(255, 68, 68, 0.3);
+}
+
+.ytdl-dl-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+/* ─── Progress ───────────────────────────────────────────────── */
+.ytdl-progress {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.ytdl-progress-track {
+  flex: 1;
+  height: 4px;
+  background: #333;
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.ytdl-progress-bar {
+  height: 100%;
+  background: linear-gradient(90deg, #ff4444, #ff8800);
+  border-radius: 2px;
+  transition: width 0.3s;
+  width: 0%;
+}
+
+.ytdl-progress-pct {
+  font-size: 12px;
+  color: #888;
+  min-width: 50px;
+  text-align: right;
+}
+
+/* ─── Config Message ─────────────────────────────────────────── */
+.ytdl-cfg-msg {
+  font-size: 12px;
+  min-height: 18px;
+  margin-top: 8px;
+  text-align: center;
+}
+
+.ytdl-cfg-msg.ok {
+  color: #4caf50;
+}

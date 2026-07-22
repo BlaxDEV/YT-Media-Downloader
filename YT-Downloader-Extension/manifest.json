@@ -1,7 +1,7 @@
 {
   "name": "YT Media Downloader",
-  "version": "1.1.7",
-  "version_name": "v.1.1.7-release",
+  "version": "1.2.0",
+  "version_name": "v.1.2.0-release",
   "description": "Download YouTube videos and audio locally in high definition without ads",
   "manifest_version": 3,
   "browser_specific_settings": {
@@ -22,13 +22,36 @@
     "http://127.0.0.1:19836/*"
   ],
   "background": {
-    "scripts": ["background.js"]
+    "service_worker": "background.js"
   },
   "content_scripts": [
     {
       "matches": ["*://*.youtube.com/*"],
-      "js": ["i18n.js", "content/content.js"],
-      "css": ["content/content.css"],
+      "js": [
+        "i18n.js",
+        "content/core.js",
+        "content/icons.js",
+        "content/buttons.js",
+        "content/panel.js",
+        "content/panel-i18n.js",
+        "content/sliders.js",
+        "content/preview.js",
+        "content/history.js",
+        "content/video-data.js",
+        "content/download.js",
+        "content/panel-events.js",
+        "content/observer.js",
+        "content/content.js"
+      ],
+      "css": [
+        "content/css/action-btn.css",
+        "content/css/base.css",
+        "content/css/controls.css",
+        "content/css/trim.css",
+        "content/css/download.css",
+        "content/css/preview.css",
+        "content/css/extras.css"
+      ],
       "run_at": "document_idle"
     }
   ],
@@ -44,5 +67,11 @@
     "16": "icons/icon16.png",
     "48": "icons/icon48.png",
     "128": "icons/icon128.png"
-  }
+  },
+  "web_accessible_resources": [
+    {
+      "resources": ["icons/*"],
+      "matches": ["*://*.youtube.com/*"]
+    }
+  ]
 }

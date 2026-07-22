@@ -1,0 +1,55 @@
+/* ═══════════════════════════════════════════════════════════════
+   Action Button Styles - YT Media Downloader
+   ═══════════════════════════════════════════════════════════════ */
+
+.ytdl-fallback-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0 16px;
+  height: 38px;
+  min-height: 38px;
+  border-radius: 19px;
+  background: rgba(0, 0, 0, 0.05);
+  color: var(--yt-spec-text-primary, #0f0f0f);
+  cursor: pointer;
+  font-family: "Roboto", "Arial", sans-serif;
+  font-size: 14px;
+  font-weight: 500;
+  white-space: nowrap;
+  transition: background 0.2s;
+  margin-left: 8px;
+}
+
+.ytdl-fallback-btn:hover {
+  background: rgba(0, 0, 0, 0.1);
+}
+
+[dir="dark"] .ytdl-fallback-btn,
+html[dark] .ytdl-fallback-btn {
+  background: rgba(255, 255, 255, 0.1);
+  color: #f1f1f1;
+}
+
+[dir="dark"] .ytdl-fallback-btn:hover,
+html[dark] .ytdl-fallback-btn:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.ytdl-shorts-btn {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.1);
+  color: #fff;
+  cursor: pointer;
+  margin-bottom: 16px;
+  transition: background 0.2s;
+}
+
+.ytdl-shorts-btn:hover {
+  background: rgba(255, 255, 255, 0.2);
+}

@@ -1,0 +1,217 @@
+/* ═══════════════════════════════════════════════════════════════
+   Controls Styles - Loading, Errors, Buttons, Chips, Inputs
+   YT Media Downloader
+   ═══════════════════════════════════════════════════════════════ */
+
+/* ─── Loading ────────────────────────────────────────────────── */
+.ytdl-loading {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 24px 0;
+  color: #aaa;
+  font-size: 13px;
+}
+
+.ytdl-spinner {
+  width: 18px;
+  height: 18px;
+  border: 2px solid #444;
+  border-top-color: #ff4444;
+  border-radius: 50%;
+  animation: ytdl-spin 0.7s linear infinite;
+}
+
+@keyframes ytdl-spin {
+  to { transform: rotate(360deg); }
+}
+
+/* ─── Server Error ───────────────────────────────────────────── */
+.ytdl-server-err {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 12px;
+  background: rgba(244, 67, 54, 0.1);
+  border: 1px solid rgba(244, 67, 54, 0.2);
+  border-radius: 8px;
+  margin-bottom: 8px;
+  font-size: 13px;
+  color: #f44336;
+}
+
+.ytdl-server-err span {
+  flex: 1;
+}
+
+.ytdl-server-err button {
+  padding: 4px 10px;
+  background: rgba(244, 67, 54, 0.15);
+  border: 1px solid rgba(244, 67, 54, 0.3);
+  border-radius: 4px;
+  color: #f44336;
+  font-size: 12px;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+/* ─── Quality Buttons Grid ───────────────────────────────────── */
+.ytdl-qualities-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 6px;
+  margin-bottom: 12px;
+}
+
+.ytdl-q-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 10px 4px;
+  background: #2a2a2a;
+  border: 1px solid #3a3a3a;
+  border-radius: 8px;
+  color: #ccc;
+  cursor: pointer;
+  transition: all 0.15s;
+  font-family: inherit;
+}
+
+.ytdl-q-btn:hover {
+  border-color: #ff4444;
+  background: rgba(255, 68, 68, 0.08);
+}
+
+.ytdl-q-btn.active {
+  border-color: #ff4444;
+  background: rgba(255, 68, 68, 0.15);
+  color: #fff;
+  box-shadow: 0 0 0 1px rgba(255, 68, 68, 0.3);
+}
+
+.ytdl-q-res {
+  font-size: 15px;
+  font-weight: 600;
+  line-height: 1.2;
+}
+
+.ytdl-q-info {
+  font-size: 11px;
+  color: #888;
+  margin-top: 2px;
+}
+
+.ytdl-q-btn.active .ytdl-q-info {
+  color: #bbb;
+}
+
+.ytdl-no-fmt {
+  color: #888;
+  font-size: 13px;
+  padding: 16px 0;
+  text-align: center;
+}
+
+/* ─── Options Row ────────────────────────────────────────────── */
+.ytdl-opt-row {
+  margin-bottom: 12px;
+}
+
+.ytdl-opt-row label {
+  display: block;
+  font-size: 12px;
+  color: #aaa;
+  margin-bottom: 6px;
+  font-weight: 500;
+}
+
+.ytdl-opt-row small {
+  display: block;
+  font-size: 11px;
+  color: #666;
+  margin-top: 4px;
+}
+
+/* ─── Chips ──────────────────────────────────────────────────── */
+.ytdl-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.ytdl-chip {
+  padding: 6px 12px;
+  background: #2a2a2a;
+  border: 1px solid #3a3a3a;
+  border-radius: 16px;
+  color: #ccc;
+  font-size: 12px;
+  cursor: pointer;
+  transition: all 0.15s;
+  font-family: inherit;
+}
+
+.ytdl-chip:hover {
+  border-color: #ff4444;
+  color: #fff;
+}
+
+.ytdl-chip.active {
+  border-color: #ff4444;
+  background: rgba(255, 68, 68, 0.15);
+  color: #fff;
+}
+
+/* ─── Text Input ─────────────────────────────────────────────── */
+.ytdl-text-input {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 8px 12px;
+  background: #2a2a2a;
+  border: 1px solid #3a3a3a;
+  border-radius: 8px;
+  color: #f1f1f1;
+  font-size: 13px;
+  font-family: monospace;
+  outline: none;
+  transition: border-color 0.15s;
+}
+
+.ytdl-text-input:focus {
+  border-color: #ff4444;
+}
+
+.ytdl-text-input::placeholder {
+  color: #666;
+}
+
+/* ─── Select Input ────────────────────────────────────────── */
+.ytdl-select-input {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 8px 12px;
+  background: #2a2a2a;
+  border: 1px solid #3a3a3a;
+  border-radius: 8px;
+  color: #f1f1f1;
+  font-size: 13px;
+  font-family: "Roboto", "Arial", sans-serif;
+  outline: none;
+  transition: border-color 0.2s;
+  cursor: pointer;
+  -webkit-appearance: none;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='%23aaa'%3E%3Cpath d='M7 10l5 5 5-5z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 10px center;
+  padding-right: 30px;
+}
+
+.ytdl-select-input:focus {
+  border-color: #ff4444;
+}
+
+.ytdl-select-input option {
+  background: #1e1e1e;
+  color: #f1f1f1;
+}

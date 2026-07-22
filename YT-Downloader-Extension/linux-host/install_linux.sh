@@ -10,39 +10,8 @@ SYSTEMD_USER_DIR="${HOME}/.config/systemd/user"
 SERVICE_NAME="yt-downloader.service"
 
 echo "===================================================================="
-echo " YT Media Downloader Companion Server Setup (Linux)"
+echo " Installing YT Media Downloader Companion Server (Linux)"
 echo "===================================================================="
-
-if [ -f "${INSTALL_BIN_DIR}/YTDownloader" ] || [ -f "${SYSTEMD_USER_DIR}/${SERVICE_NAME}" ]; then
-    echo " ℹ️  The server is already installed on your system."
-    echo " 1) Repair / Update Server (Reinstall)"
-    echo " 2) Verify & Start Server (Ignore installation)"
-    echo " 3) Uninstall completely"
-    echo ""
-    read -p " Select an option [1-3]: " opt
-    if [ "$opt" == "3" ]; then
-        echo "🗑️ Uninstalling..."
-        systemctl --user stop "${SERVICE_NAME}" 2>/dev/null || true
-        systemctl --user disable "${SERVICE_NAME}" 2>/dev/null || true
-        rm -f "${INSTALL_BIN_DIR}/YTDownloader"
-        rm -f "${SYSTEMD_USER_DIR}/${SERVICE_NAME}"
-        systemctl --user daemon-reload
-        echo "✅ Uninstalled successfully."
-        exit 0
-    elif [ "$opt" == "2" ]; then
-        echo "⚙️ Verifying and starting server..."
-        systemctl --user start "${SERVICE_NAME}" 2>/dev/null || true
-        systemctl --user status "${SERVICE_NAME}" --no-pager || true
-        echo "✅ Verification complete."
-        exit 0
-    elif [ "$opt" == "1" ]; then
-        echo "🔄 Proceeding with repair/reinstallation..."
-    else
-        echo "❌ Invalid option. Exiting."
-        exit 1
-    fi
-    echo "===================================================================="
-fi
 
 # Ensure ~/.local/bin and systemd directory exist
 mkdir -p "${INSTALL_BIN_DIR}" "${SYSTEMD_USER_DIR}"

@@ -1,0 +1,15 @@
+# Python / PyInstaller
+__pycache__/
+*.pyc
+build/
+dist/
+*.spec
+
+# Build outputs & tools
+native-host/
+native-host-test/
+tools/
+*.exe
+*.zip
+*.tar.gz
+tmp_staging/

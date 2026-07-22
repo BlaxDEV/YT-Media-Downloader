@@ -34,6 +34,10 @@ document.addEventListener("DOMContentLoaded", () => {
     el("i18n-welcomeStep4Desc", "welcomeStep4Desc");
     el("i18n-welcomeStep5Title", "welcomeStep5Title");
     el("i18n-welcomeStep5Desc", "welcomeStep5Desc");
+    el("i18n-welcomeStep6Title", "welcomeStep6Title");
+    el("i18n-welcomeStep6Desc", "welcomeStep6Desc");
+    el("i18n-welcomeStep7Title", "welcomeStep7Title");
+    el("i18n-welcomeStep7Desc", "welcomeStep7Desc");
 
     // FAQ items
     el("i18n-faq1Title", "faq1Title");

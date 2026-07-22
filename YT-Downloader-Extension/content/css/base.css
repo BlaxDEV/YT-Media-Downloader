@@ -1,0 +1,156 @@
+/* ═══════════════════════════════════════════════════════════════
+   Base Panel Styles - YT Media Downloader
+   ═══════════════════════════════════════════════════════════════ */
+
+/* ─── Popup Container ──────────────────────────────────────── */
+.ytdl-popup {
+  position: fixed;
+  z-index: 99999;
+  opacity: 0;
+  transform: translateY(8px) scale(0.96);
+  transition: opacity 0.15s ease, transform 0.15s ease;
+  pointer-events: none;
+}
+
+.ytdl-popup-show {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+  pointer-events: auto;
+}
+
+.ytdl-popup-inner {
+  width: 370px;
+  max-height: 600px;
+  background: #212121;
+  border-radius: 12px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  font-family: "Roboto", "Arial", sans-serif;
+}
+
+/* ─── Header ─────────────────────────────────────────────────── */
+.ytdl-popup-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 14px;
+  border-bottom: 1px solid #333;
+  cursor: grab;
+  user-select: none;
+  gap: 8px;
+}
+
+.ytdl-popup-header:active {
+  cursor: grabbing;
+}
+
+.ytdl-dragging {
+  user-select: none;
+}
+
+.ytdl-dragging .ytdl-popup-inner {
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.6);
+}
+
+.ytdl-popup-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 15px;
+  font-weight: 500;
+  color: #f1f1f1;
+}
+
+.ytdl-popup-subtitle {
+  font-size: 10px;
+  color: #666;
+  margin-top: 1px;
+  white-space: nowrap;
+}
+
+.ytdl-kofi-subtitle {
+  display: block;
+  font-size: 11px;
+  font-weight: 600;
+  color: #ff5e5e;
+  text-decoration: none;
+  margin-top: 2px;
+  transition: color 0.2s;
+}
+
+.ytdl-kofi-subtitle:hover {
+  color: #ff8888;
+  text-decoration: underline;
+}
+
+.ytdl-popup-close {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  background: none;
+  border: none;
+  color: #aaa;
+  border-radius: 50%;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.ytdl-popup-close:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: #fff;
+}
+
+/* ─── Tabs ───────────────────────────────────────────────────── */
+.ytdl-popup-tabs {
+  display: flex;
+  padding: 4px 8px;
+  gap: 2px;
+  border-bottom: 1px solid #333;
+}
+
+.ytdl-popup-tab {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  padding: 8px 4px;
+  background: none;
+  border: none;
+  color: #aaa;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  border-radius: 8px;
+  transition: all 0.15s;
+  font-family: inherit;
+}
+
+.ytdl-popup-tab:hover {
+  color: #fff;
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.ytdl-popup-tab.active {
+  color: #fff;
+  background: rgba(255, 68, 68, 0.15);
+}
+
+/* ─── Body ───────────────────────────────────────────────────── */
+.ytdl-popup-body {
+  overflow-y: auto;
+  max-height: 600px;
+}
+
+.ytdl-popup-content {
+  display: none;
+  padding: 12px 16px 16px;
+}
+
+.ytdl-popup-content.active {
+  display: block;
+}

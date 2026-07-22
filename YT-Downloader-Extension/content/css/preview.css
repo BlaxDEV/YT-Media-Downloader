@@ -1,0 +1,221 @@
+/* ═══════════════════════════════════════════════════════════════
+   Preview Toggle & Scissors Animation - YT Media Downloader
+   ═══════════════════════════════════════════════════════════════ */
+
+/* ─── Preview Trim Toggle ───────────────────────────────────── */
+.ytdl-preview-toggle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 8px;
+  cursor: pointer;
+  user-select: none;
+}
+
+.ytdl-preview-toggle input {
+  display: none;
+}
+
+.ytdl-toggle-track {
+  display: inline-block !important;
+  position: relative !important;
+  width: 36px !important;
+  height: 20px !important;
+  min-width: 36px !important;
+  min-height: 20px !important;
+  background: #444 !important;
+  border: 1px solid #555 !important;
+  border-radius: 10px !important;
+  flex-shrink: 0 !important;
+  transition: all 0.2s !important;
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.5) !important;
+  box-sizing: border-box !important;
+}
+
+.ytdl-toggle-track::after {
+  content: "" !important;
+  position: absolute !important;
+  top: 2px !important;
+  left: 2px !important;
+  width: 14px !important;
+  height: 14px !important;
+  background: #ccc !important;
+  border-radius: 50% !important;
+  transition: all 0.2s !important;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.6) !important;
+}
+
+.ytdl-audio-toggle {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  cursor: pointer !important;
+  user-select: none !important;
+  margin-right: 10px !important;
+}
+
+.ytdl-audio-toggle input {
+  display: none !important;
+}
+
+.ytdl-preview-toggle input:checked + .ytdl-toggle-track,
+.ytdl-audio-toggle input:checked + .ytdl-toggle-track {
+  background: #ff4444 !important;
+  border-color: #ff6666 !important;
+}
+
+.ytdl-preview-toggle input:checked + .ytdl-toggle-track::after,
+.ytdl-audio-toggle input:checked + .ytdl-toggle-track::after {
+  transform: translateX(16px) !important;
+  background: #fff !important;
+}
+
+.ytdl-preview-label {
+  font-size: 12px;
+  color: #aaa;
+  font-weight: 500;
+}
+
+.ytdl-preview-toggle input:checked ~ .ytdl-preview-label {
+  color: #3ea6ff;
+}
+
+/* ─── Scissors Entrance & Glow Animation ─────────────────────── */
+@keyframes ytdl-scissors-appear {
+  0% {
+    opacity: 0;
+    transform: scale(0.2) rotate(-45deg);
+    filter: drop-shadow(0 0 0px transparent);
+  }
+  60% {
+    opacity: 1;
+    transform: scale(1.25) rotate(10deg);
+    filter: drop-shadow(0 0 14px #3ea6ff) drop-shadow(0 0 24px #ff8800);
+  }
+  80% {
+    transform: scale(0.95) rotate(-5deg);
+    filter: drop-shadow(0 0 10px #3ea6ff);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1) rotate(0deg);
+    filter: drop-shadow(0 0 6px #3ea6ff);
+  }
+}
+
+@keyframes ytdl-scissors-glow-pulse {
+  0%, 100% {
+    filter: drop-shadow(0 0 4px #3ea6ff) drop-shadow(0 0 8px rgba(62, 166, 255, 0.5));
+  }
+  50% {
+    filter: drop-shadow(0 0 12px #3ea6ff) drop-shadow(0 0 22px rgba(62, 166, 255, 0.9));
+  }
+}
+
+.ytdl-scissors-show {
+  animation: ytdl-scissors-appear 0.6s cubic-bezier(0.18, 0.89, 0.32, 1.28) forwards,
+             ytdl-scissors-glow-pulse 1.8s ease-in-out 0.6s 3;
+}
+
+/* ─── Preview Badge (floating indicator) ─────────────────────── */
+#ytdl-preview-badge {
+  position: fixed;
+  bottom: 16px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #1a5fa8;
+  color: #fff;
+  font-size: 12px;
+  font-weight: 500;
+  padding: 6px 16px;
+  border-radius: 20px;
+  z-index: 999999;
+  box-shadow: 0 4px 12px rgba(26, 95, 168, 0.5);
+  animation: ytdl-badge-pulse 2s ease-in-out infinite;
+  pointer-events: none;
+}
+
+@keyframes ytdl-badge-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.7; }
+}
+
+/* ─── Trim Overlay on YouTube Progress Bar ───────────────────── */
+#ytdl-trim-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+  pointer-events: none;
+  z-index: 9999 !important;
+  overflow: hidden;
+  border-radius: inherit;
+}
+
+.ytdl-ov-dim {
+  position: absolute;
+  top: 0;
+  height: 100%;
+  background: rgba(80, 80, 80, 0.6);
+}
+
+.ytdl-ov-dim-left {
+  left: 0%;
+  width: 0%;
+}
+
+.ytdl-ov-dim-right {
+  left: 0%;
+  width: 0%;
+}
+
+.ytdl-ov-played {
+  position: absolute;
+  top: 0;
+  height: 100%;
+  background: var(--ytdl-active-color, #ff1744);
+  box-shadow: 0 0 6px var(--ytdl-active-color, #ff1744);
+  width: 0%;
+  left: 0%;
+  transition: width 0.1s linear, left 0.1s linear;
+}
+
+.ytdl-ov-unplayed {
+  position: absolute;
+  top: 0;
+  height: 100%;
+  background: var(--ytdl-active-color, #ff1744);
+  opacity: 0.35;
+  width: 0%;
+  left: 0%;
+}
+
+/* ─── Preview: change progress handle to light blue ────────────── */
+#movie_player.ytdl-preview-active .ytp-play-progress,
+#movie_player.ytdl-preview-active .ytp-load-progress,
+#movie_player.ytdl-preview-active .ytp-hover-progress-light,
+.html5-video-player.ytdl-preview-active .ytp-play-progress,
+.html5-video-player.ytdl-preview-active .ytp-load-progress {
+  opacity: 0 !important;
+  visibility: hidden !important;
+}
+
+#movie_player.ytdl-preview-active .ytp-scrubber-button,
+.html5-video-player.ytdl-preview-active .ytp-scrubber-button {
+  background: var(--ytdl-active-color, #ff1744) !important;
+  border-color: var(--ytdl-active-color, #ff1744) !important;
+  box-shadow: 0 0 6px var(--ytdl-active-color, #ff1744) !important;
+  z-index: 10000 !important;
+}
+
+#movie_player.ytdl-preview-active .ytp-scrubber-container,
+.html5-video-player.ytdl-preview-active .ytp-scrubber-container {
+  z-index: 10000 !important;
+}
+
+#movie_player.ytdl-preview-active .ytp-progress-bar-container,
+.html5-video-player.ytdl-preview-active .ytp-progress-bar-container {
+  z-index: 55 !important;
+}
