@@ -79,6 +79,8 @@ window.YTDL.buttons = {
 
     const selectors = [
       "ytd-watch-metadata ytd-menu-renderer #top-level-buttons-computed",
+      "ytd-watch-metadata #top-level-buttons-computed",
+      "ytd-watch-metadata #actions #top-level-buttons-computed",
       "ytd-menu-renderer #top-level-buttons-computed",
       "#above-the-fold ytd-menu-renderer #top-level-buttons-computed",
       "#actions ytd-menu-renderer #top-level-buttons-computed",
@@ -98,6 +100,9 @@ window.YTDL.buttons = {
   // ─── Inject Download Button ─────────────────────────────────
   injectDownloadButton() {
     if (!window.YTDL.isVideoPage()) return;
+    const getLang = () => window.YTDL?.state?.defaultSettings?.defLang || "en";
+    const t = (k) => typeof window.YTDL_I18N_get === "function" ? window.YTDL_I18N_get(getLang(), k) : k;
+
     const actionBar = this.findActionBar();
     if (!actionBar) {
       setTimeout(() => this.injectDownloadButton(), 1000);
