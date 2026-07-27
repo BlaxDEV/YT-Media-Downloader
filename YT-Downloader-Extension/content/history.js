@@ -73,20 +73,29 @@ window.YTDL.history = {
       const thumbWrap = document.createElement("div");
       thumbWrap.className = "ytdl-hist-thumb-wrap";
 
-      const fallbackSvg = d.type === "audio" 
-        ? '<svg class="ytdl-hist-fallback-icon" viewBox="0 0 24 24"><path fill="currentColor" d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z"/></svg>'
-        : '<svg class="ytdl-hist-fallback-icon" viewBox="0 0 24 24"><path fill="currentColor" d="M17 10.5V7c0-.55-.45-1-1-1H4c-.55 0-1 .45-1 1v10c0 .55.45 1 1 1h12c.55 0 1-.45 1-1v-3.5l4 4v-11l-4 4z"/></svg>';
+      const createFallbackSvg = () => {
+        const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+        svg.setAttribute("class", "ytdl-hist-fallback-icon");
+        svg.setAttribute("viewBox", "0 0 24 24");
+        const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+        path.setAttribute("fill", "currentColor");
+        path.setAttribute("d", d.type === "audio" 
+          ? "M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z"
+          : "M17 10.5V7c0-.55-.45-1-1-1H4c-.55 0-1 .45-1 1v10c0 .55.45 1 1 1h12c.55 0 1-.45 1-1v-3.5l4 4v-11l-4 4z");
+        svg.appendChild(path);
+        return svg;
+      };
 
       if (d.thumbnail) {
         const img = document.createElement("img");
         img.className = "ytdl-hist-thumb-img";
         img.src = d.thumbnail;
         img.onerror = () => {
-          thumbWrap.innerHTML = fallbackSvg;
+          img.replaceWith(createFallbackSvg());
         };
         thumbWrap.appendChild(img);
       } else {
-        thumbWrap.innerHTML = fallbackSvg;
+        thumbWrap.appendChild(createFallbackSvg());
       }
 
       if (d.duration) {
