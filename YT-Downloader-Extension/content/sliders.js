@@ -38,6 +38,9 @@ window.YTDL.sliders = {
     container.textContent = "";
     if (!window.YTDL.state.scissorsTrims || window.YTDL.state.scissorsTrims.length === 0) return;
 
+    const getLang = () => window.YTDL?.state?.defaultSettings?.defLang || "en";
+    const t = (k) => typeof window.YTDL_I18N_get === "function" ? window.YTDL_I18N_get(getLang(), k) : k;
+
     const dur = window.YTDL.state.videoInfo?.duration || window.YTDL.preview?.getYouTubeVideo()?.duration || 600;
     window.YTDL.state.scissorsTrims.forEach((trim, idx) => {
       const row = document.createElement("div");
@@ -54,7 +57,7 @@ window.YTDL.sliders = {
 
       const span = document.createElement("span");
       span.style.cssText = "color: #ffffff !important; font-weight: 500;";
-      span.textContent = `Corte ${idx + 1}: `;
+      span.textContent = `${t("trimCutPrefix")} ${idx + 1}: `;
 
       const b = document.createElement("b");
       b.style.cssText = "color: #ffffff !important;";
@@ -72,12 +75,12 @@ window.YTDL.sliders = {
 
       const editBtn = document.createElement("button");
       editBtn.className = `ytdl-multi-trim-edit ${isEditing ? 'active' : ''}`;
-      editBtn.title = "Editar este corte en tiempo real";
-      editBtn.textContent = isEditing ? '✅ Editando' : '✏️ Editar';
+      editBtn.title = t("trimEditTitle");
+      editBtn.textContent = isEditing ? (`✅ ${t("trimEditingBtn")}`) : (`✏️ ${t("trimEditBtn")}`);
 
       const delBtn = document.createElement("button");
       delBtn.className = "ytdl-multi-trim-del";
-      delBtn.title = "Eliminar";
+      delBtn.title = t("trimDeleteTitle");
       delBtn.textContent = "✖";
 
       divBtn.appendChild(editBtn);
@@ -89,6 +92,16 @@ window.YTDL.sliders = {
         e.preventDefault();
         if (window.YTDL.state.editingTrimIndex === idx) {
           window.YTDL.state.editingTrimIndex = null;
+          if (window.YTDL.buttons && typeof window.YTDL.buttons.resetScissorsTool === "function") {
+            window.YTDL.buttons.resetScissorsTool();
+          }
+          const startEl = panel.querySelector(`#ytdl-${prefix}-start`);
+          const endEl = panel.querySelector(`#ytdl-${prefix}-end`);
+          if (startEl && endEl) {
+            startEl.value = 0;
+            endEl.value = 1000;
+          }
+          this.setupSliders(panel);
           this.renderMultiTrimList(prefix);
           return;
         }
@@ -110,26 +123,31 @@ window.YTDL.sliders = {
         window.YTDL.state.scissorsTrimA = trim.start;
         window.YTDL.state.scissorsTrimB = trim.end;
         window.YTDL.state.scissorsState = 2;
-        window.YTDL.state.activeScissorsColor = trim.color;
-        if (panel) panel.style.setProperty("--ytdl-active-color", trim.color);
-        
+        window.YTDL.state.activeScissorsColor = trim.color || "#ff1744";
+        if (panel) panel.style.setProperty("--ytdl-active-color", trim.color || "#ff1744");
+
+        const scissorsBtn = document.getElementById("ytdl-scissors-btn");
+        if (scissorsBtn) {
+          const svg = scissorsBtn.querySelector("svg");
+          if (svg) svg.setAttribute("fill", trim.color || "#ff1744");
+          const lbl = document.getElementById("ytdl-scissors-label");
+          if (lbl) lbl.textContent = "B";
+        }
+
         const fill = panel.querySelector(`#ytdl-${prefix}-fill`);
         if (fill) {
           fill.style.left = (trim.start / 10) + "%";
           fill.style.width = ((trim.end - trim.start) / 10) + "%";
         }
-        const scissorsBtn = document.getElementById("ytdl-scissors-btn");
-        if (scissorsBtn) {
-          const svg = scissorsBtn.querySelector("svg");
-          if (svg) svg.setAttribute("fill", trim.color);
-          const lbl = document.getElementById("ytdl-scissors-label");
-          if (lbl) lbl.textContent = "B";
-        }
-        if (window.YTDL.state.previewMode) {
+        
+        const previewCb = panel.querySelector(`#ytdl-${prefix}-preview-cb`);
+        if (previewCb && previewCb.checked) {
+          window.YTDL.preview.startPreview(prefix, true);
+        } else if (window.YTDL.state.previewMode) {
+          window.YTDL.preview.seekToTrimStart(prefix);
           const video = window.YTDL.preview.getYouTubeVideo();
           const curPct = video ? video.currentTime / dur : 0;
           window.YTDL.preview.updateProgressOverlay(trim.start / 1000, trim.end / 1000, curPct);
-          window.YTDL.preview.seekToTrimStart(prefix);
         }
         this.renderMultiTrimList(prefix);
       });

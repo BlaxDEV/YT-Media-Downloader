@@ -322,6 +322,8 @@ window.YTDL.buttons = {
         const currentVal = Math.round((currentTimeSec / dur) * 1000);
         const label = document.getElementById("ytdl-scissors-label");
 
+        const isEditingSlice = (window.YTDL.state.editingTrimIndex !== null && window.YTDL.state.editingTrimIndex !== undefined);
+
         if (window.YTDL.state.scissorsState === 0) {
           window.YTDL.state.scissorsTimeSecA = currentTimeSec;
           window.YTDL.state.scissorsTimeSecB = null;
@@ -343,6 +345,16 @@ window.YTDL.buttons = {
           }
           window.YTDL.state.scissorsState = 2;
           if (label) label.textContent = "B";
+        } else if (isEditingSlice) {
+          // When editing an existing slice and state is 2, restart marking Point A for this active slice
+          window.YTDL.state.scissorsTimeSecA = currentTimeSec;
+          window.YTDL.state.scissorsTimeSecB = null;
+          window.YTDL.state.scissorsTrimA = currentVal;
+          window.YTDL.state.scissorsTrimB = null;
+          window.YTDL.state.scissorsState = 1;
+          if (label) label.textContent = "A";
+          const activeCol = window.YTDL.state.activeScissorsColor || "#ff1744";
+          scissorsBtn.querySelector("svg").setAttribute("fill", activeCol);
         } else {
           window.YTDL.state.scissorsTimeSecA = null;
           window.YTDL.state.scissorsTimeSecB = null;
