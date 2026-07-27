@@ -185,29 +185,29 @@
 }
 
 /* ─── Preview: change progress handle to active scissors color ─── */
-#movie_player.ytdl-preview-active .ytp-play-progress,
-#movie_player.ytdl-preview-active .ytp-load-progress,
-#movie_player.ytdl-preview-active .ytp-hover-progress-light,
-.html5-video-player.ytdl-preview-active .ytp-play-progress,
-.html5-video-player.ytdl-preview-active .ytp-load-progress {
+#movie_player.ytdl-trim-active .ytp-play-progress,
+#movie_player.ytdl-trim-active .ytp-load-progress,
+#movie_player.ytdl-trim-active .ytp-hover-progress-light,
+.html5-video-player.ytdl-trim-active .ytp-play-progress,
+.html5-video-player.ytdl-trim-active .ytp-load-progress {
   opacity: 0 !important;
   visibility: hidden !important;
 }
 
-#movie_player.ytdl-preview-active .ytp-scrubber-button,
-.html5-video-player.ytdl-preview-active .ytp-scrubber-button {
+#movie_player.ytdl-trim-active .ytp-scrubber-button,
+.html5-video-player.ytdl-trim-active .ytp-scrubber-button {
   background: var(--ytdl-active-color, #ff1744) !important;
   border-color: var(--ytdl-active-color, #ff1744) !important;
   box-shadow: 0 0 8px var(--ytdl-active-color, #ff1744) !important;
   z-index: 100000 !important;
 }
 
-#movie_player.ytdl-preview-active .ytp-scrubber-container,
-.html5-video-player.ytdl-preview-active .ytp-scrubber-container {
+#movie_player.ytdl-trim-active .ytp-scrubber-container,
+.html5-video-player.ytdl-trim-active .ytp-scrubber-container {
   z-index: 100000 !important;
 }
 
-#movie_player.ytdl-preview-active .ytp-progress-bar-container,
-.html5-video-player.ytdl-preview-active .ytp-progress-bar-container {
+#movie_player.ytdl-trim-active .ytp-progress-bar-container,
+.html5-video-player.ytdl-trim-active .ytp-progress-bar-container {
   z-index: 9999 !important;
 }

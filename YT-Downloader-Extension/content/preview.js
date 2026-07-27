@@ -56,7 +56,7 @@ window.YTDL.preview = {
   seekToTrimStart(prefix) {
     const video = this.getYouTubeVideo();
     const range = this.getTrimRange(prefix);
-    if (video && range) {
+    if (video && range && isFinite(range.start)) {
       video.currentTime = range.start;
     }
   },
@@ -65,7 +65,7 @@ window.YTDL.preview = {
   seekToTrimEnd(prefix) {
     const video = this.getYouTubeVideo();
     const range = this.getTrimRange(prefix);
-    if (video && range) {
+    if (video && range && isFinite(range.end)) {
       video.currentTime = range.end;
     }
   },
@@ -76,7 +76,7 @@ window.YTDL.preview = {
       const video = this.getYouTubeVideo();
       if (video) {
         const range = this.getTrimRange(window.YTDL.state.previewMode);
-        if (range && video.currentTime >= range.end) {
+        if (range && video.currentTime >= range.end && isFinite(range.start)) {
           video.currentTime = range.start;
         }
       }
@@ -97,10 +97,18 @@ window.YTDL.preview = {
     const isScissorsActive = window.YTDL.state.scissorsState > 0;
     const isPreviewActive = window.YTDL.state.previewMode !== null;
 
-    if (!hasSlices && !isEditing && !isScissorsActive && !isPreviewActive) {
+    const player = document.querySelector("#movie_player, .html5-video-player");
+
+    // Show overlay if editing, previewing, or scissors actively placing points
+    const active = isPreviewActive || isEditing || isScissorsActive;
+
+    if (!active) {
+      if (player) player.classList.remove("ytdl-trim-active");
       this.removeProgressOverlay();
       return;
     }
+
+    if (player) player.classList.add("ytdl-trim-active");
 
     // Determine current active trim range percentages
     let range = null;
@@ -138,7 +146,7 @@ window.YTDL.preview = {
     const range = this.getTrimRange(prefix);
     if (!range) return;
 
-    if (seek) {
+    if (seek && isFinite(range.start)) {
       video.currentTime = range.start;
       if (video.paused) {
         video.play().catch(() => {});
@@ -149,7 +157,10 @@ window.YTDL.preview = {
     video.addEventListener("timeupdate", this._timeUpdateHandler);
 
     const player = document.querySelector("#movie_player, .html5-video-player");
-    if (player) player.classList.add("ytdl-preview-active");
+    if (player) {
+      player.classList.add("ytdl-preview-active");
+      player.classList.add("ytdl-trim-active");
+    }
 
     this.showPreviewIndicator(true);
     this.createProgressOverlay();
@@ -165,10 +176,13 @@ window.YTDL.preview = {
       video.removeEventListener("timeupdate", this._timeUpdateHandler);
     }
     const player = document.querySelector("#movie_player, .html5-video-player");
-    if (player) player.classList.remove("ytdl-preview-active");
+    if (player) {
+      player.classList.remove("ytdl-preview-active");
+      // Let refreshOverlay decide whether to remove ytdl-trim-active
+    }
 
     this.showPreviewIndicator(false);
-    this.refreshOverlay(); // Don't remove overlay completely if slices exist, let refreshOverlay decide
+    this.refreshOverlay();
   },
 
   // ─── Create Progress Overlay ────────────────────────────────
@@ -179,7 +193,8 @@ window.YTDL.preview = {
     const player = document.querySelector("#movie_player, .html5-video-player");
     if (!player) return;
 
-    const progressBar = player.querySelector(".ytp-progress-bar-container") || player.querySelector(".ytp-progress-bar");
+    // Use container to allow elements (like markers) to overflow visible space safely
+    const progressBar = player.querySelector(".ytp-progress-bar-container");
     if (!progressBar) return;
 
     const overlay = document.createElement("div");
@@ -275,7 +290,7 @@ window.YTDL.preview = {
         overlay.appendChild(markerA);
       }
 
-      if (trimEndPct !== undefined && window.YTDL.state.scissorsState === 2) {
+      if (trimEndPct !== undefined && window.YTDL.state.scissorsState >= 2) {
         const markerB = document.createElement("div");
         markerB.className = "ytdl-trim-marker ytdl-trim-marker-b";
         markerB.style.cssText = `

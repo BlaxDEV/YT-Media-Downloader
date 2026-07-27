@@ -345,16 +345,6 @@ window.YTDL.buttons = {
           }
           window.YTDL.state.scissorsState = 2;
           if (label) label.textContent = "B";
-        } else if (isEditingSlice) {
-          // When editing an existing slice and state is 2, restart marking Point A for this active slice
-          window.YTDL.state.scissorsTimeSecA = currentTimeSec;
-          window.YTDL.state.scissorsTimeSecB = null;
-          window.YTDL.state.scissorsTrimA = currentVal;
-          window.YTDL.state.scissorsTrimB = null;
-          window.YTDL.state.scissorsState = 1;
-          if (label) label.textContent = "A";
-          const activeCol = window.YTDL.state.activeScissorsColor || "#ff1744";
-          scissorsBtn.querySelector("svg").setAttribute("fill", activeCol);
         } else {
           window.YTDL.state.scissorsTimeSecA = null;
           window.YTDL.state.scissorsTimeSecB = null;
@@ -427,6 +417,7 @@ window.YTDL.buttons = {
 
   // ─── Reset Scissors Tool ────────────────────────────────────
   resetScissorsTool() {
+    window.YTDL.state.editingTrimIndex = null; // Clear edit index to sync panel and scissors tool
     if (window.YTDL.state.scissorsState === 0 && window.YTDL.state.scissorsTrimA === null && window.YTDL.state.scissorsTrimB === null) return;
     window.YTDL.state.scissorsState = 0;
     window.YTDL.state.scissorsTrimA = null;
@@ -445,6 +436,9 @@ window.YTDL.buttons = {
       if (svg) svg.setAttribute("fill", "#bbb");
     }
     window.YTDL.preview.stopPreview();
+    if (window.YTDL.preview && typeof window.YTDL.preview.refreshOverlay === "function") {
+      window.YTDL.preview.refreshOverlay();
+    }
   },
 
   // ─── Apply Scissors to Panel ────────────────────────────────
