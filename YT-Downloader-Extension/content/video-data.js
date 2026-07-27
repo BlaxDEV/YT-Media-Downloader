@@ -81,18 +81,31 @@ window.YTDL.videoData = {
     if (container) container.textContent = "";
     targetRes.forEach(res => {
       const exts = fmtGroups[res];
-      if (!exts) return;
-      const formats = exts[selectedFmt] || exts[Object.keys(exts)[0]];
-      if (!formats || formats.length === 0) return;
-      const fmt = formats[0];
+      let fmtId = `res:${res}`;
+      let sizeText = selectedFmt.toUpperCase();
+      let ext = selectedFmt;
+      let rawSize = 0;
+
+      if (exts) {
+        const formats = exts[selectedFmt] || exts[Object.keys(exts)[0]];
+        if (formats && formats.length > 0) {
+          const fmt = formats[0];
+          fmtId = fmt.format_id || `res:${res}`;
+          rawSize = fmt.filesize || 0;
+          ext = fmt.ext || selectedFmt;
+          if (fmt.filesize) {
+            sizeText = `~${(fmt.filesize / 1048576).toFixed(0)} MB`;
+          }
+        }
+      }
+
       const btn = document.createElement("button");
       btn.className = "ytdl-q-btn";
-      btn.dataset.fmt = fmt.format_id;
-      btn.dataset.rawSize = fmt.filesize || 0;
-      btn.dataset.ext = fmt.ext || selectedFmt;
-      const size = fmt.filesize ? `${(fmt.filesize / 1048576).toFixed(0)} MB` : fmt.ext;
+      btn.dataset.fmt = fmtId;
+      btn.dataset.rawSize = rawSize;
+      btn.dataset.ext = ext;
       const resSpan = document.createElement("span"); resSpan.className = "ytdl-q-res"; resSpan.textContent = res;
-      const infoSpan = document.createElement("span"); infoSpan.className = "ytdl-q-info"; infoSpan.textContent = size;
+      const infoSpan = document.createElement("span"); infoSpan.className = "ytdl-q-info"; infoSpan.textContent = sizeText;
       btn.appendChild(resSpan); btn.appendChild(infoSpan);
       btn.addEventListener("click", () => {
         container.querySelectorAll(".ytdl-q-btn").forEach(b => b.classList.remove("active"));

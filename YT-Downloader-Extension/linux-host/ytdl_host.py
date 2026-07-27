@@ -165,8 +165,11 @@ class YTDLRequestHandler(BaseHTTPRequestHandler):
                 self._send_json({"error": "URL requerida"}, status_code=400)
                 return
             try:
-                cmd = [YTDLP_BIN, "--dump-json", "--no-warnings", "--no-playlist", "--extractor-args", "youtube:player_client=android,web", url]
+                cmd = [YTDLP_BIN, "--dump-json", "--no-warnings", "--no-playlist", url]
                 res = subprocess.run(cmd, capture_output=True, text=True)
+                if res.returncode != 0:
+                    cmd_fb = [YTDLP_BIN, "--dump-json", "--no-warnings", "--no-playlist", "--extractor-args", "youtube:player_client=android,web", url]
+                    res = subprocess.run(cmd_fb, capture_output=True, text=True)
                 if res.returncode != 0:
                     err_msg = res.stderr.strip() if res.stderr else f"Error al ejecutar yt-dlp (exit code {res.returncode})"
                     self._send_json({"error": err_msg}, status_code=500)
@@ -196,8 +199,11 @@ class YTDLRequestHandler(BaseHTTPRequestHandler):
                 self._send_json({"error": "URL requerida"}, status_code=400)
                 return
             try:
-                cmd = [YTDLP_BIN, "--dump-json", "--no-warnings", "--no-playlist", "--extractor-args", "youtube:player_client=android,web", url]
+                cmd = [YTDLP_BIN, "--dump-json", "--no-warnings", "--no-playlist", url]
                 res = subprocess.run(cmd, capture_output=True, text=True)
+                if res.returncode != 0:
+                    cmd_fb = [YTDLP_BIN, "--dump-json", "--no-warnings", "--no-playlist", "--extractor-args", "youtube:player_client=android,web", url]
+                    res = subprocess.run(cmd_fb, capture_output=True, text=True)
                 if res.returncode != 0:
                     err_msg = res.stderr.strip() if res.stderr else f"Error al ejecutar yt-dlp (exit code {res.returncode})"
                     self._send_json({"error": err_msg}, status_code=500)
@@ -387,7 +393,27 @@ class YTDLRequestHandler(BaseHTTPRequestHandler):
                 if is_anim_export:
                     cmd.extend(["-f", "bestvideo[height<=1080]/best"])
                 else:
-                    cmd.extend(["-f", "bestvideo+bestaudio/best", "--merge-output-format", ext])
+                    fmt_id = str(body.get("format_id") or body.get("quality") or "")
+                    target_h = "1080"
+                    if "1080" in fmt_id:
+                        target_h = "1080"
+                    elif "720" in fmt_id:
+                        target_h = "720"
+                    elif "480" in fmt_id:
+                        target_h = "480"
+                    elif "360" in fmt_id:
+                        target_h = "360"
+                    elif "240" in fmt_id:
+                        target_h = "240"
+                    elif "144" in fmt_id:
+                        target_h = "144"
+
+                    if fmt_id.isdigit():
+                        format_spec = f"{fmt_id}+bestaudio/bestvideo[height<={target_h}]+bestaudio/best"
+                    else:
+                        format_spec = f"bestvideo[height<={target_h}]+bestaudio/bestvideo[height<={target_h}]+best/best"
+
+                    cmd.extend(["-f", format_spec, "--merge-output-format", ext])
                 if audio_meta:
                     cmd.extend(["--embed-metadata"])
 
