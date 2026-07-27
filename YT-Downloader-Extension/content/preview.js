@@ -290,7 +290,7 @@ window.YTDL.preview = {
         overlay.appendChild(markerA);
       }
 
-      if (trimEndPct !== undefined && window.YTDL.state.scissorsState >= 2) {
+      if (trimEndPct !== undefined) {
         const markerB = document.createElement("div");
         markerB.className = "ytdl-trim-marker ytdl-trim-marker-b";
         markerB.style.cssText = `
