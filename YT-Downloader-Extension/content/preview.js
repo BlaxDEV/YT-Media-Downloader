@@ -209,61 +209,7 @@ window.YTDL.preview = {
     const video = this.getYouTubeVideo();
     const dur = window.YTDL.state.videoInfo?.duration || video?.duration || 1;
 
-    // 1. Render all slices in multi-trim queue
-    if (window.YTDL.state.scissorsTrims && window.YTDL.state.scissorsTrims.length > 0) {
-      window.YTDL.state.scissorsTrims.forEach((trim, idx) => {
-        const isEditing = (window.YTDL.state.editingTrimIndex === idx);
-        const col = trim.color || "#ff1744";
-        const sPct = (trim.start / 1000);
-        const ePct = (trim.end / 1000);
-
-        const sliceDiv = document.createElement("div");
-        sliceDiv.className = `ytdl-ov-slice ${isEditing ? 'active' : ''}`;
-        sliceDiv.style.cssText = `
-          position: absolute !important;
-          top: 0 !important;
-          height: 100% !important;
-          left: ${(sPct * 100).toFixed(2)}% !important;
-          width: ${((ePct - sPct) * 100).toFixed(2)}% !important;
-          background: ${col} !important;
-          opacity: ${isEditing ? '0.95' : '0.55'} !important;
-          box-shadow: ${isEditing ? `0 0 10px ${col}, 0 0 18px ${col}` : `0 0 4px ${col}`} !important;
-          z-index: ${isEditing ? '95' : '85'} !important;
-          border-radius: 2px !important;
-          pointer-events: none !important;
-        `;
-        overlay.appendChild(sliceDiv);
-
-        // Render mini vertical edge lines for non-editing slices to identify boundaries clearly
-        if (!isEditing) {
-          const markerStart = document.createElement("div");
-          markerStart.style.cssText = `
-            position: absolute !important;
-            top: -2px !important;
-            height: 12px !important;
-            width: 2px !important;
-            left: ${(sPct * 100).toFixed(2)}% !important;
-            background: ${col} !important;
-            z-index: 86 !important;
-            pointer-events: none !important;
-          `;
-          overlay.appendChild(markerStart);
-
-          const markerEnd = document.createElement("div");
-          markerEnd.style.cssText = `
-            position: absolute !important;
-            top: -2px !important;
-            height: 12px !important;
-            width: 2px !important;
-            left: ${(ePct * 100).toFixed(2)}% !important;
-            background: ${col} !important;
-            z-index: 86 !important;
-            pointer-events: none !important;
-          `;
-          overlay.appendChild(markerEnd);
-        }
-      });
-    }
+    // Render only the active selection or the actively edited cut to avoid onion-skinning (individual preview style).
 
     // 2. Render active trim highlight & dim background if trimming is active
     if (trimStartPct !== undefined && trimEndPct !== undefined) {
