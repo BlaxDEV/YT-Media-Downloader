@@ -16,11 +16,11 @@ VSVersionInfo(
         '040904B0',
         [StringStruct('CompanyName', 'Gabriel'),
         StringStruct('FileDescription', 'YT Media Downloader Companion Server'),
-        StringStruct('FileVersion', '1.2.3'),
+        StringStruct('FileVersion', '1.2.4'),
         StringStruct('InternalName', 'YTDownloader'),
         StringStruct('OriginalFilename', 'YTDownloader.exe'),
         StringStruct('ProductName', 'YT Media Downloader Companion Server'),
-        StringStruct('ProductVersion', '1.2.3')])
+        StringStruct('ProductVersion', '1.2.4')])
       ]),
     VarFileInfo([VarStruct('Translation', [1033, 1200])])
   ]

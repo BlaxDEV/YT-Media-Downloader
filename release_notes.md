@@ -1,13 +1,20 @@
-# YT Media Downloader v1.2.3
+# YT Media Downloader v1.2.4
 
-## 🚀 Bugfix & Release Notes (v1.2.3)
+## 🐛 Bugfixes & Improvements (v1.2.4)
 
-### 🐛 Hotfix & Firefox / Zen Compatibility Updates
-- **Firefox & Zen Browser Icon Fix (`web_accessible_resources`)**: Added missing `web_accessible_resources` declaration in `manifest.firefox.json` allowing content scripts to render extension icons (`audio.png`, `no-audio.png`, `delete.png`) without browser CORS / CSP security blocks.
-- **Global Version Synchronization (v1.2.3)**: Synchronized version number `v1.2.3` across `manifest.json`, `manifest.firefox.json`, Extension Popup (`popup.html`), Welcome Page (`welcome.html`), YouTube injected Panel (`panel.js`), Python helper scripts, Windows Installer, and Linux build manifests.
-- **Companion Server `TOOLS_DIR` Resolution & Null I/O Fix**: Enhanced multi-level parent path resolution for `tools/` binaries (`yt-dlp`, `ffmpeg`, `ffprobe`) in `ytdl_host.py` to eliminate `HTTP 500` errors on `/info` endpoints during local development and cross-platform execution. Redirected null I/O streams (`sys.stdout`/`sys.stderr`) when built with PyInstaller `--noconsole` to prevent silent startup crashes.
-- **Windows & Linux Installer Output strictly in `Output/`**: Synchronized `/history` endpoint in the companion server binary, resolved background process file locks, and configured installer build output strictly to `Output/Setup_YT_Downloader-Win-v1.2.3.exe` and `Output/Setup_YT_Downloader-Linux-v1.2.3.tar.gz`.
-- **Multi-Language i18n for Cut & Edit Labels**: Added comprehensive translation keys (`trimCutPrefix`, `trimEditBtn`, `trimEditingBtn`, `trimEditTitle`, `trimDeleteTitle`) across all 9 supported languages (`en`, `es`, `pt`, `fr`, `de`, `it`, `ru`, `ja`, `zh`) so multi-trim queue slice rows render dynamically in the user's selected language.
-- **Scissors & Trim Slice Editing Bugfix**: Fixed state machine transition in `sliders.js` and `buttons.js` when editing an active cut slice (`editingTrimIndex`). Selecting or re-marking Point A/B with the scissors tool now dynamically updates the selected slice's start/end timestamps and timeline overlay without resetting values to `00:00 - 00:00`.
-- **Welcome Page Modernization**: Updated `welcome.html` and step 6 translations across all languages from outdated "Onion Skinning" terminology to "Multi-Trim Queue (+)".
+### Bugs Corregidos
+- **Fix: Botón "Descargar" no funcionaba** — La variable `prefix` no estaba declarada en `download.js`, causando un `ReferenceError` que impedía iniciar cualquier descarga.
+- **Fix: Botón "Abrir Carpeta" no funcionaba** — El endpoint POST `/open_folder` no existía en el servidor companion. Se implementó para abrir la carpeta de descargas con el explorador de archivos del sistema operativo.
+- **Fix: Descarga siempre en 360p aunque se seleccione 1080p** — El comando de descarga tenía `--extractor-args "youtube:player_client=android,web"` hardcodeado, lo que restringía los formatos DASH a solo 360p. Se eliminó del comando de descarga y se usa el campo `quality` (ej. `1080p`) enviado por la extensión para construir el especificador `-f "bestvideo[height<=1080]+bestaudio"`.
+- **Fix: Ventanas CMD emergentes** — Cada llamada a yt-dlp o ffmpeg abría una ventana de consola visible en Windows. Se agregó `subprocess.CREATE_NO_WINDOW` a todas las llamadas `subprocess.run()` y `subprocess.Popen()`.
 
+### Mejoras
+- **Soporte de Cookies de YouTube** — El servidor companion ahora detecta automáticamente cookies del navegador para autenticarse con YouTube, evitando bloqueos por CAPTCHA/bot detection y habilitando todas las calidades de video (1080p, 720p, 480p, etc.). Se soportan Chrome, Edge, Firefox, Brave, Opera y Vivaldi.
+- **Instalador pide cerrar navegadores** — El Setup de Windows ahora requiere cerrar todos los navegadores antes de instalar. Esto permite extraer las cookies de YouTube automáticamente durante la instalación para garantizar la descarga en HD.
+- **Grid de calidades siempre completo** — La cuadrícula de calidades (1080p, 720p, 480p, 360p, 240p, 144p) ahora siempre muestra todas las opciones, incluso cuando yt-dlp no devuelve formatos específicos para una resolución.
+
+### Archivos Modificados
+- `content/download.js` — Fix variable `prefix` y envío de campo `quality`
+- `content/video-data.js` — Render completo de la cuadrícula de calidades
+- `linux-host/ytdl_host.py` — CREATE_NO_WINDOW, cookies, `/open_folder`, format specifier por altura
+- `scripts/installer.iss` — Cierre obligatorio de navegadores + exportación automática de cookies
