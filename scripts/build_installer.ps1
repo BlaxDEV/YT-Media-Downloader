@@ -29,5 +29,5 @@ if (-not (Test-Path $InnoSetupPath)) {
 
 Write-Host "===================================================================="
 Write-Host " Build complete! Windows release ready at:"
-Write-Host " Output\Setup_YT_Downloader-Win-v1.2.4.exe"
+Write-Host " Output\Setup_YT_Downloader-Win-v1.2.5.exe"
 Write-Host "===================================================================="

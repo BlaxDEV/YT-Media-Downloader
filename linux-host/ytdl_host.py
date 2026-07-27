@@ -26,7 +26,7 @@ if sys.stderr is None:
 
 HOST = "127.0.0.1"
 PORT = 19836
-VERSION = "1.2.4"
+VERSION = "1.2.5"
 
 # Determine base directory and tools path
 if getattr(sys, 'frozen', False):

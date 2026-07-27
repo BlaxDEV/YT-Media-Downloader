@@ -102,6 +102,9 @@ window.YTDL.sliders = {
             endEl.value = 1000;
           }
           this.setupSliders(panel);
+          if (window.YTDL.preview && typeof window.YTDL.preview.refreshOverlay === "function") {
+            window.YTDL.preview.refreshOverlay();
+          }
           this.renderMultiTrimList(prefix);
           return;
         }
@@ -143,11 +146,11 @@ window.YTDL.sliders = {
         const previewCb = panel.querySelector(`#ytdl-${prefix}-preview-cb`);
         if (previewCb && previewCb.checked) {
           window.YTDL.preview.startPreview(prefix, true);
-        } else if (window.YTDL.state.previewMode) {
+        } else {
           window.YTDL.preview.seekToTrimStart(prefix);
-          const video = window.YTDL.preview.getYouTubeVideo();
-          const curPct = video ? video.currentTime / dur : 0;
-          window.YTDL.preview.updateProgressOverlay(trim.start / 1000, trim.end / 1000, curPct);
+          if (window.YTDL.preview && typeof window.YTDL.preview.refreshOverlay === "function") {
+            window.YTDL.preview.refreshOverlay();
+          }
         }
         this.renderMultiTrimList(prefix);
       });
@@ -160,11 +163,8 @@ window.YTDL.sliders = {
         }
         window.YTDL.state.scissorsTrims.splice(idx, 1);
         this.renderMultiTrimList(prefix);
-        if (window.YTDL.state.previewMode) {
-          const video = window.YTDL.preview.getYouTubeVideo();
-          const curPct = video ? video.currentTime / dur : 0;
-          const r = window.YTDL.preview.getTrimRange(prefix);
-          if (r) window.YTDL.preview.updateProgressOverlay(r.start / dur, r.end / dur, curPct);
+        if (window.YTDL.preview && typeof window.YTDL.preview.refreshOverlay === "function") {
+          window.YTDL.preview.refreshOverlay();
         }
       });
       container.appendChild(row);
@@ -321,20 +321,17 @@ window.YTDL.sliders = {
               window.YTDL.preview.seekToTrimStart(prefix);
             }
           }
-          const video = window.YTDL.preview.getYouTubeVideo();
-          const currentPct = video ? video.currentTime / dur : s / 1000;
-          const range = window.YTDL.preview.getTrimRange(prefix);
-          if (range) {
-            window.YTDL.preview.updateProgressOverlay(range.start / dur, range.end / dur, currentPct);
-          } else {
-            window.YTDL.preview.updateProgressOverlay(s / 1000, e / 1000, currentPct);
-          }
+        }
+        if (window.YTDL.preview && typeof window.YTDL.preview.refreshOverlay === "function") {
+          window.YTDL.preview.refreshOverlay();
         }
       };
 
       const handleSliderInput = (e) => {
         if (!window.YTDL.buttons.isApplyingScissors && e && e.isTrusted && (window.YTDL.state.scissorsState > 0 || window.YTDL.state.scissorsTrimA !== null || window.YTDL.state.scissorsTrimB !== null)) {
-          window.YTDL.buttons.resetScissorsTool();
+          if (window.YTDL.state.editingTrimIndex === null || window.YTDL.state.editingTrimIndex === undefined) {
+            window.YTDL.buttons.resetScissorsTool();
+          }
         }
         update(false, e ? e.target : null);
       };
@@ -345,7 +342,9 @@ window.YTDL.sliders = {
       const handleInputEdit = (e) => {
         if (e.type === 'blur' || (e.type === 'keydown' && e.key === 'Enter')) {
           if (!window.YTDL.buttons.isApplyingScissors && e && e.isTrusted && (window.YTDL.state.scissorsState > 0 || window.YTDL.state.scissorsTrimA !== null || window.YTDL.state.scissorsTrimB !== null)) {
-            window.YTDL.buttons.resetScissorsTool();
+            if (window.YTDL.state.editingTrimIndex === null || window.YTDL.state.editingTrimIndex === undefined) {
+              window.YTDL.buttons.resetScissorsTool();
+            }
           }
           update(true, e ? e.target : null);
         }

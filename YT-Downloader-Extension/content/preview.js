@@ -6,6 +6,14 @@
 window.YTDL = window.YTDL || {};
 
 window.YTDL.preview = {
+  _timeUpdateHandler: null,
+
+  init() {
+    if (!this._timeUpdateHandler) {
+      this._timeUpdateHandler = () => this.onYouTubeTimeUpdate();
+    }
+  },
+
   // ─── Get YouTube Video Element ──────────────────────────────
   getYouTubeVideo() {
     return document.querySelector("video.html5-main-video, video.video-stream, video");
@@ -64,19 +72,59 @@ window.YTDL.preview = {
 
   // ─── YouTube Time Update Handler ────────────────────────────
   onYouTubeTimeUpdate() {
-    if (!window.YTDL.state.previewMode) return;
+    if (window.YTDL.state.previewMode) {
+      const video = this.getYouTubeVideo();
+      if (video) {
+        const range = this.getTrimRange(window.YTDL.state.previewMode);
+        if (range && video.currentTime >= range.end) {
+          video.currentTime = range.start;
+        }
+      }
+    }
+    this.refreshOverlay();
+  },
+
+  // ─── Refresh Progress Overlay ───────────────────────────────
+  refreshOverlay() {
     const video = this.getYouTubeVideo();
     if (!video) return;
-    const range = this.getTrimRange(window.YTDL.state.previewMode);
-    if (!range) return;
-    const dur = window.YTDL.state.videoInfo?.duration || video.duration || 1;
 
-    if (video.currentTime >= range.end) {
-      video.currentTime = range.start;
+    const dur = window.YTDL.state.videoInfo?.duration || video.duration || 1;
+    const curPct = video.currentTime / dur;
+
+    const hasSlices = window.YTDL.state.scissorsTrims && window.YTDL.state.scissorsTrims.length > 0;
+    const isEditing = (window.YTDL.state.editingTrimIndex !== null && window.YTDL.state.editingTrimIndex !== undefined);
+    const isScissorsActive = window.YTDL.state.scissorsState > 0;
+    const isPreviewActive = window.YTDL.state.previewMode !== null;
+
+    if (!hasSlices && !isEditing && !isScissorsActive && !isPreviewActive) {
+      this.removeProgressOverlay();
+      return;
     }
 
-    const currentPct = video.currentTime / dur;
-    this.updateProgressOverlay(range.start / dur, range.end / dur, currentPct);
+    // Determine current active trim range percentages
+    let range = null;
+    if (isPreviewActive) {
+      range = this.getTrimRange(window.YTDL.state.previewMode);
+    } else if (isEditing) {
+      const editTrim = window.YTDL.state.scissorsTrims[window.YTDL.state.editingTrimIndex];
+      if (editTrim) {
+        range = {
+          start: editTrim.timeSecA !== undefined ? editTrim.timeSecA : (editTrim.start / 1000) * dur,
+          end: editTrim.timeSecB !== undefined ? editTrim.timeSecB : (editTrim.end / 1000) * dur
+        };
+      }
+    } else if (isScissorsActive) {
+      const s = window.YTDL.state.scissorsTimeSecA !== null ? window.YTDL.state.scissorsTimeSecA : 0;
+      const e = window.YTDL.state.scissorsTimeSecB !== null ? window.YTDL.state.scissorsTimeSecB : dur;
+      range = { start: s, end: e };
+    }
+
+    if (range) {
+      this.updateProgressOverlay(range.start / dur, range.end / dur, curPct);
+    } else {
+      this.updateProgressOverlay(undefined, undefined, curPct);
+    }
   },
 
   // ─── Start Preview ──────────────────────────────────────────
@@ -97,34 +145,37 @@ window.YTDL.preview = {
       }
     }
 
-    video.addEventListener("timeupdate", () => this.onYouTubeTimeUpdate());
+    this.init();
+    video.addEventListener("timeupdate", this._timeUpdateHandler);
 
     const player = document.querySelector("#movie_player, .html5-video-player");
     if (player) player.classList.add("ytdl-preview-active");
 
     this.showPreviewIndicator(true);
     this.createProgressOverlay();
-    const dur = window.YTDL.state.videoInfo?.duration || video.duration || 1;
-    this.updateProgressOverlay(range.start / dur, range.end / dur, video.currentTime / dur);
+    this.refreshOverlay();
   },
 
   // ─── Stop Preview ───────────────────────────────────────────
   stopPreview() {
     window.YTDL.state.previewMode = null;
     const video = this.getYouTubeVideo();
-    if (video) {
-      video.removeEventListener("timeupdate", () => this.onYouTubeTimeUpdate());
+    this.init();
+    if (video && this._timeUpdateHandler) {
+      video.removeEventListener("timeupdate", this._timeUpdateHandler);
     }
     const player = document.querySelector("#movie_player, .html5-video-player");
     if (player) player.classList.remove("ytdl-preview-active");
 
     this.showPreviewIndicator(false);
-    this.removeProgressOverlay();
+    this.refreshOverlay(); // Don't remove overlay completely if slices exist, let refreshOverlay decide
   },
 
   // ─── Create Progress Overlay ────────────────────────────────
   createProgressOverlay() {
-    this.removeProgressOverlay();
+    const existing = document.getElementById("ytdl-trim-overlay");
+    if (existing) return;
+
     const player = document.querySelector("#movie_player, .html5-video-player");
     if (!player) return;
 
@@ -135,6 +186,13 @@ window.YTDL.preview = {
     overlay.id = "ytdl-trim-overlay";
     overlay.textContent = "";
     progressBar.appendChild(overlay);
+
+    const video = this.getYouTubeVideo();
+    if (video) {
+      this.init();
+      video.removeEventListener("timeupdate", this._timeUpdateHandler);
+      video.addEventListener("timeupdate", this._timeUpdateHandler);
+    }
   },
 
   // ─── Update Progress Overlay ────────────────────────────────
@@ -175,6 +233,35 @@ window.YTDL.preview = {
           pointer-events: none !important;
         `;
         overlay.appendChild(sliceDiv);
+
+        // Render mini vertical edge lines for non-editing slices to identify boundaries clearly
+        if (!isEditing) {
+          const markerStart = document.createElement("div");
+          markerStart.style.cssText = `
+            position: absolute !important;
+            top: -2px !important;
+            height: 12px !important;
+            width: 2px !important;
+            left: ${(sPct * 100).toFixed(2)}% !important;
+            background: ${col} !important;
+            z-index: 86 !important;
+            pointer-events: none !important;
+          `;
+          overlay.appendChild(markerStart);
+
+          const markerEnd = document.createElement("div");
+          markerEnd.style.cssText = `
+            position: absolute !important;
+            top: -2px !important;
+            height: 12px !important;
+            width: 2px !important;
+            left: ${(ePct * 100).toFixed(2)}% !important;
+            background: ${col} !important;
+            z-index: 86 !important;
+            pointer-events: none !important;
+          `;
+          overlay.appendChild(markerEnd);
+        }
       });
     }
 
@@ -204,6 +291,81 @@ window.YTDL.preview = {
       overlay.appendChild(played);
       overlay.appendChild(unplayed);
 
+      // Render scissor markers "A" and "B" exactly at cut points
+      if (trimStartPct !== undefined) {
+        const markerA = document.createElement("div");
+        markerA.className = "ytdl-trim-marker ytdl-trim-marker-a";
+        markerA.style.cssText = `
+          position: absolute !important;
+          top: -4px !important;
+          height: 16px !important;
+          width: 2px !important;
+          left: ${(trimStartPct * 100).toFixed(2)}% !important;
+          background: ${activeColor} !important;
+          z-index: 100001 !important;
+          box-shadow: 0 0 4px ${activeColor} !important;
+          pointer-events: none !important;
+        `;
+        const dotA = document.createElement("div");
+        dotA.style.cssText = `
+          position: absolute !important;
+          top: -6px !important;
+          left: -4px !important;
+          width: 10px !important;
+          height: 10px !important;
+          border-radius: 50% !important;
+          background: ${activeColor} !important;
+          border: 1px solid #fff !important;
+          box-shadow: 0 0 4px rgba(0,0,0,0.5) !important;
+          font-size: 7px !important;
+          font-weight: bold !important;
+          color: #fff !important;
+          display: flex !important;
+          align-items: center !important;
+          justify-content: center !important;
+        `;
+        dotA.textContent = "A";
+        markerA.appendChild(dotA);
+        overlay.appendChild(markerA);
+      }
+
+      if (trimEndPct !== undefined && window.YTDL.state.scissorsState === 2) {
+        const markerB = document.createElement("div");
+        markerB.className = "ytdl-trim-marker ytdl-trim-marker-b";
+        markerB.style.cssText = `
+          position: absolute !important;
+          top: -4px !important;
+          height: 16px !important;
+          width: 2px !important;
+          left: ${(trimEndPct * 100).toFixed(2)}% !important;
+          background: ${activeColor} !important;
+          z-index: 100001 !important;
+          box-shadow: 0 0 4px ${activeColor} !important;
+          pointer-events: none !important;
+        `;
+        const dotB = document.createElement("div");
+        dotB.style.cssText = `
+          position: absolute !important;
+          top: -6px !important;
+          left: -4px !important;
+          width: 10px !important;
+          height: 10px !important;
+          border-radius: 50% !important;
+          background: ${activeColor} !important;
+          border: 1px solid #fff !important;
+          box-shadow: 0 0 4px rgba(0,0,0,0.5) !important;
+          font-size: 7px !important;
+          font-weight: bold !important;
+          color: #fff !important;
+          display: flex !important;
+          align-items: center !important;
+          justify-content: center !important;
+        `;
+        dotB.textContent = "B";
+        markerB.appendChild(dotB);
+        overlay.appendChild(markerB);
+      }
+
       if (player) {
         player.style.setProperty("--ytdl-active-color", activeColor);
       }
@@ -214,6 +376,11 @@ window.YTDL.preview = {
   removeProgressOverlay() {
     const existing = document.getElementById("ytdl-trim-overlay");
     if (existing) existing.remove();
+
+    const video = this.getYouTubeVideo();
+    if (video && this._timeUpdateHandler) {
+      video.removeEventListener("timeupdate", this._timeUpdateHandler);
+    }
   },
 
   // ─── Show Preview Indicator ─────────────────────────────────
