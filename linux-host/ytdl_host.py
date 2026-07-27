@@ -165,8 +165,12 @@ class YTDLRequestHandler(BaseHTTPRequestHandler):
                 self._send_json({"error": "URL requerida"}, status_code=400)
                 return
             try:
-                cmd = [YTDLP_BIN, "--dump-json", "--no-warnings", "--no-playlist", url]
-                res = subprocess.run(cmd, capture_output=True, text=True, check=True)
+                cmd = [YTDLP_BIN, "--dump-json", "--no-warnings", "--no-playlist", "--extractor-args", "youtube:player_client=android,web", url]
+                res = subprocess.run(cmd, capture_output=True, text=True)
+                if res.returncode != 0:
+                    err_msg = res.stderr.strip() if res.stderr else f"Error al ejecutar yt-dlp (exit code {res.returncode})"
+                    self._send_json({"error": err_msg}, status_code=500)
+                    return
                 info = json.loads(res.stdout)
                 chapters = []
                 for idx, ch in enumerate(info.get("chapters") or []):
@@ -192,8 +196,12 @@ class YTDLRequestHandler(BaseHTTPRequestHandler):
                 self._send_json({"error": "URL requerida"}, status_code=400)
                 return
             try:
-                cmd = [YTDLP_BIN, "--dump-json", "--no-warnings", "--no-playlist", url]
-                res = subprocess.run(cmd, capture_output=True, text=True, check=True)
+                cmd = [YTDLP_BIN, "--dump-json", "--no-warnings", "--no-playlist", "--extractor-args", "youtube:player_client=android,web", url]
+                res = subprocess.run(cmd, capture_output=True, text=True)
+                if res.returncode != 0:
+                    err_msg = res.stderr.strip() if res.stderr else f"Error al ejecutar yt-dlp (exit code {res.returncode})"
+                    self._send_json({"error": err_msg}, status_code=500)
+                    return
                 info = json.loads(res.stdout)
                 formats = []
                 # Parse video formats
@@ -210,7 +218,7 @@ class YTDLRequestHandler(BaseHTTPRequestHandler):
                                 "filesize": fmt.get("filesize") or fmt.get("filesize_approx") or 0,
                                 "type": "video"
                             })
-                self._send_json({"formats": formats})
+                self._send_json({"formats": formats, "title": info.get("title", "Video")})
             except Exception as e:
                 self._send_json({"error": f"Error obteniendo formatos: {str(e)}"}, status_code=500)
 
@@ -275,7 +283,7 @@ class YTDLRequestHandler(BaseHTTPRequestHandler):
                     with open(out_path, "wb") as f:
                         f.write(data)
                 else:
-                    stream_cmd = [YTDLP_BIN, "--no-warnings", "-g", "-f", "bestvideo/best", url]
+                    stream_cmd = [YTDLP_BIN, "--no-warnings", "--extractor-args", "youtube:player_client=android,web", "-g", "-f", "bestvideo/best", url]
                     stream_res = subprocess.run(stream_cmd, capture_output=True, text=True, check=True)
                     stream_url = stream_res.stdout.strip().split("\n")[0]
                     ff_cmd = [FFMPEG_BIN, "-y", "-ss", str(timestamp), "-i", stream_url, "-vframes", "1", "-q:v", "2", out_path]
@@ -344,7 +352,7 @@ class YTDLRequestHandler(BaseHTTPRequestHandler):
             if is_anim_export:
                 ext = "mp4"
 
-            cmd = [YTDLP_BIN, "--no-warnings", "--newline", "--progress-template", "%(progress._percent_str)s"]
+            cmd = [YTDLP_BIN, "--no-warnings", "--newline", "--progress-template", "%(progress._percent_str)s", "--extractor-args", "youtube:player_client=android,web"]
             if FFMPEG_BIN != "ffmpeg":
                 cmd.extend(["--ffmpeg-location", os.path.dirname(FFMPEG_BIN)])
 
