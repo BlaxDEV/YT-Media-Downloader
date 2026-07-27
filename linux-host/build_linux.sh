@@ -4,11 +4,11 @@
 # ==============================================================================
 set -e
 
-VERSION="1.2.2"
+VERSION="1.2.3"
 BASE_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 DIST_DIR="${BASE_DIR}/dist"
 BUILD_DIR="${BASE_DIR}/build"
-RELEASE_DIR="${BASE_DIR}/.."
+RELEASE_DIR="${BASE_DIR}/../Output"
 
 echo "===================================================================="
 echo " Building YT Media Downloader Companion Server (Linux v${VERSION})"

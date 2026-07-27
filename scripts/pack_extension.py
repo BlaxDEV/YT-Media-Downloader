@@ -62,9 +62,12 @@ if __name__ == '__main__':
             if 'version' in data:
                 version = data['version']
     
-    # Enforce exact naming rule for dedicated browser extension packages
-    zip_chrome = os.path.join(out_dir, f'YT-Media-Downloader-Extension-Chrome-v{version}.zip')
-    zip_firefox = os.path.join(out_dir, f'YT-Media-Downloader-Extension-Firefox-v{version}.zip')
+    # Enforce output path to Output/ directory
+    output_dir = os.path.join(out_dir, 'Output')
+    os.makedirs(output_dir, exist_ok=True)
+
+    zip_chrome = os.path.join(output_dir, f'YT-Media-Downloader-Extension-Chrome-v{version}.zip')
+    zip_firefox = os.path.join(output_dir, f'YT-Media-Downloader-Extension-Firefox-v{version}.zip')
     
     create_posix_zip(ext_dir, zip_chrome, target_browser='chrome')
     if os.path.exists(os.path.join(ext_dir, 'manifest.firefox.json')):
