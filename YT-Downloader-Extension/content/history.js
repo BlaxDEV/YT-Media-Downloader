@@ -122,7 +122,7 @@ window.YTDL.history = {
       tagsDiv.className = "ytdl-hist-tags";
       
       const tagQuality = d.quality || (d.type === "audio" ? "Audio" : "1080p");
-      const tagFormat = d.format || (d.type === "audio" ? "MP3" : "MP4");
+      const tagFormat = (d.format || (d.type === "audio" ? "MP3" : "MP4")).toUpperCase();
       
       const tags = [tagQuality, tagFormat];
       if (d.duration && !thumbWrap.querySelector('.ytdl-hist-dur-pill')) tags.push(d.duration);
