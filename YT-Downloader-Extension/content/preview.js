@@ -193,8 +193,7 @@ window.YTDL.preview = {
     const player = document.querySelector("#movie_player, .html5-video-player");
     if (!player) return;
 
-    // Use container to allow elements (like markers) to overflow visible space safely
-    const progressBar = player.querySelector(".ytp-progress-bar-container");
+    const progressBar = player.querySelector(".ytp-progress-bar");
     if (!progressBar) return;
 
     const overlay = document.createElement("div");
