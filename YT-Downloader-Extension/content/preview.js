@@ -128,55 +128,85 @@ window.YTDL.preview = {
     const player = document.querySelector("#movie_player, .html5-video-player");
     if (!player) return;
 
-    const progressBar = player.querySelector(".ytp-progress-bar");
+    const progressBar = player.querySelector(".ytp-progress-bar-container") || player.querySelector(".ytp-progress-bar");
     if (!progressBar) return;
 
     const overlay = document.createElement("div");
     overlay.id = "ytdl-trim-overlay";
     overlay.textContent = "";
-    ["ytdl-ov-dim ytdl-ov-dim-left", "ytdl-ov-played", "ytdl-ov-unplayed", "ytdl-ov-dim ytdl-ov-dim-right"].forEach(cls => {
-      const div = document.createElement("div");
-      div.className = cls;
-      overlay.appendChild(div);
-    });
-    progressBar.insertBefore(overlay, progressBar.firstChild);
+    progressBar.appendChild(overlay);
   },
 
   // ─── Update Progress Overlay ────────────────────────────────
   updateProgressOverlay(trimStartPct, trimEndPct, currentPct) {
-    const overlay = document.getElementById("ytdl-trim-overlay");
-    if (!overlay) return;
-
-    const dimLeft = overlay.querySelector(".ytdl-ov-dim-left");
-    const played = overlay.querySelector(".ytdl-ov-played");
-    const unplayed = overlay.querySelector(".ytdl-ov-unplayed");
-    const dimRight = overlay.querySelector(".ytdl-ov-dim-right");
-
-    const clamped = Math.max(trimStartPct, Math.min(trimEndPct, currentPct));
-
-    if (dimLeft) {
-      dimLeft.style.left = "0%";
-      dimLeft.style.width = (trimStartPct * 100) + "%";
+    let overlay = document.getElementById("ytdl-trim-overlay");
+    if (!overlay) {
+      this.createProgressOverlay();
+      overlay = document.getElementById("ytdl-trim-overlay");
+      if (!overlay) return;
     }
-    if (dimRight) {
-      dimRight.style.left = (trimEndPct * 100) + "%";
-      dimRight.style.width = ((1 - trimEndPct) * 100) + "%";
-    }
+    overlay.textContent = "";
 
-    if (played) {
-      played.style.left = (trimStartPct * 100) + "%";
-      played.style.width = ((clamped - trimStartPct) * 100) + "%";
-    }
-
-    if (unplayed) {
-      unplayed.style.left = (clamped * 100) + "%";
-      unplayed.style.width = ((trimEndPct - clamped) * 100) + "%";
-    }
-
-    // Apply active color to the player container for CSS variables
     const player = document.querySelector("#movie_player, .html5-video-player");
-    if (player) {
-      player.style.setProperty("--ytdl-active-color", window.YTDL.state.activeScissorsColor || "#ff1744");
+    const video = this.getYouTubeVideo();
+    const dur = window.YTDL.state.videoInfo?.duration || video?.duration || 1;
+
+    // 1. Render all slices in multi-trim queue
+    if (window.YTDL.state.scissorsTrims && window.YTDL.state.scissorsTrims.length > 0) {
+      window.YTDL.state.scissorsTrims.forEach((trim, idx) => {
+        const isEditing = (window.YTDL.state.editingTrimIndex === idx);
+        const col = trim.color || "#ff1744";
+        const sPct = (trim.start / 1000);
+        const ePct = (trim.end / 1000);
+
+        const sliceDiv = document.createElement("div");
+        sliceDiv.className = `ytdl-ov-slice ${isEditing ? 'active' : ''}`;
+        sliceDiv.style.cssText = `
+          position: absolute !important;
+          top: 0 !important;
+          height: 100% !important;
+          left: ${(sPct * 100).toFixed(2)}% !important;
+          width: ${((ePct - sPct) * 100).toFixed(2)}% !important;
+          background: ${col} !important;
+          opacity: ${isEditing ? '0.95' : '0.55'} !important;
+          box-shadow: ${isEditing ? `0 0 10px ${col}, 0 0 18px ${col}` : `0 0 4px ${col}`} !important;
+          z-index: ${isEditing ? '95' : '85'} !important;
+          border-radius: 2px !important;
+          pointer-events: none !important;
+        `;
+        overlay.appendChild(sliceDiv);
+      });
+    }
+
+    // 2. Render active trim highlight & dim background if trimming is active
+    if (trimStartPct !== undefined && trimEndPct !== undefined) {
+      const clamped = Math.max(trimStartPct, Math.min(trimEndPct, currentPct || 0));
+      const activeColor = window.YTDL.state.activeScissorsColor || "#ff1744";
+
+      const dimLeft = document.createElement("div");
+      dimLeft.className = "ytdl-ov-dim ytdl-ov-dim-left";
+      dimLeft.style.cssText = `position:absolute !important;top:0 !important;height:100% !important;left:0% !important;width:${(trimStartPct * 100).toFixed(2)}% !important;background:rgba(0,0,0,0.6) !important;z-index:80 !important;pointer-events:none !important;`;
+
+      const dimRight = document.createElement("div");
+      dimRight.className = "ytdl-ov-dim ytdl-ov-dim-right";
+      dimRight.style.cssText = `position:absolute !important;top:0 !important;height:100% !important;left:${(trimEndPct * 100).toFixed(2)}% !important;width:${((1 - trimEndPct) * 100).toFixed(2)}% !important;background:rgba(0,0,0,0.6) !important;z-index:80 !important;pointer-events:none !important;`;
+
+      const played = document.createElement("div");
+      played.className = "ytdl-ov-played";
+      played.style.cssText = `position:absolute !important;top:0 !important;height:100% !important;left:${(trimStartPct * 100).toFixed(2)}% !important;width:${((clamped - trimStartPct) * 100).toFixed(2)}% !important;background:${activeColor} !important;box-shadow:0 0 10px ${activeColor} !important;z-index:96 !important;pointer-events:none !important;transition:width 0.1s linear !important;`;
+
+      const unplayed = document.createElement("div");
+      unplayed.className = "ytdl-ov-unplayed";
+      unplayed.style.cssText = `position:absolute !important;top:0 !important;height:100% !important;left:${(clamped * 100).toFixed(2)}% !important;width:${((trimEndPct - clamped) * 100).toFixed(2)}% !important;background:${activeColor} !important;opacity:0.45 !important;z-index:91 !important;pointer-events:none !important;`;
+
+      overlay.appendChild(dimLeft);
+      overlay.appendChild(dimRight);
+      overlay.appendChild(played);
+      overlay.appendChild(unplayed);
+
+      if (player) {
+        player.style.setProperty("--ytdl-active-color", activeColor);
+      }
     }
   },
 
