@@ -81,22 +81,18 @@ window.YTDL.videoData = {
     if (container) container.textContent = "";
     targetRes.forEach(res => {
       const exts = fmtGroups[res];
-      let fmtId = `res:${res}`;
-      let sizeText = selectedFmt.toUpperCase();
-      let ext = selectedFmt;
-      let rawSize = 0;
+      if (!exts) return; // Skip rendering if the resolution is not actually available
 
-      if (exts) {
-        const formats = exts[selectedFmt] || exts[Object.keys(exts)[0]];
-        if (formats && formats.length > 0) {
-          const fmt = formats[0];
-          fmtId = fmt.format_id || `res:${res}`;
-          rawSize = fmt.filesize || 0;
-          ext = fmt.ext || selectedFmt;
-          if (fmt.filesize) {
-            sizeText = `~${(fmt.filesize / 1048576).toFixed(0)} MB`;
-          }
-        }
+      const formats = exts[selectedFmt] || exts[Object.keys(exts)[0]];
+      if (!formats || formats.length === 0) return;
+
+      const fmt = formats[0];
+      const fmtId = fmt.format_id;
+      const rawSize = fmt.filesize || 0;
+      const ext = fmt.ext || selectedFmt;
+      let sizeText = selectedFmt.toUpperCase();
+      if (fmt.filesize) {
+        sizeText = `~${(fmt.filesize / 1048576).toFixed(0)} MB`;
       }
 
       const btn = document.createElement("button");
