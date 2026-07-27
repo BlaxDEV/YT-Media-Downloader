@@ -18,6 +18,12 @@ from urllib.parse import urlparse, parse_qs
 from http.server import HTTPServer, BaseHTTPRequestHandler
 from socketserver import ThreadingMixIn
 
+# Prevent crash when built with PyInstaller --noconsole (where sys.stdout/stderr are None)
+if sys.stdout is None:
+    sys.stdout = open(os.devnull, "w", encoding="utf-8")
+if sys.stderr is None:
+    sys.stderr = open(os.devnull, "w", encoding="utf-8")
+
 HOST = "127.0.0.1"
 PORT = 19836
 VERSION = "1.2.2"
@@ -29,9 +35,12 @@ else:
     BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
 # Check for binaries inside tools/ or tools-linux/ or fallback to system PATH
-TOOLS_DIR = os.path.join(BASE_DIR, "tools")
-if not os.path.exists(TOOLS_DIR):
-    TOOLS_DIR = os.path.join(BASE_DIR, "..", "tools")
+possible_tools_dirs = [
+    os.path.join(BASE_DIR, "tools"),
+    os.path.join(BASE_DIR, "..", "tools"),
+    os.path.join(BASE_DIR, "..", "..", "tools")
+]
+TOOLS_DIR = next((d for d in possible_tools_dirs if os.path.exists(d)), os.path.join(BASE_DIR, "tools"))
 
 EXT = ".exe" if platform.system() == "Windows" else ""
 
