@@ -12,6 +12,8 @@ SolidCompression=yes
 ArchitecturesInstallIn64BitMode=x64
 PrivilegesRequired=lowest
 SetupIconFile=..\icon.ico
+CloseApplications=force
+CloseApplicationsFilter=*.exe
 
 [Files]
 Source: "..\native-host\YTDownloader.exe"; DestDir: "{app}"; Flags: ignoreversion
@@ -38,6 +40,74 @@ var
 begin
   Result := RegQueryStringValue(HKLM, 'Software\Microsoft\Windows\CurrentVersion\Uninstall\YT Downloader_is1', 'UninstallString', UninstallPath) or
             RegQueryStringValue(HKCU, 'Software\Microsoft\Windows\CurrentVersion\Uninstall\YT Downloader_is1', 'UninstallString', UninstallPath);
+end;
+
+function IsBrowserRunning(const ExeName: String): Boolean;
+var
+  ResultCode: Integer;
+begin
+  Exec('tasklist', '/FI "IMAGENAME eq ' + ExeName + '" /NH', '', SW_HIDE, ewWaitUntilTerminated, ResultCode);
+  Result := (ResultCode = 0);
+end;
+
+procedure KillProcess(const ExeName: String);
+var
+  ResultCode: Integer;
+begin
+  Exec('taskkill', '/F /IM ' + ExeName, '', SW_HIDE, ewWaitUntilTerminated, ResultCode);
+end;
+
+function CloseAllBrowsers: Boolean;
+var
+  Browsers: array[0..5] of String;
+  I: Integer;
+begin
+  Browsers[0] := 'chrome.exe';
+  Browsers[1] := 'msedge.exe';
+  Browsers[2] := 'firefox.exe';
+  Browsers[3] := 'brave.exe';
+  Browsers[4] := 'opera.exe';
+  Browsers[5] := 'vivaldi.exe';
+
+  for I := 0 to 5 do
+    KillProcess(Browsers[I]);
+
+  // Small wait for processes to fully close
+  Sleep(1500);
+  Result := True;
+end;
+
+procedure ExportBrowserCookies;
+var
+  YtdlpPath, CookiesPath: String;
+  ResultCode: Integer;
+  Browsers: array[0..5] of String;
+  I: Integer;
+begin
+  YtdlpPath := ExpandConstant('{app}\tools\yt-dlp.exe');
+  CookiesPath := ExpandConstant('{userappdata}\..\Downloads\YTMediaDownloader\.yt_cookies.txt');
+
+  if not FileExists(YtdlpPath) then Exit;
+
+  Browsers[0] := 'chrome';
+  Browsers[1] := 'edge';
+  Browsers[2] := 'firefox';
+  Browsers[3] := 'brave';
+  Browsers[4] := 'opera';
+  Browsers[5] := 'vivaldi';
+
+  for I := 0 to 5 do
+  begin
+    Exec(YtdlpPath,
+      '--cookies-from-browser ' + Browsers[I] + ' --cookies "' + CookiesPath + '" --skip-download --no-warnings "https://www.youtube.com/watch?v=jNQXAC9IVRw"',
+      '', SW_HIDE, ewWaitUntilTerminated, ResultCode);
+    if (ResultCode = 0) and FileExists(CookiesPath) then
+    begin
+      Log('Cookies exported successfully from ' + Browsers[I]);
+      Exit;
+    end;
+  end;
+  Log('Could not export cookies from any browser.');
 end;
 
 procedure InitializeWizard;
@@ -69,12 +139,44 @@ begin
   end;
 end;
 
+function PrepInstall(CurPageID: Integer): Boolean;
+var
+  MsgResult: Integer;
+begin
+  Result := True;
+  if CurPageID = wpReady then
+  begin
+    MsgResult := MsgBox(
+      'Para una instalación correcta se deben cerrar todos los navegadores (Chrome, Edge, Firefox, Brave, etc.).' + #13#10 + #13#10 +
+      'Esto es necesario para poder extraer las cookies de YouTube y habilitar la descarga en todas las calidades (1080p, 720p, etc.).' + #13#10 + #13#10 +
+      '¿Deseas cerrar todos los navegadores ahora y continuar?',
+      mbConfirmation, MB_YESNO);
+    if MsgResult = IDNO then
+    begin
+      MsgBox('No se puede continuar sin cerrar los navegadores.' + #13#10 + 'Por favor ciérralos manualmente y vuelve a intentar.', mbError, MB_OK);
+      Result := False;
+    end
+    else
+    begin
+      CloseAllBrowsers;
+    end;
+  end;
+end;
+
 function NextButtonClick(CurPageID: Integer): Boolean;
 var
   ResultCode: Integer;
   UninstallStr: String;
 begin
   Result := True;
+
+  // Handle browser close on Ready page
+  if (CurPageID = wpReady) and (not IsMaintenanceMode) then
+  begin
+    Result := PrepInstall(CurPageID);
+    Exit;
+  end;
+
   if (IsMaintenanceMode) and (CurPageID = MaintenancePage.ID) then
   begin
     if MaintenancePage.SelectedValueIndex = 2 then // Desinstalar
@@ -95,7 +197,19 @@ begin
       MsgBox('Servidor verificado e iniciado en segundo plano. El programa se cerrará.', mbInformation, MB_OK);
       Result := False;
       WizardForm.Close;
+    end
+    else // Reparar - also need to close browsers
+    begin
+      Result := PrepInstall(wpReady);
     end;
   end;
 end;
 
+procedure CurStepChanged(CurStep: TSetupStep);
+begin
+  if CurStep = ssPostInstall then
+  begin
+    // Export cookies after installation (browsers are closed at this point)
+    ExportBrowserCookies;
+  end;
+end;

@@ -17,6 +17,7 @@ window.YTDL.download = {
     const bar = panel.querySelector(`#ytdl-${type === "video" ? "v" : "a"}-bar`);
     const pct = panel.querySelector(`#ytdl-${type === "video" ? "v" : "a"}-pct`);
 
+    const prefix = type === "video" ? "v" : "a";
     const openBtn = panel.querySelector(`#ytdl-${prefix}-open-folder-btn`);
     if (openBtn) openBtn.style.display = "none";
     btn.disabled = true;
@@ -35,13 +36,17 @@ window.YTDL.download = {
       if (!fmtBtn) { window.YTDL.state.isDownloading = false; btn.disabled = false; return; }
 
       const fmtId = fmtBtn.dataset.fmt;
+      const resText = fmtBtn.querySelector(".ytdl-q-res")?.textContent || "1080p";
+      body.quality = resText;
+      body.format_id = fmtId;
+
       const videoFormats = window.YTDL.state.formatsData?.formats?.filter(f => f.type === "video" && f.resolution && f.resolution !== "unknown") || [];
       const audioFormats = window.YTDL.state.formatsData?.formats?.filter(f => f.type === "audio") || [];
       const selectedFmt = videoFormats.find(f => f.format_id === fmtId);
 
-      body.format_id = fmtId;
       const includeAudio = panel.querySelector("#ytdl-v-include-audio")?.checked !== false;
-      if (selectedFmt?.type === "video" && audioFormats.length > 0 && includeAudio) {
+      // Only combine format_ids when we have a real numeric yt-dlp format_id
+      if (selectedFmt?.type === "video" && !fmtId.startsWith("res:") && audioFormats.length > 0 && includeAudio) {
         const bestAudio = audioFormats.find(f => f.ext === "m4a") || audioFormats[0];
         body.format_id = `${fmtId}+${bestAudio.format_id}`;
       }

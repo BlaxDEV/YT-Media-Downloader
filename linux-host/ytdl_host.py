@@ -59,8 +59,72 @@ YTDLP_BIN = get_binary_path("yt-dlp")
 FFMPEG_BIN = get_binary_path("ffmpeg")
 FFPROBE_BIN = get_binary_path("ffprobe")
 
+# Windows: hide CMD windows spawned by subprocess
+IS_WINDOWS = platform.system() == "Windows"
+_subprocess_kwargs = {}
+if IS_WINDOWS:
+    _subprocess_kwargs["creationflags"] = subprocess.CREATE_NO_WINDOW
+
+# Detect browser for cookies (avoids YouTube bot detection / CAPTCHA)
+COOKIES_BROWSER = None
+COOKIES_FILE = None
+
+def _detect_cookies_browser():
+    """Try to find a working cookie source. Runs in background on startup."""
+    global COOKIES_BROWSER, COOKIES_FILE
+
+    # 1. Check if user manually placed a cookies.txt next to the binary
+    manual_cookies = os.path.join(BASE_DIR, "cookies.txt")
+    if not os.path.exists(manual_cookies):
+        manual_cookies = os.path.join(os.path.dirname(BASE_DIR), "cookies.txt")
+    if os.path.exists(manual_cookies):
+        COOKIES_FILE = manual_cookies
+        print(f"[YTDL] Using manual cookies file: {manual_cookies}")
+        return
+
+    # 2. Try each browser with --cookies-from-browser
+    #    Use a fast test: just try to extract cookies (no video download)
+    cookies_export_path = os.path.join(DEFAULT_DOWNLOAD_DIR, ".yt_cookies.txt")
+    for browser in ["chrome", "edge", "firefox", "brave", "opera", "vivaldi"]:
+        try:
+            # Try exporting cookies to file (works even if --cookies-from-browser fails at runtime)
+            export_cmd = [YTDLP_BIN, "--cookies-from-browser", browser, "--cookies", cookies_export_path,
+                          "--skip-download", "--no-warnings", "https://www.youtube.com/watch?v=jNQXAC9IVRw"]
+            res = subprocess.run(export_cmd, capture_output=True, text=True, timeout=30, **_subprocess_kwargs)
+            if res.returncode == 0 and os.path.exists(cookies_export_path) and os.path.getsize(cookies_export_path) > 100:
+                COOKIES_FILE = cookies_export_path
+                print(f"[YTDL] Cookies exported from {browser} -> {cookies_export_path}")
+                return
+        except Exception:
+            continue
+
+    # 3. If export failed, try --cookies-from-browser directly (for browsers that support it at runtime)
+    for browser in ["chrome", "edge", "firefox", "brave"]:
+        try:
+            test_cmd = [YTDLP_BIN, "--cookies-from-browser", browser, "--skip-download", "--no-warnings",
+                        "https://www.youtube.com/watch?v=jNQXAC9IVRw"]
+            res = subprocess.run(test_cmd, capture_output=True, text=True, timeout=20, **_subprocess_kwargs)
+            if res.returncode == 0:
+                COOKIES_BROWSER = browser
+                print(f"[YTDL] Using cookies-from-browser: {browser}")
+                return
+        except Exception:
+            continue
+
+    print("[YTDL] No cookies source detected. Some videos may be limited to 360p.")
+    print("[YTDL] Tip: Place a 'cookies.txt' file next to YTDownloader.exe to fix this.")
+
+def _ytdlp_base_cmd():
+    """Return yt-dlp base command with cookies if available."""
+    cmd = [YTDLP_BIN]
+    if COOKIES_FILE and os.path.exists(COOKIES_FILE):
+        cmd.extend(["--cookies", COOKIES_FILE])
+    elif COOKIES_BROWSER:
+        cmd.extend(["--cookies-from-browser", COOKIES_BROWSER])
+    return cmd
+
 # Default download directory
-if platform.system() == "Windows":
+if IS_WINDOWS:
     DEFAULT_DOWNLOAD_DIR = os.path.join(os.path.expanduser("~"), "Downloads", "YTMediaDownloader")
 else:
     DEFAULT_DOWNLOAD_DIR = os.path.join(os.path.expanduser("~"), "Downloads", "YTMediaDownloader")
@@ -165,11 +229,11 @@ class YTDLRequestHandler(BaseHTTPRequestHandler):
                 self._send_json({"error": "URL requerida"}, status_code=400)
                 return
             try:
-                cmd = [YTDLP_BIN, "--dump-json", "--no-warnings", "--no-playlist", url]
-                res = subprocess.run(cmd, capture_output=True, text=True)
+                cmd = _ytdlp_base_cmd() + ["--dump-json", "--no-warnings", "--no-playlist", url]
+                res = subprocess.run(cmd, capture_output=True, text=True, **_subprocess_kwargs)
                 if res.returncode != 0:
-                    cmd_fb = [YTDLP_BIN, "--dump-json", "--no-warnings", "--no-playlist", "--extractor-args", "youtube:player_client=android,web", url]
-                    res = subprocess.run(cmd_fb, capture_output=True, text=True)
+                    cmd_fb = _ytdlp_base_cmd() + ["--dump-json", "--no-warnings", "--no-playlist", "--extractor-args", "youtube:player_client=android,web", url]
+                    res = subprocess.run(cmd_fb, capture_output=True, text=True, **_subprocess_kwargs)
                 if res.returncode != 0:
                     err_msg = res.stderr.strip() if res.stderr else f"Error al ejecutar yt-dlp (exit code {res.returncode})"
                     self._send_json({"error": err_msg}, status_code=500)
@@ -199,11 +263,11 @@ class YTDLRequestHandler(BaseHTTPRequestHandler):
                 self._send_json({"error": "URL requerida"}, status_code=400)
                 return
             try:
-                cmd = [YTDLP_BIN, "--dump-json", "--no-warnings", "--no-playlist", url]
-                res = subprocess.run(cmd, capture_output=True, text=True)
+                cmd = _ytdlp_base_cmd() + ["--dump-json", "--no-warnings", "--no-playlist", url]
+                res = subprocess.run(cmd, capture_output=True, text=True, **_subprocess_kwargs)
                 if res.returncode != 0:
-                    cmd_fb = [YTDLP_BIN, "--dump-json", "--no-warnings", "--no-playlist", "--extractor-args", "youtube:player_client=android,web", url]
-                    res = subprocess.run(cmd_fb, capture_output=True, text=True)
+                    cmd_fb = _ytdlp_base_cmd() + ["--dump-json", "--no-warnings", "--no-playlist", "--extractor-args", "youtube:player_client=android,web", url]
+                    res = subprocess.run(cmd_fb, capture_output=True, text=True, **_subprocess_kwargs)
                 if res.returncode != 0:
                     err_msg = res.stderr.strip() if res.stderr else f"Error al ejecutar yt-dlp (exit code {res.returncode})"
                     self._send_json({"error": err_msg}, status_code=500)
@@ -262,9 +326,9 @@ class YTDLRequestHandler(BaseHTTPRequestHandler):
                     if sys_name == "Windows":
                         os.startfile(folder_path)
                     elif sys_name == "Darwin":
-                        subprocess.Popen(["open", folder_path])
+                        subprocess.Popen(["open", folder_path], **_subprocess_kwargs)
                     else:  # Linux
-                        subprocess.Popen(["xdg-open", folder_path])
+                        subprocess.Popen(["xdg-open", folder_path], **_subprocess_kwargs)
                     self._send_json({"status": "ok"})
                 except Exception as e:
                     self._send_json({"error": str(e)}, status_code=500)
@@ -289,11 +353,11 @@ class YTDLRequestHandler(BaseHTTPRequestHandler):
                     with open(out_path, "wb") as f:
                         f.write(data)
                 else:
-                    stream_cmd = [YTDLP_BIN, "--no-warnings", "--extractor-args", "youtube:player_client=android,web", "-g", "-f", "bestvideo/best", url]
-                    stream_res = subprocess.run(stream_cmd, capture_output=True, text=True, check=True)
+                    stream_cmd = _ytdlp_base_cmd() + ["--no-warnings", "-g", "-f", "bestvideo/best", url]
+                    stream_res = subprocess.run(stream_cmd, capture_output=True, text=True, check=True, **_subprocess_kwargs)
                     stream_url = stream_res.stdout.strip().split("\n")[0]
                     ff_cmd = [FFMPEG_BIN, "-y", "-ss", str(timestamp), "-i", stream_url, "-vframes", "1", "-q:v", "2", out_path]
-                    subprocess.run(ff_cmd, capture_output=True, check=True)
+                    subprocess.run(ff_cmd, capture_output=True, check=True, **_subprocess_kwargs)
                 self._send_json({"status": "ok", "path": out_path})
             except Exception as e:
                 self._send_json({"error": str(e)}, status_code=500)
@@ -335,6 +399,21 @@ class YTDLRequestHandler(BaseHTTPRequestHandler):
                 _save_history()
             self._send_json({"status": "ok"})
 
+        elif path == "/open_folder":
+            folder = body.get("path") or DEFAULT_DOWNLOAD_DIR
+            if os.path.isdir(folder):
+                import platform
+                system = platform.system()
+                if system == "Windows":
+                    os.startfile(folder)
+                elif system == "Darwin":
+                    subprocess.Popen(["open", folder], **_subprocess_kwargs)
+                else:
+                    subprocess.Popen(["xdg-open", folder], **_subprocess_kwargs)
+                self._send_json({"status": "ok"})
+            else:
+                self._send_json({"error": "Carpeta no encontrada"}, status_code=404)
+
         else:
             self._send_json({"error": "Ruta POST no válida"}, status_code=404)
 
@@ -358,7 +437,7 @@ class YTDLRequestHandler(BaseHTTPRequestHandler):
             if is_anim_export:
                 ext = "mp4"
 
-            cmd = [YTDLP_BIN, "--no-warnings", "--newline", "--progress-template", "%(progress._percent_str)s", "--extractor-args", "youtube:player_client=android,web"]
+            cmd = _ytdlp_base_cmd() + ["--no-warnings", "--newline", "--progress-template", "%(progress._percent_str)s"]
             if FFMPEG_BIN != "ffmpeg":
                 cmd.extend(["--ffmpeg-location", os.path.dirname(FFMPEG_BIN)])
 
@@ -393,23 +472,15 @@ class YTDLRequestHandler(BaseHTTPRequestHandler):
                 if is_anim_export:
                     cmd.extend(["-f", "bestvideo[height<=1080]/best"])
                 else:
-                    fmt_id = str(body.get("format_id") or body.get("quality") or "")
-                    target_h = "1080"
-                    if "1080" in fmt_id:
-                        target_h = "1080"
-                    elif "720" in fmt_id:
-                        target_h = "720"
-                    elif "480" in fmt_id:
-                        target_h = "480"
-                    elif "360" in fmt_id:
-                        target_h = "360"
-                    elif "240" in fmt_id:
-                        target_h = "240"
-                    elif "144" in fmt_id:
-                        target_h = "144"
+                    fmt_id = str(body.get("format_id") or "")
+                    quality = str(body.get("quality") or "1080p")
+                    # Extract target height from quality field (e.g. "1080p" -> "1080")
+                    target_h = quality.replace("p", "").strip() or "1080"
 
-                    if fmt_id.isdigit():
-                        format_spec = f"{fmt_id}+bestaudio/bestvideo[height<={target_h}]+bestaudio/best"
+                    # Real numeric format_id from yt-dlp (e.g. "137+251")
+                    has_real_fmt = fmt_id and not fmt_id.startswith("res:") and fmt_id not in ("", "undefined")
+                    if has_real_fmt:
+                        format_spec = f"{fmt_id}/bestvideo[height<={target_h}]+bestaudio/best"
                     else:
                         format_spec = f"bestvideo[height<={target_h}]+bestaudio/bestvideo[height<={target_h}]+best/best"
 
@@ -420,7 +491,7 @@ class YTDLRequestHandler(BaseHTTPRequestHandler):
             out_template = os.path.join(out_dir, "%(title)s.temp_conv.%(ext)s" if is_anim_export else "%(title)s.%(ext)s")
             cmd.extend(["-o", out_template, url])
 
-            process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
+            process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, **_subprocess_kwargs)
 
             while True:
                 line = process.stdout.readline()
@@ -450,7 +521,7 @@ class YTDLRequestHandler(BaseHTTPRequestHandler):
                         ff_conv = [FFMPEG_BIN, "-y", "-i", temp_mp4, "-vf", "fps=15,scale=720:-1:flags=lanczos,split[s0][s1];[s0]palettegen[p];[s1][p]paletteuse", final_path]
                     else:
                         ff_conv = [FFMPEG_BIN, "-y", "-i", temp_mp4, "-vf", "fps=20,scale=1080:-1:flags=lanczos", "-vcodec", "libwebp", "-lossless", "0", "-qscale", "80", "-preset", "default", "-loop", "0", "-an", "-vsync", "0", final_path]
-                    subprocess.run(ff_conv, capture_output=True)
+                    subprocess.run(ff_conv, capture_output=True, **_subprocess_kwargs)
                     try:
                         os.remove(temp_mp4)
                     except:
@@ -475,6 +546,9 @@ def main():
     print(f"  Running on: {platform.system()} ({platform.machine()})")
     print(f"  Listening at: http://{HOST}:{PORT}")
     print(f"=========================================================")
+    # Detect browser cookies in background (non-blocking)
+    cookies_thread = threading.Thread(target=_detect_cookies_browser, daemon=True)
+    cookies_thread.start()
     try:
         server = ThreadingHTTPServer((HOST, PORT), YTDLRequestHandler)
         server.serve_forever()
