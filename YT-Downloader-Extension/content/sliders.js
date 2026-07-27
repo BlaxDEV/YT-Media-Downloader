@@ -327,11 +327,29 @@ window.YTDL.sliders = {
         }
       };
 
-      const handleSliderInput = (e) => {
-        if (!window.YTDL.buttons.isApplyingScissors && e && e.isTrusted && (window.YTDL.state.scissorsState > 0 || window.YTDL.state.scissorsTrimA !== null || window.YTDL.state.scissorsTrimB !== null)) {
+      const syncScissorsWithSliders = () => {
+        if (!window.YTDL.buttons.isApplyingScissors && (window.YTDL.state.scissorsState > 0 || window.YTDL.state.scissorsTrimA !== null || window.YTDL.state.scissorsTrimB !== null)) {
           if (window.YTDL.state.editingTrimIndex === null || window.YTDL.state.editingTrimIndex === undefined) {
-            window.YTDL.buttons.resetScissorsTool();
+            const dur = window.YTDL.state.videoInfo?.duration || window.YTDL.preview?.getYouTubeVideo()?.duration || 600;
+            const sVal = parseInt(start.value);
+            const eVal = parseInt(end.value);
+            window.YTDL.state.scissorsTrimA = sVal;
+            window.YTDL.state.scissorsTrimB = eVal;
+            window.YTDL.state.scissorsTimeSecA = (sVal / 1000) * dur;
+            window.YTDL.state.scissorsTimeSecB = (eVal / 1000) * dur;
+            
+            const label = document.getElementById("ytdl-scissors-label");
+            if (window.YTDL.state.scissorsState === 1 && eVal < 1000) {
+              window.YTDL.state.scissorsState = 2;
+              if (label) label.textContent = "B";
+            }
           }
+        }
+      };
+
+      const handleSliderInput = (e) => {
+        if (e && e.isTrusted) {
+          syncScissorsWithSliders();
         }
         update(false, e ? e.target : null);
       };
@@ -341,10 +359,8 @@ window.YTDL.sliders = {
       
       const handleInputEdit = (e) => {
         if (e.type === 'blur' || (e.type === 'keydown' && e.key === 'Enter')) {
-          if (!window.YTDL.buttons.isApplyingScissors && e && e.isTrusted && (window.YTDL.state.scissorsState > 0 || window.YTDL.state.scissorsTrimA !== null || window.YTDL.state.scissorsTrimB !== null)) {
-            if (window.YTDL.state.editingTrimIndex === null || window.YTDL.state.editingTrimIndex === undefined) {
-              window.YTDL.buttons.resetScissorsTool();
-            }
+          if (e.isTrusted) {
+            syncScissorsWithSliders();
           }
           update(true, e ? e.target : null);
         }
