@@ -10,30 +10,31 @@
   height: 38px;
   min-height: 38px;
   border-radius: 19px;
-  background: rgba(0, 0, 0, 0.05);
-  color: var(--yt-spec-text-primary, #0f0f0f);
+  background: #ff4444;
+  color: #fff;
   cursor: pointer;
   font-family: "Roboto", "Arial", sans-serif;
   font-size: 14px;
   font-weight: 500;
   white-space: nowrap;
-  transition: background 0.2s;
+  transition: background 0.2s, box-shadow 0.2s;
   margin-left: 8px;
 }
 
 .ytdl-fallback-btn:hover {
-  background: rgba(0, 0, 0, 0.1);
+  background: #ff5555;
+  box-shadow: 0 2px 8px rgba(255, 68, 68, 0.3);
 }
 
 [dir="dark"] .ytdl-fallback-btn,
 html[dark] .ytdl-fallback-btn {
-  background: rgba(255, 255, 255, 0.1);
-  color: #f1f1f1;
+  background: #ff4444;
+  color: #fff;
 }
 
 [dir="dark"] .ytdl-fallback-btn:hover,
 html[dark] .ytdl-fallback-btn:hover {
-  background: rgba(255, 255, 255, 0.2);
+  background: #ff5555;
 }
 
 .ytdl-shorts-btn {
