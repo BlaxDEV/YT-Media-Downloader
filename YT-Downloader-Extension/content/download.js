@@ -17,19 +17,28 @@ window.YTDL.download = {
     const bar = panel.querySelector(`#ytdl-${type === "video" ? "v" : "a"}-bar`);
     const pct = panel.querySelector(`#ytdl-${type === "video" ? "v" : "a"}-pct`);
 
+    const getLang = () => window.YTDL?.state?.defaultSettings?.defLang || "en";
+    const t = (k) => typeof window.YTDL_I18N_get === "function" ? window.YTDL_I18N_get(getLang(), k) : k;
+
     const prefix = type === "video" ? "v" : "a";
     const openBtn = panel.querySelector(`#ytdl-${prefix}-open-folder-btn`);
     if (openBtn) openBtn.style.display = "none";
     btn.disabled = true;
     if (progress) progress.style.display = "flex";
     if (bar) bar.style.width = "0%";
-    if (pct) pct.textContent = "Iniciando...";
+    if (pct) pct.textContent = t("downloadStarting");
 
     const pageTitle = document.title.replace(/^\(\d+\)\s*/, "").replace(/ - YouTube$/, "") || "Video";
+    const durSec = window.YTDL.state.videoInfo?.duration || window.YTDL.preview?.getYouTubeVideo()?.duration || 0;
+    const durationStr = durSec ? window.YTDL.formatTime(durSec) : "";
+    const thumb = window.YTDL.state.formatsData?.thumbnail || window.YTDL.state.videoInfo?.thumbnail || "";
+
     let body = { 
       url: window.YTDL.state.currentVideoUrl, 
       type, 
-      title: window.YTDL.state.formatsData?.title || window.YTDL.state.videoInfo?.title || pageTitle 
+      title: window.YTDL.state.formatsData?.title || window.YTDL.state.videoInfo?.title || pageTitle,
+      thumbnail: thumb,
+      duration_str: durationStr
     };
     if (type === "video") {
       const fmtBtn = panel.querySelector("#ytdl-qualities .ytdl-q-btn.active");
@@ -140,7 +149,7 @@ window.YTDL.download = {
     if (res?.id) {
       this.pollProgress(type, res.id);
     } else {
-      if (pct) pct.textContent = `Error: ${res?.error || "desconocido"}`;
+      if (pct) pct.textContent = `Error: ${res?.error || t("errUnknown")}`;
       window.YTDL.state.isDownloading = false;
       btn.disabled = false;
     }

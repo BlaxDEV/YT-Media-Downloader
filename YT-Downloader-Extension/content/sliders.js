@@ -288,7 +288,9 @@ window.YTDL.sliders = {
           const secStart = window.YTDL.parseTime(timeA.value);
           const secEnd = window.YTDL.parseTime(timeB.value);
           const remainSecs = Math.max(0, secEnd - secStart);
-          trimText.textContent = `Restante: ${window.YTDL.formatTime(remainSecs)}`;
+          const getLang = () => window.YTDL?.state?.defaultSettings?.defLang || "en";
+          const t = (k) => typeof window.YTDL_I18N_get === "function" ? window.YTDL_I18N_get(getLang(), k) : k;
+          trimText.textContent = `${t("trimRemaining")} ${window.YTDL.formatTime(remainSecs)}`;
         }
 
         if (window.YTDL.state.editingTrimIndex !== null && window.YTDL.state.editingTrimIndex !== undefined) {

@@ -204,7 +204,8 @@ window.YTDL.buttons = {
       cameraBtn = document.createElement("button");
       cameraBtn.id = "ytdl-camera-btn";
       cameraBtn.className = "ytp-button";
-      const title = typeof YTDL_I18N_get === "function" ? YTDL_I18N_get("cameraGrabTitle") : "Tomar captura";
+      const getLang = () => window.YTDL?.state?.defaultSettings?.defLang || "en";
+      const title = typeof YTDL_I18N_get === "function" ? YTDL_I18N_get(getLang(), "cameraGrabTitle") : "Tomar captura";
       this.bindTooltip(cameraBtn, title);
       cameraBtn.style.cssText = "width:48px; height:100%; opacity:0.9; display:none; align-items:center; justify-content:center; position:relative; border:none; background:none; cursor:pointer; padding:0;";
       cameraBtn.textContent = "";
@@ -259,7 +260,7 @@ window.YTDL.buttons = {
 
         await window.YTDL.serverPost("/frame_grab", payload);
         
-        const badgeMsg = typeof YTDL_I18N_get === "function" ? YTDL_I18N_get("frameGrabbed") : "Frame captured & saved!";
+        const badgeMsg = typeof YTDL_I18N_get === "function" ? YTDL_I18N_get(getLang(), "frameGrabbed") : "Frame captured & saved!";
         const existing = document.getElementById("ytdl-preview-badge");
         if (existing) existing.remove();
         const badge = document.createElement("div");
@@ -287,10 +288,12 @@ window.YTDL.buttons = {
     if (!rightControls) return;
 
     if (!scissorsBtn) {
+      const getLang = () => window.YTDL?.state?.defaultSettings?.defLang || "en";
+      const scisTitle = typeof YTDL_I18N_get === "function" ? YTDL_I18N_get(getLang(), "scissorsTooltip") : "Modo Recorte";
       scissorsBtn = document.createElement("button");
       scissorsBtn.id = "ytdl-scissors-btn";
       scissorsBtn.className = "ytp-button";
-      this.bindTooltip(scissorsBtn, "Modo Recorte");
+      this.bindTooltip(scissorsBtn, scisTitle);
       scissorsBtn.style.cssText = "width:48px; height:100%; opacity:0.9; display:none; align-items:center; justify-content:center; position:relative; border:none; background:none; cursor:pointer; padding:0;";
       scissorsBtn.textContent = "";
       const svgNS = "http://www.w3.org/2000/svg";

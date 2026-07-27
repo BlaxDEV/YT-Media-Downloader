@@ -1,7 +1,9 @@
-# YT Media Downloader v1.2.5
+# YT Media Downloader v1.2.6
 
-## Bug Fixes
-- **Trim & Cut Editing Specificity** — Fixed an issue where manual slider movements or input typing during cut editing would trigger `resetScissorsTool()` prematurely. This was resetting the active trim mode, stopping the preview, and discarding active selection properties. Adjusting the ranges is now precise and specific.
-- **Individual Cut Previews (No Onion Skinning)** — Completely removed the layered "onion skin" slices (`ytdl-ov-slice`) to avoid visual clutter. The player progress timeline now renders only the active, individual selection (either the one being actively made or the active edit segment) with its corresponding brand color, dimming highlights, and markers.
-- **Scissors Position Markers** — Added custom scissor markers ("A" and "B" icons) on the progress bar to clearly mark the selected start and end boundaries on the timeline.
-- **Listener Leak Prevention** — Replaced anonymous wrapper functions on the YouTube video element `timeupdate` event with a single bound reference to prevent memory and performance leaks during active preview switching.
+## Release Notes
+
+- **Overhauled History UI** — Redesigned the History tab with a sleek dark card aesthetic, featuring video thumbnail previews with duration badge pills, formatted metadata tags (resolution, format, duration, file size), and real-time status indicators.
+- **Default Downloads Location** — Updated default download directory to `Documents/YTDownloader` (`%USERPROFILE%\Documents\YTDownloader`) across companion server and setup installer.
+- **Chapter Batch Selection** — Added dedicated "Select all" and "Deselect all" buttons below the chapter list for quick batch chapter selection.
+- **Full i18n & Dynamic Localization** — Complete multi-language coverage across 9 languages (en, es, pt, fr, de, it, ru, ja, zh) with real-time translation synchronization between YouTube video panel and extension popup menu.
+- **Installer Process & Uninstall Fixes** — Updated Windows setup to forcibly terminate running companion server processes before install/uninstall steps and ensure clean file removal.

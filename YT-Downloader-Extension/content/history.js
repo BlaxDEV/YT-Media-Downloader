@@ -66,63 +66,94 @@ window.YTDL.history = {
 
     const pageItems = items.slice((page - 1) * 10, page * 10);
     pageItems.forEach(d => {
-      const item = document.createElement("div");
-      item.className = "ytdl-hist-item";
-      const icon = d.type === "audio" ? "🎵" : "🎬";
-      const st = d.status === "complete" ? `✅ ${t("histComplete")}` : d.status === "processing" ? `⏳ ${t("histProcessing")}` : d.status === "error" ? `❌ ${t("histError")}` : `${Math.round(d.progress || 0)}%`;
+      const card = document.createElement("div");
+      card.className = "ytdl-hist-item";
 
-      const infoDiv = document.createElement("div");
-      infoDiv.className = "ytdl-hist-info";
+      // 1. Left Thumbnail Column
+      const thumbWrap = document.createElement("div");
+      thumbWrap.className = "ytdl-hist-thumb-wrap";
 
-      const titleSpan = document.createElement("span");
-      titleSpan.className = "ytdl-hist-title";
-      titleSpan.textContent = `${icon} ${d.title || "Video"}`;
+      const fallbackSvg = d.type === "audio" 
+        ? '<svg class="ytdl-hist-fallback-icon" viewBox="0 0 24 24"><path fill="currentColor" d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z"/></svg>'
+        : '<svg class="ytdl-hist-fallback-icon" viewBox="0 0 24 24"><path fill="currentColor" d="M17 10.5V7c0-.55-.45-1-1-1H4c-.55 0-1 .45-1 1v10c0 .55.45 1 1 1h12c.55 0 1-.45 1-1v-3.5l4 4v-11l-4 4z"/></svg>';
 
-      const statusSpan = document.createElement("span");
-      statusSpan.className = `ytdl-hist-status ${d.status}`;
-      statusSpan.textContent = st;
-
-      infoDiv.appendChild(titleSpan);
-      infoDiv.appendChild(statusSpan);
-
-      const barDiv = document.createElement("div");
-      barDiv.className = "ytdl-hist-bar";
-      const fillDiv = document.createElement("div");
-      fillDiv.className = "ytdl-hist-bar-fill";
-      fillDiv.style.width = `${d.progress || 0}%`;
-      barDiv.appendChild(fillDiv);
-
-      item.appendChild(infoDiv);
-      item.appendChild(barDiv);
-
-      if (d.status === "complete") {
-        const actionRow = document.createElement("div");
-        actionRow.className = "ytdl-hist-action-row";
-
-        if (d.file_exists !== false && d.exists !== false) {
-          const openBtn = document.createElement("button");
-          openBtn.className = "ytdl-hist-open-btn";
-          openBtn.style.margin = "0";
-          openBtn.textContent = `📁 ${t("histOpenFolder")}`;
-          openBtn.addEventListener("click", () => {
-            window.YTDL.serverPost("/open_folder", { id: d.id, path: d.output_dir });
-          });
-          actionRow.appendChild(openBtn);
-        } else {
-          const missingBtn = document.createElement("button");
-          missingBtn.className = "ytdl-hist-missing-btn";
-          missingBtn.setAttribute("title", t("histMissingNotice"));
-          const questionSpan = document.createElement("span");
-          questionSpan.textContent = "?";
-          missingBtn.appendChild(questionSpan);
-          missingBtn.addEventListener("click", () => {
-            alert(t("histMissingNotice"));
-          });
-          actionRow.appendChild(missingBtn);
-        }
-        item.appendChild(actionRow);
+      if (d.thumbnail) {
+        const img = document.createElement("img");
+        img.className = "ytdl-hist-thumb-img";
+        img.src = d.thumbnail;
+        img.onerror = () => {
+          thumbWrap.innerHTML = fallbackSvg;
+        };
+        thumbWrap.appendChild(img);
+      } else {
+        thumbWrap.innerHTML = fallbackSvg;
       }
-      listEl.appendChild(item);
+
+      if (d.duration) {
+        const durPill = document.createElement("span");
+        durPill.className = "ytdl-hist-dur-pill";
+        durPill.textContent = d.duration;
+        thumbWrap.appendChild(durPill);
+      }
+
+      card.appendChild(thumbWrap);
+
+      // 2. Center Info Column
+      const infoCol = document.createElement("div");
+      infoCol.className = "ytdl-hist-info";
+
+      const titleDiv = document.createElement("div");
+      titleDiv.className = "ytdl-hist-title";
+      titleDiv.textContent = d.title || "Video";
+      titleDiv.setAttribute("title", d.title || "Video");
+      infoCol.appendChild(titleDiv);
+
+      // Tags Row (e.g. 1080p MP4 52:48 448 MB)
+      const tagsDiv = document.createElement("div");
+      tagsDiv.className = "ytdl-hist-tags";
+      
+      const tagQuality = d.quality || (d.type === "audio" ? "Audio" : "1080p");
+      const tagFormat = d.format || (d.type === "audio" ? "MP3" : "MP4");
+      
+      const tags = [tagQuality, tagFormat];
+      if (d.duration && !thumbWrap.querySelector('.ytdl-hist-dur-pill')) tags.push(d.duration);
+      if (d.filesize_str) tags.push(d.filesize_str);
+
+      tags.forEach(tText => {
+        const tSpan = document.createElement("span");
+        tSpan.className = "ytdl-hist-tag";
+        tSpan.textContent = tText;
+        tagsDiv.appendChild(tSpan);
+      });
+      infoCol.appendChild(tagsDiv);
+
+      // Status Row
+      const stText = d.status === "complete" 
+        ? t("histComplete") 
+        : d.status === "processing" 
+        ? `${t("histProcessing")} (${Math.round(d.progress || 0)}%)` 
+        : d.status === "error" 
+        ? t("histError") 
+        : `${Math.round(d.progress || 0)}%`;
+
+      const statusDiv = document.createElement("div");
+      statusDiv.className = `ytdl-hist-status ${d.status}`;
+      statusDiv.textContent = stText;
+      infoCol.appendChild(statusDiv);
+
+      card.appendChild(infoCol);
+
+      // 3. Right Column (Date)
+      const rightCol = document.createElement("div");
+      rightCol.className = "ytdl-hist-right-col";
+
+      const dateDiv = document.createElement("div");
+      dateDiv.className = "ytdl-hist-date";
+      dateDiv.textContent = d.timestamp_str || d.date || "";
+      rightCol.appendChild(dateDiv);
+
+      card.appendChild(rightCol);
+      listEl.appendChild(card);
     });
 
     if (totalPages > 1) {

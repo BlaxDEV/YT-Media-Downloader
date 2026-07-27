@@ -126,6 +126,10 @@ window.YTDL.panel = {
                   <select id="ytdl-v-chapters-sel" class="ytdl-select-input"></select>
                   <button class="ytdl-add-trim-btn" id="ytdl-v-add-chapter" title="Seleccionar múltiple (+)">+</button>
                 </div>
+                <div class="ytdl-ch-actions-row" id="ytdl-v-ch-actions" style="display:none; margin-top: 6px; gap: 6px;">
+                  <button class="ytdl-ch-btn" id="ytdl-v-btn-select-all">Seleccionar todos</button>
+                  <button class="ytdl-ch-btn" id="ytdl-v-btn-deselect-all">Deseleccionar todos</button>
+                </div>
                 <div class="ytdl-multi-trims-container" id="ytdl-v-selected-chapters"></div>
               </div>
             </div>
@@ -133,7 +137,6 @@ window.YTDL.panel = {
               <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></svg>
               Descargar Video
             </button>
-            <button class="ytdl-open-folder-btn" id="ytdl-v-open-folder-btn" style="display:none;">📁 Abrir Carpeta</button>
             <div class="ytdl-progress" id="ytdl-v-progress" style="display:none">
               <div class="ytdl-progress-track"><div class="ytdl-progress-bar" id="ytdl-v-bar"></div></div>
               <span class="ytdl-progress-pct" id="ytdl-v-pct">0%</span>
@@ -203,6 +206,10 @@ window.YTDL.panel = {
                   <select id="ytdl-a-chapters-sel" class="ytdl-select-input"></select>
                   <button class="ytdl-add-trim-btn" id="ytdl-a-add-chapter" title="Seleccionar múltiple (+)">+</button>
                 </div>
+                <div class="ytdl-ch-actions-row" id="ytdl-a-ch-actions" style="display:none; margin-top: 6px; gap: 6px;">
+                  <button class="ytdl-ch-btn" id="ytdl-a-btn-select-all">Seleccionar todos</button>
+                  <button class="ytdl-ch-btn" id="ytdl-a-btn-deselect-all">Deseleccionar todos</button>
+                </div>
                 <div class="ytdl-multi-trims-container" id="ytdl-a-selected-chapters"></div>
               </div>
             </div>
@@ -210,7 +217,6 @@ window.YTDL.panel = {
               <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></svg>
               Descargar Audio
             </button>
-            <button class="ytdl-open-folder-btn" id="ytdl-a-open-folder-btn" style="display:none;">📁 Abrir Carpeta</button>
             <div class="ytdl-progress" id="ytdl-a-progress" style="display:none">
               <div class="ytdl-progress-track"><div class="ytdl-progress-bar" id="ytdl-a-bar"></div></div>
               <span class="ytdl-progress-pct" id="ytdl-a-pct">0%</span>
@@ -237,8 +243,8 @@ window.YTDL.panel = {
           <div class="ytdl-popup-content" data-content="config">
             <div class="ytdl-opt-row">
               <label>Carpeta de descarga</label>
-              <input type="text" id="ytdl-out-dir" class="ytdl-text-input" placeholder="%USERPROFILE%\Downloads">
-              <small>Dejar vacío para usar Descargas por defecto</small>
+              <input type="text" id="ytdl-out-dir" class="ytdl-text-input" placeholder="%USERPROFILE%\Documents\YTDownloader">
+              <small>Dejar vacío para usar la carpeta por defecto.</small>
             </div>
             <div class="ytdl-opt-row">
               <label>Seleccionar Idioma</label>
@@ -327,7 +333,7 @@ window.YTDL.panel = {
               Guardar
             </button>
             <div class="ytdl-cfg-msg" id="ytdl-cfg-msg"></div>
-            <div class="ytdl-version" style="margin-top:16px;font-size:11px;color:#666;text-align:center;">v1.2.5</div>
+            <div class="ytdl-version" style="margin-top:16px;font-size:11px;color:#666;text-align:center;">v1.2.6</div>
           </div>
         </div>
       </div>

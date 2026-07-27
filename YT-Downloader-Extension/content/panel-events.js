@@ -108,53 +108,79 @@ window.YTDL.panelEvents = {
     panel.querySelector("#ytdl-v-add-trim")?.addEventListener("click", (e) => { e.preventDefault(); window.YTDL.sliders.addCurrentTrimSlice("v"); });
     panel.querySelector("#ytdl-a-add-trim")?.addEventListener("click", (e) => { e.preventDefault(); window.YTDL.sliders.addCurrentTrimSlice("a"); });
 
-    // Chapters selection (+)
+    // Chapters selection (+, Select All, Deselect All)
     ["v", "a"].forEach(prefix => {
       const chSel = panel.querySelector(`#ytdl-${prefix}-chapters-sel`);
       const addChBtn = panel.querySelector(`#ytdl-${prefix}-add-chapter`);
       const selCont = panel.querySelector(`#ytdl-${prefix}-selected-chapters`);
-      if (addChBtn && chSel && selCont) {
+      const btnSelectAll = panel.querySelector(`#ytdl-${prefix}-btn-select-all`);
+      const btnDeselectAll = panel.querySelector(`#ytdl-${prefix}-btn-deselect-all`);
+
+      const getLang = () => window.YTDL?.state?.defaultSettings?.defLang || "en";
+      const t = (k) => typeof window.YTDL_I18N_get === "function" ? window.YTDL_I18N_get(getLang(), k) : k;
+
+      if (btnSelectAll) btnSelectAll.textContent = t("selectAll");
+      if (btnDeselectAll) btnDeselectAll.textContent = t("deselectAll");
+
+      const renderCh = () => {
+        if (!selCont) return;
+        selCont.textContent = "";
+        if (!window.YTDL.state[`selectedChapters_${prefix}`]) window.YTDL.state[`selectedChapters_${prefix}`] = [];
+        window.YTDL.state[`selectedChapters_${prefix}`].forEach((item, idx) => {
+          const row = document.createElement("div");
+          row.textContent = "";
+          const span = document.createElement("span");
+          span.style.cssText = "color: #ffffff !important;";
+          const capB = document.createElement("b");
+          capB.textContent = `${t("chapterPrefix")} `;
+          span.appendChild(capB);
+          span.appendChild(document.createTextNode(item.text));
+
+          const delBtn = document.createElement("button");
+          delBtn.className = "ytdl-multi-trim-del";
+          delBtn.textContent = "✖";
+          delBtn.addEventListener("click", () => {
+            window.YTDL.state[`selectedChapters_${prefix}`].splice(idx, 1);
+            renderCh();
+          });
+
+          row.appendChild(span);
+          row.appendChild(delBtn);
+          selCont.appendChild(row);
+        });
+      };
+
+      if (addChBtn && chSel) {
         addChBtn.addEventListener("click", (e) => {
           e.preventDefault();
           if (!chSel.value) return;
           const opt = chSel.options[chSel.selectedIndex];
           if (!opt) return;
           if (!window.YTDL.state[`selectedChapters_${prefix}`]) window.YTDL.state[`selectedChapters_${prefix}`] = [];
-          if (chSel.value === "all") {
-            Array.from(chSel.options).forEach(o => {
-              if (o.value !== "all" && !window.YTDL.state[`selectedChapters_${prefix}`].some(x => x.range === o.value)) {
-                window.YTDL.state[`selectedChapters_${prefix}`].push({ range: o.value, text: o.textContent });
-              }
-            });
-          } else {
-            if (window.YTDL.state[`selectedChapters_${prefix}`].some(x => x.range === chSel.value)) return;
+          if (!window.YTDL.state[`selectedChapters_${prefix}`].some(x => x.range === chSel.value)) {
             window.YTDL.state[`selectedChapters_${prefix}`].push({ range: chSel.value, text: opt.textContent });
           }
-          const renderCh = () => {
-            selCont.textContent = "";
-            window.YTDL.state[`selectedChapters_${prefix}`].forEach((item, idx) => {
-              const row = document.createElement("div");
-              row.textContent = "";
-              const span = document.createElement("span");
-              span.style.cssText = "color: #ffffff !important;";
-              const capB = document.createElement("b");
-              capB.textContent = "Cap: ";
-              span.appendChild(capB);
-              span.appendChild(document.createTextNode(item.text));
+          renderCh();
+        });
+      }
 
-              const delBtn = document.createElement("button");
-              delBtn.className = "ytdl-multi-trim-del";
-              delBtn.textContent = "✖";
-              delBtn.addEventListener("click", () => {
-                window.YTDL.state[`selectedChapters_${prefix}`].splice(idx, 1);
-                renderCh();
-              });
+      if (btnSelectAll && chSel) {
+        btnSelectAll.addEventListener("click", (e) => {
+          e.preventDefault();
+          if (!window.YTDL.state[`selectedChapters_${prefix}`]) window.YTDL.state[`selectedChapters_${prefix}`] = [];
+          Array.from(chSel.options).forEach(o => {
+            if (o.value && !window.YTDL.state[`selectedChapters_${prefix}`].some(x => x.range === o.value)) {
+              window.YTDL.state[`selectedChapters_${prefix}`].push({ range: o.value, text: o.textContent });
+            }
+          });
+          renderCh();
+        });
+      }
 
-              row.appendChild(span);
-              row.appendChild(delBtn);
-              selCont.appendChild(row);
-            });
-          };
+      if (btnDeselectAll) {
+        btnDeselectAll.addEventListener("click", (e) => {
+          e.preventDefault();
+          window.YTDL.state[`selectedChapters_${prefix}`] = [];
           renderCh();
         });
       }
@@ -228,7 +254,9 @@ window.YTDL.panelEvents = {
     panel.querySelector("#ytdl-def-lang")?.addEventListener("change", () => {
       const selectedLang = panel.querySelector("#ytdl-def-lang").value;
       window.YTDL.state.defaultSettings.defLang = selectedLang;
-      window.YTDL.panelI18n.applyPanelTranslations(panel, selectedLang);
+      window.YTDL.storage.local.set({ settings: window.YTDL.state.defaultSettings }, () => {
+        window.YTDL.panelI18n.applyPanelTranslations(panel, selectedLang);
+      });
     });
 
     ["#ytdl-def-thumb", "#ytdl-def-sub", "#ytdl-def-audio", "#ytdl-opt-gif-export"].forEach(sel => {

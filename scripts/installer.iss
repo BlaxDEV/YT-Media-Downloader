@@ -1,11 +1,12 @@
 [Setup]
 AppId=YT Downloader
 AppName=YT Media Downloader Companion
-AppVersion=1.2.5
-AppPublisher=Gabriel
+AppVersion=1.2.6
+AppPublisher=BlaxDEV
+AppPublisherURL=https://github.com/BlaxDEV
 DefaultDirName={localappdata}\YT-Downloader
-DefaultGroupName=YT Media Downloader
-OutputBaseFilename=Setup_YT_Downloader-Win-v1.2.5
+DefaultGroupName=YT-Downloader
+OutputBaseFilename=Setup_YT_Downloader-Win-v1.2.6
 OutputDir=..\Output
 Compression=lzma2
 SolidCompression=yes
@@ -15,11 +16,18 @@ SetupIconFile=..\icon.ico
 CloseApplications=force
 CloseApplicationsFilter=*.exe
 
+[Dirs]
+Name: "{userdocs}\YTDownloader"
+
 [Files]
 Source: "..\native-host\YTDownloader.exe"; DestDir: "{app}"; Flags: ignoreversion
 Source: "..\tools\ffmpeg.exe"; DestDir: "{app}\tools"; Flags: ignoreversion
 Source: "..\tools\ffprobe.exe"; DestDir: "{app}\tools"; Flags: ignoreversion
 Source: "..\tools\yt-dlp.exe"; DestDir: "{app}\tools"; Flags: ignoreversion
+
+[UninstallDelete]
+Type: filesandordirs; Name: "{app}\tools"
+Type: filesandordirs; Name: "{app}"
 
 [Icons]
 Name: "{group}\YT Media Downloader Server"; Filename: "{app}\YTDownloader.exe"
@@ -33,6 +41,31 @@ Filename: "{app}\YTDownloader.exe"; Description: "Launch YT Media Downloader Ser
 var
   MaintenancePage: TInputOptionWizardPage;
   IsMaintenanceMode: Boolean;
+
+procedure KillProcess(const ExeName: String);
+var
+  ResultCode: Integer;
+begin
+  Exec('taskkill', '/F /IM ' + ExeName + ' /T', '', SW_HIDE, ewWaitUntilTerminated, ResultCode);
+end;
+
+function InitializeSetup(): Boolean;
+begin
+  // Forcibly terminate any previous running instances of the server before installation begins
+  KillProcess('YTDownloader.exe');
+  Sleep(500);
+  Result := True;
+end;
+
+procedure CurUninstallStepChanged(CurUninstallStep: TUninstallStep);
+begin
+  if CurUninstallStep = usUninstall then
+  begin
+    // Forcibly terminate server process before uninstalling files
+    KillProcess('YTDownloader.exe');
+    Sleep(500);
+  end;
+end;
 
 function IsAppInstalled: Boolean;
 var
@@ -50,29 +83,23 @@ begin
   Result := (ResultCode = 0);
 end;
 
-procedure KillProcess(const ExeName: String);
-var
-  ResultCode: Integer;
-begin
-  Exec('taskkill', '/F /IM ' + ExeName, '', SW_HIDE, ewWaitUntilTerminated, ResultCode);
-end;
-
 function CloseAllBrowsers: Boolean;
 var
-  Browsers: array[0..5] of String;
+  Browsers: array[0..6] of String;
   I: Integer;
 begin
-  Browsers[0] := 'chrome.exe';
-  Browsers[1] := 'msedge.exe';
-  Browsers[2] := 'firefox.exe';
-  Browsers[3] := 'brave.exe';
-  Browsers[4] := 'opera.exe';
-  Browsers[5] := 'vivaldi.exe';
+  Browsers[0] := 'YTDownloader.exe';
+  Browsers[1] := 'chrome.exe';
+  Browsers[2] := 'msedge.exe';
+  Browsers[3] := 'firefox.exe';
+  Browsers[4] := 'brave.exe';
+  Browsers[5] := 'opera.exe';
+  Browsers[6] := 'vivaldi.exe';
 
-  for I := 0 to 5 do
+  for I := 0 to 6 do
     KillProcess(Browsers[I]);
 
-  // Small wait for processes to fully close
+  // Wait for processes to fully close
   Sleep(1500);
   Result := True;
 end;
@@ -133,7 +160,6 @@ begin
   Result := False;
   if IsMaintenanceMode then
   begin
-    // Skip all standard pages if in maintenance mode except our custom page and ready page
     if (PageID = wpSelectDir) or (PageID = wpSelectProgramGroup) or (PageID = wpSelectTasks) or (PageID = wpReady) then
       Result := True;
   end;
@@ -170,7 +196,6 @@ var
 begin
   Result := True;
 
-  // Handle browser close on Ready page
   if (CurPageID = wpReady) and (not IsMaintenanceMode) then
   begin
     Result := PrepInstall(CurPageID);
@@ -181,12 +206,14 @@ begin
   begin
     if MaintenancePage.SelectedValueIndex = 2 then // Desinstalar
     begin
-      if RegQueryStringValue(HKLM, 'Software\Microsoft\Windows\CurrentVersion\Uninstall\YT Downloader_is1', 'QuietUninstallString', UninstallStr) or
-         RegQueryStringValue(HKCU, 'Software\Microsoft\Windows\CurrentVersion\Uninstall\YT Downloader_is1', 'QuietUninstallString', UninstallStr) then
+      KillProcess('YTDownloader.exe');
+      Sleep(500);
+      if RegQueryStringValue(HKLM, 'Software\Microsoft\Windows\CurrentVersion\Uninstall\YT Downloader_is1', 'UninstallString', UninstallStr) or
+         RegQueryStringValue(HKCU, 'Software\Microsoft\Windows\CurrentVersion\Uninstall\YT Downloader_is1', 'UninstallString', UninstallStr) then
       begin
         UninstallStr := RemoveQuotes(UninstallStr);
-        Exec(UninstallStr, '/SILENT', '', SW_SHOW, ewWaitUntilTerminated, ResultCode);
-        MsgBox('Desinstalación completada. El programa se cerrará.', mbInformation, MB_OK);
+        Exec(UninstallStr, '/SILENT /VERYSILENT', '', SW_SHOW, ewWaitUntilTerminated, ResultCode);
+        MsgBox('Desinstalación completada con éxito. El programa se cerrará.', mbInformation, MB_OK);
         Result := False;
         WizardForm.Close;
       end;
@@ -198,7 +225,7 @@ begin
       Result := False;
       WizardForm.Close;
     end
-    else // Reparar - also need to close browsers
+    else // Reparar
     begin
       Result := PrepInstall(wpReady);
     end;
@@ -209,7 +236,6 @@ procedure CurStepChanged(CurStep: TSetupStep);
 begin
   if CurStep = ssPostInstall then
   begin
-    // Export cookies after installation (browsers are closed at this point)
     ExportBrowserCookies;
   end;
 end;

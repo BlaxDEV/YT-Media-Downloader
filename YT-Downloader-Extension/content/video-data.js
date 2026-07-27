@@ -132,6 +132,9 @@ window.YTDL.videoData = {
 
     const panel = document.getElementById("ytdl-popup-panel");
     if (panel) {
+      const getLang = () => window.YTDL?.state?.defaultSettings?.defLang || "en";
+      const t = (k) => typeof window.YTDL_I18N_get === "function" ? window.YTDL_I18N_get(getLang(), k) : k;
+
       const optSub = panel.querySelector("#ytdl-opt-sub");
       const selSub = panel.querySelector("#ytdl-sel-sub");
       if (optSub && selSub) {
@@ -143,7 +146,7 @@ window.YTDL.videoData = {
         if (allSubs.length === 0) {
           const noSubOpt = document.createElement("option");
           noSubOpt.value = "";
-          noSubOpt.textContent = "No hay subtítulos";
+          noSubOpt.textContent = t("noSubtitlesNotice");
           selSub.appendChild(noSubOpt);
         } else {
           allSubs.forEach(s => {
@@ -165,7 +168,7 @@ window.YTDL.videoData = {
           if (audioTracks.length === 0) {
             const noAudioOpt = document.createElement("option");
             noAudioOpt.value = "";
-            noAudioOpt.textContent = "Pista estándar únicamente";
+            noAudioOpt.textContent = t("stdAudioTrack");
             selAudio.appendChild(noAudioOpt);
           } else {
             audioTracks.forEach(at => {
@@ -195,11 +198,14 @@ window.YTDL.videoData = {
               opt.textContent = `${i+1}. ${c.title} (${window.YTDL.formatTime(c.start_time)} - ${window.YTDL.formatTime(c.end_time)})`;
               chSel.appendChild(opt);
             });
-            const allOpt = document.createElement("option");
-            allOpt.value = "all";
-            allOpt.textContent = "📚 Descargar todos los capítulos";
-            chSel.appendChild(allOpt);
-            if (chCb) chCb.onchange = () => { if (chRow) chRow.style.display = chCb.checked ? "flex" : "none"; };
+            if (chCb) {
+              chCb.onchange = () => { 
+                const show = chCb.checked;
+                if (chRow) chRow.style.display = show ? "flex" : "none";
+                const chActions = panel.querySelector(`#ytdl-${prefix}-ch-actions`);
+                if (chActions) chActions.style.display = show ? "flex" : "none";
+              };
+            }
           } else {
             chBox.style.display = "none";
           }

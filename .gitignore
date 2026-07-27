@@ -13,3 +13,8 @@ tools/
 *.zip
 *.tar.gz
 tmp_staging/
+
+# Screenshots & Annotation tools
+mozilla-png/
+scripts/annotate_mozilla_png.py
+

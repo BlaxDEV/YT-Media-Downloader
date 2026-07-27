@@ -26,7 +26,7 @@ if sys.stderr is None:
 
 HOST = "127.0.0.1"
 PORT = 19836
-VERSION = "1.2.5"
+VERSION = "1.2.6"
 
 # Determine base directory and tools path
 if getattr(sys, 'frozen', False):
@@ -54,6 +54,17 @@ def get_binary_path(name):
     if sys_path:
         return sys_path
     return name
+
+def _extract_video_id(url):
+    if not url:
+        return ""
+    if "v=" in url:
+        return url.split("v=")[1].split("&")[0]
+    elif "youtu.be/" in url:
+        return url.split("youtu.be/")[1].split("?")[0]
+    elif "/shorts/" in url:
+        return url.split("/shorts/")[1].split("?")[0]
+    return ""
 
 YTDLP_BIN = get_binary_path("yt-dlp")
 FFMPEG_BIN = get_binary_path("ffmpeg")
@@ -123,12 +134,9 @@ def _ytdlp_base_cmd():
         cmd.extend(["--cookies-from-browser", COOKIES_BROWSER])
     return cmd
 
-# Default download directory
-if IS_WINDOWS:
-    DEFAULT_DOWNLOAD_DIR = os.path.join(os.path.expanduser("~"), "Downloads", "YTMediaDownloader")
-else:
-    DEFAULT_DOWNLOAD_DIR = os.path.join(os.path.expanduser("~"), "Downloads", "YTMediaDownloader")
-
+# Default download directory (Documents/YTDownloader)
+DOCUMENTS_DIR = os.path.join(os.path.expanduser("~"), "Documents")
+DEFAULT_DOWNLOAD_DIR = os.path.join(DOCUMENTS_DIR, "YTDownloader")
 os.makedirs(DEFAULT_DOWNLOAD_DIR, exist_ok=True)
 
 # In-memory job tracking and persistent disk history
@@ -318,24 +326,7 @@ class YTDLRequestHandler(BaseHTTPRequestHandler):
         except:
             body = {}
 
-        if path == "/open_folder":
-            folder_path = body.get("path") or DEFAULT_DOWNLOAD_DIR
-            if os.path.exists(folder_path):
-                try:
-                    sys_name = platform.system()
-                    if sys_name == "Windows":
-                        os.startfile(folder_path)
-                    elif sys_name == "Darwin":
-                        subprocess.Popen(["open", folder_path], **_subprocess_kwargs)
-                    else:  # Linux
-                        subprocess.Popen(["xdg-open", folder_path], **_subprocess_kwargs)
-                    self._send_json({"status": "ok"})
-                except Exception as e:
-                    self._send_json({"error": str(e)}, status_code=500)
-            else:
-                self._send_json({"error": "La carpeta no existe"}, status_code=404)
-
-        elif path == "/frame_grab":
+        if path == "/frame_grab":
             url = body.get("url")
             timestamp = body.get("timestamp", 0)
             title = body.get("title", "Frame")
@@ -372,10 +363,34 @@ class YTDLRequestHandler(BaseHTTPRequestHandler):
             out_dir = body.get("output_dir") or DEFAULT_DOWNLOAD_DIR
             os.makedirs(out_dir, exist_ok=True)
 
+            import datetime
+            now_dt = datetime.datetime.now()
+            date_str = now_dt.strftime("%d/%m/%Y")
+            time_str = now_dt.strftime("%H:%M")
+            timestamp_str = f"{date_str} {time_str}"
+
+            video_id = _extract_video_id(url)
+            thumb_url = body.get("thumbnail")
+            if not thumb_url and video_id:
+                thumb_url = f"https://i.ytimg.com/vi/{video_id}/mqdefault.jpg"
+
+            fmt_type = body.get("type", "video")
+            quality = body.get("quality", "1080p" if fmt_type == "video" else "320k")
+            fmt_ext = (body.get("ext") or body.get("audio_format") or "MP4").upper()
+            duration_val = body.get("duration") or body.get("duration_str") or ""
+
             jobs[job_id] = {
                 "id": job_id,
                 "url": url,
                 "title": body.get("title", "Descargando..."),
+                "type": fmt_type,
+                "quality": quality,
+                "format": fmt_ext,
+                "duration": duration_val,
+                "thumbnail": thumb_url,
+                "date": date_str,
+                "timestamp_str": timestamp_str,
+                "filesize_str": "",
                 "progress": 0.0,
                 "status": "processing",
                 "output_dir": out_dir
@@ -398,21 +413,6 @@ class YTDLRequestHandler(BaseHTTPRequestHandler):
                 history.clear()
                 _save_history()
             self._send_json({"status": "ok"})
-
-        elif path == "/open_folder":
-            folder = body.get("path") or DEFAULT_DOWNLOAD_DIR
-            if os.path.isdir(folder):
-                import platform
-                system = platform.system()
-                if system == "Windows":
-                    os.startfile(folder)
-                elif system == "Darwin":
-                    subprocess.Popen(["open", folder], **_subprocess_kwargs)
-                else:
-                    subprocess.Popen(["xdg-open", folder], **_subprocess_kwargs)
-                self._send_json({"status": "ok"})
-            else:
-                self._send_json({"error": "Carpeta no encontrada"}, status_code=404)
 
         else:
             self._send_json({"error": "Ruta POST no válida"}, status_code=404)
@@ -530,6 +530,15 @@ class YTDLRequestHandler(BaseHTTPRequestHandler):
 
                 job["progress"] = 100.0
                 job["status"] = "complete"
+                if job.get("filename") and os.path.exists(job["filename"]):
+                    try:
+                        size_b = os.path.getsize(job["filename"])
+                        if size_b >= 1073741824:
+                            job["filesize_str"] = f"{size_b / 1073741824:.2f} GB"
+                        else:
+                            job["filesize_str"] = f"{round(size_b / 1048576)} MB"
+                    except Exception:
+                        pass
             else:
                 job["status"] = "error"
             with history_lock:
