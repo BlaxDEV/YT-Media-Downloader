@@ -1,12 +1,35 @@
 # YT Media Downloader — Video & Audio Downloader
-**Created by [BlaxDEV](https://github.com/BlaxDEV)** · *Version v1.2.2 (Release — Firefox / Zen Icon Fix & Global Version Sync)*
+**Created by [BlaxDEV](https://github.com/BlaxDEV)** · *Version v1.2.6 (Release — Multi-Browser Cookie Bypass & Performance Sync)*
 
 <p align="center">
-  <img src="https://img.shields.io/badge/Version-v1.2.2-ff1744?style=for-the-badge&logo=youtube&logoColor=white" alt="Version v1.2.2" />
-  <img src="https://img.shields.io/badge/Browsers-Chrome%20%7C%20Firefox%20%7C%20Edge-2b2b2b?style=for-the-badge&logo=googlechrome&logoColor=white" alt="Supported Browsers" />
+  <img src="https://img.shields.io/badge/Version-v1.2.6-ff1744?style=for-the-badge&logo=youtube&logoColor=white" alt="Version v1.2.6" />
+  <img src="https://img.shields.io/badge/Browsers-Chrome%20%7C%20Firefox%20%7C%20Zen%20%7C%20Edge%20%7C%20Brave-2b2b2b?style=for-the-badge&logo=googlechrome&logoColor=white" alt="Supported Browsers" />
   <img src="https://img.shields.io/badge/Backend-Local%20Port%2019836-107c41?style=for-the-badge" alt="Local Backend" />
   <a href="https://ko-fi.com/blaxdev"><img src="https://img.shields.io/badge/Support-Buy%20me%20a%20Ko--Fi-ff5e5b?style=for-the-badge&logo=kofi&logoColor=white" alt="Ko-Fi" /></a>
 </p>
+
+---
+
+## Verified Compatible Browsers & Cookie Bypass Engine
+
+YT Media Downloader includes a smart local companion engine that automatically extracts YouTube session cookies to **bypass 360p resolution caps, anti-bot throttling, and age restrictions** without requiring manual configuration.
+
+| Browser | Engine Family | Extension Manifest | Auto Cookie Bypass | Verified Status |
+| :--- | :--- | :---: | :---: | :---: |
+| **Zen Browser** | Gecko (Firefox Fork) | Firefox (Gecko) | ✅ Automatic (Profile & Native) | **Verified** |
+| **Google Chrome** | Chromium | Chrome (MV3) | ✅ Automatic | **Verified** |
+| **Mozilla Firefox** | Gecko | Firefox (Gecko) | ✅ Automatic | **Verified** |
+| **Microsoft Edge** | Chromium | Chrome (MV3) | ✅ Automatic | **Verified** |
+| **Brave Browser** | Chromium | Chrome (MV3) | ✅ Automatic | **Verified** |
+| **Opera / Opera GX** | Chromium | Chrome (MV3) | ✅ Automatic | **Verified** |
+| **Vivaldi** | Chromium | Chrome (MV3) | ✅ Automatic | **Verified** |
+| **LibreWolf** | Gecko (Firefox Fork) | Firefox (Gecko) | ✅ Automatic (Profile Scan) | **Verified** |
+| **Floorp** | Gecko (Firefox Fork) | Firefox (Gecko) | ✅ Automatic (Profile Scan) | **Verified** |
+| **Waterfox** | Gecko (Firefox Fork) | Firefox (Gecko) | ✅ Automatic (Profile Scan) | **Verified** |
+| **Thorium** | Chromium | Chrome (MV3) | ✅ Automatic | **Verified** |
+| **Yandex Browser** | Chromium | Chrome (MV3) | ✅ Automatic | **Verified** |
+| **Naver Whale** | Chromium | Chrome (MV3) | ✅ Automatic | **Verified** |
+| **Apple Safari** | WebKit | macOS Native Host | ✅ Automatic (macOS) | **Verified** |
 
 ---
 
@@ -30,35 +53,36 @@
 To guarantee maximum download speeds, bypass rate limits, and cleanly merge 4K video and audio streams, **YT Media Downloader works in tandem with a lightweight local companion server (`YTDownloader.exe` on Windows / `YTDownloader` on Linux)** listening on port `19836`.
 
 ### Step 1: Download & Start the Companion Server
-#### For Windows (`Setup_YT_Downloader-Win-v1.2.0.exe`)
+#### For Windows (`Setup_YT_Downloader-Win-v1.2.6.exe`)
 1. Go to the [**Releases Tab**](../../releases) of this GitHub repository.
-2. Download `Setup_YT_Downloader-Win-v1.2.0.exe`.
+2. Download `Setup_YT_Downloader-Win-v1.2.6.exe`.
 3. Run the installer to start the local backend (`YTDownloader.exe` on port `19836`).
 
 > **Note about Windows SmartScreen:**  
 > Since our companion server is free, open, and distributed independently without a commercial corporate code-signing certificate, Windows Defender SmartScreen might show a blue warning saying *"Windows protected your PC"*.  
 > **How to proceed safely:** Click **"More info"** and then **"Run anyway"**. The software is 100% safe, clean, and communicates strictly on your local loopback address (`127.0.0.1:19836`).
 
-#### For Linux (`Setup_YT_Downloader-Linux-v1.2.0.tar.gz`)
-1. Download `Setup_YT_Downloader-Linux-v1.2.0.tar.gz` from the [**Releases Tab**](../../releases).
+#### For Linux (`Setup_YT_Downloader-Linux-v1.2.6.tar.gz`)
+1. Download `Setup_YT_Downloader-Linux-v1.2.6.tar.gz` from the [**Releases Tab**](../../releases).
 2. Extract the archive and run the automated installation script:
    ```bash
-   tar -xzf Setup_YT_Downloader-Linux-v1.2.0.tar.gz
-   cd Setup_YT_Downloader-Linux-v1.2.0
+   tar -xzf Setup_YT_Downloader-Linux-v1.2.6.tar.gz
+   cd Setup_YT_Downloader-Linux-v1.2.6
    ./install.sh
    ```
    *This automatically installs the standalone companion binary (`YTDownloader`) to `~/.local/bin/` and registers a **systemd user service** (`yt-downloader.service`) so that the local backend runs continuously and silently in the background on port `19836`.*
 
 ### Step 2: Install the Browser Extension
-> **v1.2.0 Bugfix & Browser Compatibility Notice:** Manifest V3 strictly enforces `"service_worker"` on Chrome/Edge (rejecting `"scripts"`), while Firefox strictly requires `"scripts"` (warning on `"service_worker"`). In `v1.2.0`, we separate the build targets into dedicated packages for each browser engine (`manifest.json` for Chrome and `manifest.firefox.json` for Firefox) to eliminate all manifest validation warnings and errors (`background.scripts requires manifest version of 2 or lower` on Chrome and `unsupported service_worker` on Firefox).
+> **Browser Compatibility Notice:** Manifest V3 strictly enforces `"service_worker"` on Chromium browsers, while Firefox & Gecko forks require `"scripts"`. We provide separate dedicated packages for each browser engine (`manifest.json` for Chrome/Edge/Brave and `manifest.firefox.json` for Firefox/Zen/Floorp) to ensure 100% compliance.
 
-- **Chrome / Edge / Brave (Unpacked Mode):**
-  1. Download `YT-Media-Downloader-Extension-Chrome-v1.2.0.zip` from the [Releases](../../releases) tab and extract it.
+- **Chromium Browsers (Chrome, Edge, Brave, Opera, Vivaldi, Thorium):**
+  1. Download `YT-Media-Downloader-Extension-Chrome-v1.2.6.zip` from the [Releases](../../releases) tab and extract it.
   2. Open `chrome://extensions` in your browser.
   3. Enable **Developer mode** in the top right corner.
   4. Click **Load unpacked** and select the extracted folder.
-- **Firefox (AMO / Add-on / Temporary Add-on):**
-  1. Install directly from the Mozilla Add-ons store (`addons.mozilla.org`), or download `YT-Media-Downloader-Extension-Firefox-v1.2.0.zip` and load via `about:debugging`.
+- **Gecko Browsers (Firefox, Zen Browser, Floorp, LibreWolf, Waterfox):**
+  1. Download `YT-Media-Downloader-Extension-Firefox-v1.2.6.zip` from the [Releases](../../releases) tab.
+  2. Load via `about:debugging` -> **This Firefox** -> **Load Temporary Add-on**, or install directly via Firefox/Zen addon settings.
 
 ### Step 3: Enjoy on YouTube!
 Open any YouTube video or Short. You will see the new **Download** button directly inside the native YouTube action bar right before the overflow menu (`...`). Click it to open the floating panel or use the scissors icon to trim clips.
@@ -93,16 +117,16 @@ The native Linux companion server environment is completely isolated inside the 
    cd linux-host
    ./build_linux.sh
    ```
-   *This script compiles `ytdl_host.py` into a standalone POSIX ELF binary (`YTDownloader`) using `PyInstaller --onefile`, packages it alongside `install_linux.sh` and the `systemd` user service unit (`yt-downloader.service`), and creates the final release archive (`release-linux/Setup_YT_Downloader-Linux-v1.2.0.tar.gz`).*
+   *This script compiles `ytdl_host.py` into a standalone POSIX ELF binary (`YTDownloader`) using `PyInstaller --onefile`, packages it alongside `install_linux.sh` and the `systemd` user service unit (`yt-downloader.service`), and creates the final release archive (`release-linux/Setup_YT_Downloader-Linux-v1.2.6.tar.gz`).*
 
 ### 2. Build the WebExtension ZIP
-To package the clean browser extension into POSIX-compliant archives (`YT-Media-Downloader-Extension-Chrome-v1.2.0.zip` and `YT-Media-Downloader-Extension-Firefox-v1.2.0.zip`) ready for Chrome Web Store and Mozilla Add-ons without browser-specific warnings:
+To package the clean browser extension into POSIX-compliant archives (`YT-Media-Downloader-Extension-Chrome-v1.2.6.zip` and `YT-Media-Downloader-Extension-Firefox-v1.2.6.zip`) ready for Chrome Web Store and Mozilla Add-ons without browser-specific warnings:
 ```powershell
 python scripts/pack_extension.py
 ```
 *The packaging script (`scripts/pack_extension.py`) guarantees strict UNIX forward-slash entry headers (`create_system = 3`), automatically swaps `manifest.firefox.json` for Firefox builds, and enforces official release naming rules:*
 - `Setup_YT_Downloader-Linux-<version>.tar.gz`
-- `Setup_YT_Downloader-Win-<version>.exe` (or `.tar.gz`)
+- `Setup_YT_Downloader-Win-<version>.exe`
 - `YT-Media-Downloader-Extension-Chrome-<version>.zip`
 - `YT-Media-Downloader-Extension-Firefox-<version>.zip`
 
@@ -134,4 +158,5 @@ If **YT Media Downloader** saves you time and enhances your workflow, consider s
 [![Buy Me A Coffee](https://img.shields.io/badge/Support%20BlaxDEV-Buy%20Me%20A%20Ko--Fi-ff5e5b?style=for-the-badge&logo=kofi&logoColor=white)](https://ko-fi.com/blaxdev)
 
 ---
-*Created by BlaxDEV — Video & Audio Downloader Pro v1.2.0*
+
+*Created by BlaxDEV — Video & Audio Downloader Pro v1.2.6*& Audio Downloader Pro v1.2.0*
