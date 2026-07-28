@@ -16,19 +16,19 @@ YT Media Downloader includes a smart local companion engine that automatically e
 
 | Browser | Engine Family | Extension Manifest | Auto Cookie Bypass | Verified Status |
 | :--- | :--- | :---: | :---: | :---: |
-| **Zen Browser** | Gecko (Firefox Fork) | Firefox (Gecko) | ✅ Automatic (Profile & Native) | **Verified** |
 | **Google Chrome** | Chromium | Chrome (MV3) | ✅ Automatic | **Verified** |
-| **Mozilla Firefox** | Gecko | Firefox (Gecko) | ✅ Automatic | **Verified** |
 | **Microsoft Edge** | Chromium | Chrome (MV3) | ✅ Automatic | **Verified** |
 | **Brave Browser** | Chromium | Chrome (MV3) | ✅ Automatic | **Verified** |
 | **Opera / Opera GX** | Chromium | Chrome (MV3) | ✅ Automatic | **Verified** |
 | **Vivaldi** | Chromium | Chrome (MV3) | ✅ Automatic | **Verified** |
-| **LibreWolf** | Gecko (Firefox Fork) | Firefox (Gecko) | ✅ Automatic (Profile Scan) | **Verified** |
-| **Floorp** | Gecko (Firefox Fork) | Firefox (Gecko) | ✅ Automatic (Profile Scan) | **Verified** |
-| **Waterfox** | Gecko (Firefox Fork) | Firefox (Gecko) | ✅ Automatic (Profile Scan) | **Verified** |
 | **Thorium** | Chromium | Chrome (MV3) | ✅ Automatic | **Verified** |
 | **Yandex Browser** | Chromium | Chrome (MV3) | ✅ Automatic | **Verified** |
 | **Naver Whale** | Chromium | Chrome (MV3) | ✅ Automatic | **Verified** |
+| **Mozilla Firefox** | Gecko | Firefox (Gecko) | ✅ Automatic | **Verified** |
+| **Zen Browser** | Gecko (Firefox Fork) | Firefox (Gecko) | ✅ Automatic (Profile & Native) | **Verified** |
+| **Floorp** | Gecko (Firefox Fork) | Firefox (Gecko) | ✅ Automatic (Profile Scan) | **Verified** |
+| **LibreWolf** | Gecko (Firefox Fork) | Firefox (Gecko) | ✅ Automatic (Profile Scan) | **Verified** |
+| **Waterfox** | Gecko (Firefox Fork) | Firefox (Gecko) | ✅ Automatic (Profile Scan) | **Verified** |
 | **Apple Safari** | WebKit | macOS Native Host | ✅ Automatic (macOS) | **Verified** |
 
 ---
