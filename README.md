@@ -14,22 +14,11 @@
 
 YT Media Downloader includes a smart local companion engine that automatically extracts YouTube session cookies to **bypass 360p resolution caps, anti-bot throttling, and age restrictions** without requiring manual configuration.
 
-| Browser | Engine Family | Extension Manifest | Auto Cookie Bypass | Verified Status |
-| :--- | :--- | :---: | :---: | :---: |
-| **Google Chrome** | Chromium | Chrome (MV3) | ✅ Automatic | **Verified** |
-| **Microsoft Edge** | Chromium | Chrome (MV3) | ✅ Automatic | **Verified** |
-| **Brave Browser** | Chromium | Chrome (MV3) | ✅ Automatic | **Verified** |
-| **Opera / Opera GX** | Chromium | Chrome (MV3) | ✅ Automatic | **Verified** |
-| **Vivaldi** | Chromium | Chrome (MV3) | ✅ Automatic | **Verified** |
-| **Thorium** | Chromium | Chrome (MV3) | ✅ Automatic | **Verified** |
-| **Yandex Browser** | Chromium | Chrome (MV3) | ✅ Automatic | **Verified** |
-| **Naver Whale** | Chromium | Chrome (MV3) | ✅ Automatic | **Verified** |
-| **Mozilla Firefox** | Gecko | Firefox (Gecko) | ✅ Automatic | **Verified** |
-| **Zen Browser** | Gecko (Firefox Fork) | Firefox (Gecko) | ✅ Automatic (Profile & Native) | **Verified** |
-| **Floorp** | Gecko (Firefox Fork) | Firefox (Gecko) | ✅ Automatic (Profile Scan) | **Verified** |
-| **LibreWolf** | Gecko (Firefox Fork) | Firefox (Gecko) | ✅ Automatic (Profile Scan) | **Verified** |
-| **Waterfox** | Gecko (Firefox Fork) | Firefox (Gecko) | ✅ Automatic (Profile Scan) | **Verified** |
-| **Apple Safari** | WebKit | macOS Native Host | ✅ Automatic (macOS) | **Verified** |
+| Engine Family | Manifest Target | Supported & Verified Browsers | Auto Cookie Bypass | Status |
+| :--- | :---: | :--- | :---: | :---: |
+| **Chromium** | `Chrome (MV3)` | **Google Chrome**, **Microsoft Edge**, **Brave**, **Opera / Opera GX**, **Vivaldi**, **Thorium**, **Yandex**, **Naver Whale** | ✅ Automatic | **Verified** |
+| **Gecko** | `Firefox (Gecko)` | **Mozilla Firefox**, **Zen Browser**, **Floorp**, **LibreWolf**, **Waterfox** | ✅ Automatic *(Native & Profile Scan)* | **Verified** |
+| **WebKit** | `macOS Host` | **Apple Safari** | ✅ Automatic *(macOS)* | **Verified** |
 
 ---
 
