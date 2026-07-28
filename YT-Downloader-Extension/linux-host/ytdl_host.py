@@ -80,6 +80,63 @@ if IS_WINDOWS:
 COOKIES_BROWSER = None
 COOKIES_FILE = None
 
+def _get_firefox_fork_profile_paths():
+    """Find profile directories for Firefox forks like Zen, Floorp, LibreWolf, Waterfox."""
+    paths = []
+    if IS_WINDOWS:
+        appdata = os.getenv("APPDATA", "")
+        if appdata:
+            possible_roots = [
+                os.path.join(appdata, "Zen", "Profiles"),
+                os.path.join(appdata, "floorp", "Profiles"),
+                os.path.join(appdata, "LibreWolf", "Profiles"),
+                os.path.join(appdata, "Waterfox", "Profiles"),
+            ]
+            for root in possible_roots:
+                if os.path.exists(root):
+                    try:
+                        for item in os.listdir(root):
+                            p_path = os.path.join(root, item)
+                            if os.path.isdir(p_path) and (os.path.exists(os.path.join(p_path, "cookies.sqlite")) or os.path.exists(os.path.join(p_path, "cookies.sqlite-wal"))):
+                                paths.append(p_path)
+                    except Exception:
+                        pass
+    elif platform.system() == "Linux":
+        home = os.path.expanduser("~")
+        possible_roots = [
+            os.path.join(home, ".zen"),
+            os.path.join(home, ".var", "app", "app.zen_browser.zen", ".zen"),
+            os.path.join(home, ".floorp"),
+            os.path.join(home, ".librewolf"),
+            os.path.join(home, ".waterfox"),
+        ]
+        for root in possible_roots:
+            if os.path.exists(root):
+                try:
+                    for root_dir, dirs, files in os.walk(root):
+                        if "cookies.sqlite" in files:
+                            paths.append(root_dir)
+                except Exception:
+                    pass
+    elif platform.system() == "Darwin":
+        home = os.path.expanduser("~")
+        possible_roots = [
+            os.path.join(home, "Library", "Application Support", "Zen", "Profiles"),
+            os.path.join(home, "Library", "Application Support", "floorp", "Profiles"),
+            os.path.join(home, "Library", "Application Support", "LibreWolf", "Profiles"),
+            os.path.join(home, "Library", "Application Support", "Waterfox", "Profiles"),
+        ]
+        for root in possible_roots:
+            if os.path.exists(root):
+                try:
+                    for item in os.listdir(root):
+                        p_path = os.path.join(root, item)
+                        if os.path.isdir(p_path) and os.path.exists(os.path.join(p_path, "cookies.sqlite")):
+                            paths.append(p_path)
+                except Exception:
+                    pass
+    return paths
+
 def _detect_cookies_browser():
     """Try to find a working cookie source. Runs in background on startup."""
     global COOKIES_BROWSER, COOKIES_FILE
@@ -93,10 +150,22 @@ def _detect_cookies_browser():
         print(f"[YTDL] Using manual cookies file: {manual_cookies}")
         return
 
+    browsers_to_try = [
+        "chrome", "edge", "firefox", "zen", "brave", "opera", "vivaldi",
+        "chromium", "waterfox", "librewolf", "floorp", "thorium", "yandex", "whale"
+    ]
+    if platform.system() == "Darwin":
+        browsers_to_try.append("safari")
+
+    # Add custom Firefox fork profile paths as firefox:<path>
+    custom_profiles = _get_firefox_fork_profile_paths()
+    for p in custom_profiles:
+        browsers_to_try.append(f"firefox:{p}")
+
     # 2. Try each browser with --cookies-from-browser
     #    Use a fast test: just try to extract cookies (no video download)
     cookies_export_path = os.path.join(DEFAULT_DOWNLOAD_DIR, ".yt_cookies.txt")
-    for browser in ["chrome", "edge", "firefox", "brave", "opera", "vivaldi"]:
+    for browser in browsers_to_try:
         try:
             # Try exporting cookies to file (works even if --cookies-from-browser fails at runtime)
             export_cmd = [YTDLP_BIN, "--cookies-from-browser", browser, "--cookies", cookies_export_path,
@@ -110,7 +179,7 @@ def _detect_cookies_browser():
             continue
 
     # 3. If export failed, try --cookies-from-browser directly (for browsers that support it at runtime)
-    for browser in ["chrome", "edge", "firefox", "brave"]:
+    for browser in browsers_to_try:
         try:
             test_cmd = [YTDLP_BIN, "--cookies-from-browser", browser, "--skip-download", "--no-warnings",
                         "https://www.youtube.com/watch?v=jNQXAC9IVRw"]
