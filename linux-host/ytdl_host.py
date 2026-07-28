@@ -150,46 +150,62 @@ def _detect_cookies_browser():
         print(f"[YTDL] Using manual cookies file: {manual_cookies}")
         return
 
-    browsers_to_try = [
-        "chrome", "edge", "firefox", "zen", "brave", "opera", "vivaldi",
+    # PRIORITIZE Firefox fork profiles (Zen Browser, Floorp, LibreWolf, Waterfox) FIRST!
+    custom_profiles = _get_firefox_fork_profile_paths()
+    browsers_to_try = [f"firefox:{p}" for p in custom_profiles]
+
+    # Standard browser identifiers supported natively by yt-dlp (excluding 'zen' as yt-dlp rejects it as a keyword)
+    standard_browsers = [
+        "firefox", "chrome", "edge", "brave", "opera", "vivaldi",
         "chromium", "waterfox", "librewolf", "floorp", "thorium", "yandex", "whale"
     ]
     if platform.system() == "Darwin":
-        browsers_to_try.append("safari")
+        standard_browsers.append("safari")
 
-    # Add custom Firefox fork profile paths as firefox:<path>
-    custom_profiles = _get_firefox_fork_profile_paths()
-    for p in custom_profiles:
-        browsers_to_try.append(f"firefox:{p}")
+    browsers_to_try.extend(standard_browsers)
 
-    # 2. Try each browser with --cookies-from-browser
-    #    Use a fast test: just try to extract cookies (no video download)
     cookies_export_path = os.path.join(DEFAULT_DOWNLOAD_DIR, ".yt_cookies.txt")
+    best_export = None
+    max_yt_entries = 0
+
     for browser in browsers_to_try:
         try:
-            # Try exporting cookies to file (works even if --cookies-from-browser fails at runtime)
-            export_cmd = [YTDLP_BIN, "--cookies-from-browser", browser, "--cookies", cookies_export_path,
-                          "--skip-download", "--no-warnings", "https://www.youtube.com/watch?v=jNQXAC9IVRw"]
-            res = subprocess.run(export_cmd, capture_output=True, text=True, timeout=30, **_subprocess_kwargs)
-            if res.returncode == 0 and os.path.exists(cookies_export_path) and os.path.getsize(cookies_export_path) > 100:
-                COOKIES_FILE = cookies_export_path
-                print(f"[YTDL] Cookies exported from {browser} -> {cookies_export_path}")
-                return
+            temp_export = os.path.join(DEFAULT_DOWNLOAD_DIR, ".yt_cookies_temp.txt")
+            if os.path.exists(temp_export):
+                try: os.remove(temp_export)
+                except Exception: pass
+
+            export_cmd = [YTDLP_BIN, "--cookies-from-browser", browser, "--cookies", temp_export,
+                          "--skip-download", "--no-warnings", "https://www.youtube.com/watch?v=LXb3EKWsInQ"]
+            res = subprocess.run(export_cmd, capture_output=True, text=True, timeout=25, **_subprocess_kwargs)
+            if res.returncode == 0 and os.path.exists(temp_export) and os.path.getsize(temp_export) > 100:
+                with open(temp_export, "r", encoding="utf-8", errors="ignore") as f:
+                    content = f.read()
+                    yt_count = content.count("youtube.com")
+
+                if yt_count > max_yt_entries:
+                    max_yt_entries = yt_count
+                    if os.path.exists(cookies_export_path):
+                        try: os.remove(cookies_export_path)
+                        except Exception: pass
+                    os.rename(temp_export, cookies_export_path)
+                    best_export = browser
+
+                    # If this browser has active YouTube cookies (>= 3 entries), select it immediately!
+                    if yt_count >= 3:
+                        COOKIES_FILE = cookies_export_path
+                        print(f"[YTDL] Cookies exported from {browser} ({yt_count} YouTube entries) -> {cookies_export_path}")
+                        return
+                else:
+                    try: os.remove(temp_export)
+                    except Exception: pass
         except Exception:
             continue
 
-    # 3. If export failed, try --cookies-from-browser directly (for browsers that support it at runtime)
-    for browser in browsers_to_try:
-        try:
-            test_cmd = [YTDLP_BIN, "--cookies-from-browser", browser, "--skip-download", "--no-warnings",
-                        "https://www.youtube.com/watch?v=jNQXAC9IVRw"]
-            res = subprocess.run(test_cmd, capture_output=True, text=True, timeout=20, **_subprocess_kwargs)
-            if res.returncode == 0:
-                COOKIES_BROWSER = browser
-                print(f"[YTDL] Using cookies-from-browser: {browser}")
-                return
-        except Exception:
-            continue
+    if max_yt_entries > 0 and os.path.exists(cookies_export_path):
+        COOKIES_FILE = cookies_export_path
+        print(f"[YTDL] Cookies exported from {best_export} ({max_yt_entries} YouTube entries) -> {cookies_export_path}")
+        return
 
     print("[YTDL] No cookies source detected. Some videos may be limited to 360p.")
     print("[YTDL] Tip: Place a 'cookies.txt' file next to YTDownloader.exe to fix this.")
