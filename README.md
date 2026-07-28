@@ -159,4 +159,4 @@ If **YT Media Downloader** saves you time and enhances your workflow, consider s
 
 ---
 
-*Created by BlaxDEV — Video & Audio Downloader Pro v1.2.6*& Audio Downloader Pro v1.2.0*
+*Created by BlaxDEV — Video & Audio Downloader Pro v1.2.6*
