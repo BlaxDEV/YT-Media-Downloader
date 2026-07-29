@@ -32,7 +32,7 @@ window.YTDL.videoData = {
     }
     if (container) container.textContent = "";
 
-    const info = await window.YTDL.serverRequest(`/info?url=${encodeURIComponent(window.YTDL.state.currentVideoUrl)}`);
+    const info = await window.YTDL.serverPost("/info", { url: window.YTDL.state.currentVideoUrl });
     if (info.error) {
       const errEl = document.getElementById("ytdl-server-err");
       if (errEl) errEl.style.display = "flex";
@@ -42,7 +42,7 @@ window.YTDL.videoData = {
 
     window.YTDL.state.videoInfo = info;
 
-    const data = await window.YTDL.serverRequest(`/formats?url=${encodeURIComponent(window.YTDL.state.currentVideoUrl)}`);
+    const data = await window.YTDL.serverPost("/formats", { url: window.YTDL.state.currentVideoUrl });
     if (data.error) {
       if (loadEl) { loadEl.textContent = ""; const errSpan = document.createElement("span"); errSpan.style.color = "#f44336"; errSpan.textContent = data.error; loadEl.appendChild(errSpan); }
       return;
@@ -183,32 +183,14 @@ window.YTDL.videoData = {
       });
 
       const chapters = window.YTDL.state.videoInfo?.chapters || [];
+      window.YTDL.state.currentChapters = chapters;
       ["v", "a"].forEach(prefix => {
         const chBox = panel.querySelector(`#ytdl-${prefix}-chapters-box`);
-        const chSel = panel.querySelector(`#ytdl-${prefix}-chapters-sel`);
-        const chCb = panel.querySelector(`#ytdl-${prefix}-chapters-cb`);
-        const chRow = panel.querySelector(`#ytdl-${prefix}-chapters-row`);
-        if (chBox && chSel) {
-          if (chapters.length > 0) {
-            chBox.style.display = "block";
-            chSel.textContent = "";
-            chapters.forEach((c, i) => {
-              const opt = document.createElement("option");
-              opt.value = `${window.YTDL.formatTime(c.start_time)}-${window.YTDL.formatTime(c.end_time)}`;
-              opt.textContent = `${i+1}. ${c.title} (${window.YTDL.formatTime(c.start_time)} - ${window.YTDL.formatTime(c.end_time)})`;
-              chSel.appendChild(opt);
-            });
-            if (chCb) {
-              chCb.onchange = () => { 
-                const show = chCb.checked;
-                if (chRow) chRow.style.display = show ? "flex" : "none";
-                const chActions = panel.querySelector(`#ytdl-${prefix}-ch-actions`);
-                if (chActions) chActions.style.display = show ? "flex" : "none";
-              };
-            }
-          } else {
-            chBox.style.display = "none";
-          }
+        if (chBox) {
+          chBox.style.display = chapters.length > 0 ? "block" : "none";
+        }
+        if (window.YTDL?.panelEvents?.updateChaptersBreakdown) {
+          window.YTDL.panelEvents.updateChaptersBreakdown(panel, prefix);
         }
       });
 

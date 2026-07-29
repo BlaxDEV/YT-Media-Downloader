@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>YT Media Downloader - What's New in v1.2.7</title>
+  <link rel="stylesheet" href="welcome.css">
+  <style>
+    .changelog-banner {
+      background: linear-gradient(135deg, rgba(255, 78, 69, 0.15) 0%, rgba(255, 0, 0, 0.05) 100%);
+      border: 1px solid rgba(255, 78, 69, 0.35);
+      border-radius: 16px;
+      padding: 20px 24px;
+      margin-bottom: 24px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      backdrop-filter: blur(10px);
+    }
+    .changelog-banner-icon {
+      font-size: 36px;
+      line-height: 1;
+    }
+    .changelog-banner-text h3 {
+      margin: 0 0 4px 0;
+      color: #ff4e45;
+      font-size: 16px;
+      font-weight: 700;
+    }
+    .changelog-banner-text p {
+      margin: 0;
+      color: #ddd;
+      font-size: 13px;
+      line-height: 1.5;
+    }
+    .changelog-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+      margin-bottom: 28px;
+    }
+    @media (max-width: 768px) {
+      .changelog-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+    .changelog-card {
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 16px;
+      padding: 24px;
+      backdrop-filter: blur(10px);
+    }
+    .changelog-card-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 16px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      padding-bottom: 12px;
+    }
+    .changelog-card-icon {
+      font-size: 24px;
+    }
+    .changelog-card-header h2 {
+      margin: 0;
+      font-size: 18px;
+      font-weight: 700;
+      color: #ffffff;
+    }
+    .changelog-list {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+    .changelog-list li {
+      position: relative;
+      padding-left: 24px;
+      font-size: 13px;
+      color: #ccc;
+      line-height: 1.5;
+    }
+    .changelog-list li::before {
+      content: "✨";
+      position: absolute;
+      left: 0;
+      top: 0;
+      font-size: 12px;
+    }
+    .changelog-list li strong {
+      color: #fff;
+    }
+    .changelog-cta-box {
+      text-align: center;
+      margin-top: 32px;
+      padding: 28px;
+      background: rgba(0, 0, 0, 0.4);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 20px;
+    }
+    .changelog-cta-title {
+      font-size: 18px;
+      font-weight: 700;
+      color: #fff;
+      margin-bottom: 8px;
+    }
+    .changelog-cta-desc {
+      font-size: 13px;
+      color: #aaa;
+      margin-bottom: 20px;
+    }
+    .changelog-download-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      background: linear-gradient(135deg, #ff0000 0%, #cc0000 100%);
+      color: #ffffff;
+      padding: 14px 28px;
+      border-radius: 30px;
+      font-size: 14px;
+      font-weight: 700;
+      text-decoration: none;
+      box-shadow: 0 6px 20px rgba(255, 0, 0, 0.4);
+      transition: all 0.25s ease;
+    }
+    .changelog-download-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 26px rgba(255, 0, 0, 0.6);
+      color: #ffffff;
+    }
+  </style>
+</head>
+<body>
+  <!-- Ambient background lighting and waves -->
+  <div class="bg-waves"></div>
+  <div class="bg-glow-1"></div>
+  <div class="bg-glow-2"></div>
+
+  <div class="welcome-container">
+    <!-- Header -->
+    <header class="welcome-header">
+      <div class="header-content">
+        <div class="logo-box">
+          <svg viewBox="0 0 24 24" width="46" height="46" fill="#ff2a2a"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></svg>
+        </div>
+        <div class="header-titles">
+          <h1 id="cl-title">YT Media Downloader — Release v1.2.7</h1>
+          <p class="welcome-subtitle" id="cl-subtitle">What's new in v1.2.7 across the Extension and Companion Server.</p>
+          <div class="creator-badge">
+            <span id="i18n-subtitleCreator">created by BlaxDEV</span>
+          </div>
+        </div>
+      </div>
+      <!-- Language Selector Bar -->
+      <div class="lang-bar">
+        <label id="i18n-welcomeSelectLang">Language:</label>
+        <select id="langSelect" class="lang-select">
+          <option value="en">English (Default)</option>
+          <option value="es">Español (Spanish)</option>
+          <option value="pt">Português (Portuguese)</option>
+          <option value="fr">Français (French)</option>
+          <option value="de">Deutsch (German)</option>
+          <option value="it">Italiano (Italian)</option>
+          <option value="ru">Русский (Russian)</option>
+          <option value="ja">日本語 (Japanese)</option>
+          <option value="zh">中文 (Chinese)</option>
+        </select>
+      </div>
+    </header>
+
+    <!-- Highlighted Security Banner -->
+    <div class="changelog-banner">
+      <div class="changelog-banner-icon">🔒</div>
+      <div class="changelog-banner-text">
+        <h3 id="cl-sec-title">Critical Security & Zero-Disk Memory Upgrade</h3>
+        <p id="cl-sec-desc">Master credentials (SID, HSID, SSID, APISID, SAPISID) are strictly discarded. Cookies are processed 100% in RAM with zero disk persistence, and legacy disk cookie files are purged automatically on server startup.</p>
+      </div>
+    </div>
+
+    <!-- 2-Column Changelog Grid -->
+    <div class="changelog-grid">
+      <!-- Companion Server Changes -->
+      <div class="changelog-card">
+        <div class="changelog-card-header">
+          <div class="changelog-card-icon">🖥️</div>
+          <h2 id="cl-srv-title">Companion Server (ytdl_host.py)</h2>
+        </div>
+        <ul class="changelog-list">
+          <li><strong id="cl-srv-item1-t">Zero-Disk Cookie Security:</strong> <span id="cl-srv-item1-d">Processes active player cookies exclusively in RAM with instant 0-byte file cleanup.</span></li>
+          <li><strong id="cl-srv-item2-t">Native OS Folder Selector (/select_folder):</strong> <span id="cl-srv-item2-d">Opens native Windows/Linux folder picker windows, remembering the last selected folder.</span></li>
+          <li><strong id="cl-srv-item3-t">Legacy Disk Cookie Purge:</strong> <span id="cl-srv-item3-d">Automatically detects and purges plaintext cookie files (.yt_cookies.txt, cookies.txt) on startup.</span></li>
+          <li><strong id="cl-srv-item4-t">Updated yt-dlp & 4K Bypass:</strong> <span id="cl-srv-item4-d">Updated engine dependencies to ensure smooth 1080p, 4K, and 60fps format parsing.</span></li>
+        </ul>
+      </div>
+
+      <!-- Extension UI Changes -->
+      <div class="changelog-card">
+        <div class="changelog-card-header">
+          <div class="changelog-card-icon">🎨</div>
+          <h2 id="cl-ext-title">Extension UI & Features</h2>
+        </div>
+        <ul class="changelog-list">
+          <li><strong id="cl-ext-item1-t">Direct "Save As" Workflow:</strong> <span id="cl-ext-item1-d">Clicking Download Video or Download Audio prompts the OS folder picker window directly.</span></li>
+          <li><strong id="cl-ext-item2-t">Chapter Selection Modal:</strong> <span id="cl-ext-item2-d">Sleek modal popup with Select All / Deselect All controls and dynamic badge summary.</span></li>
+          <li><strong id="cl-ext-item3-t">YouTube Player Animations:</strong> <span id="cl-ext-item3-d">Center-screen badges ("A", "B", and ♻️ Loop arrows) over the video player while trimming.</span></li>
+          <li><strong id="cl-ext-item4-t">Dynamic i18n Download Labels:</strong> <span id="cl-ext-item4-d">Real-time button label states translated across 9 supported languages.</span></li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- Download CTA Box -->
+    <div class="changelog-cta-box">
+      <div class="changelog-cta-title" id="cl-cta-title">Upgrade Your Companion Server to v1.2.7</div>
+      <div class="changelog-cta-desc" id="cl-cta-desc">To take full advantage of the new security model and native folder picker, download the latest Companion Server executable.</div>
+      <a href="https://github.com/BlaxDEV/YT-Media-Downloader/releases/tag/v1.2.7" target="_blank" class="changelog-download-btn" id="cl-cta-btn">
+        <span>🚀 Download Companion Server v1.2.7 (Release Tab)</span>
+      </a>
+    </div>
+
+    <!-- Footer -->
+    <footer class="welcome-footer">
+      <p><span id="i18n-footerCreator">created by BlaxDEV</span> | YT Media Downloader Extension v1.2.7</p>
+    </footer>
+  </div>
+
+  <script src="../i18n.js"></script>
+  <script src="changelog.js"></script>
+</body>
+</html>

@@ -115,22 +115,11 @@ window.YTDL.panel = {
                 <span class="ytdl-preview-label">Previsualizar recortes</span>
               </label>
               <div class="ytdl-chapters-box" id="ytdl-v-chapters-box" style="display:none;">
-                <div class="ytdl-chapters-header">
-                  <label class="ytdl-preview-toggle" style="margin: 0; padding-left: 0;">
-                    <input type="checkbox" id="ytdl-v-chapters-cb">
-                    <span class="ytdl-toggle-track"></span>
-                    <span class="ytdl-preview-label">Descargar por Capítulos</span>
-                  </label>
-                </div>
-                <div class="ytdl-chapters-select-row" id="ytdl-v-chapters-row" style="display:none; margin-top: 8px;">
-                  <select id="ytdl-v-chapters-sel" class="ytdl-select-input"></select>
-                  <button class="ytdl-add-trim-btn" id="ytdl-v-add-chapter" title="Seleccionar múltiple (+)">+</button>
-                </div>
-                <div class="ytdl-ch-actions-row" id="ytdl-v-ch-actions" style="display:none; margin-top: 6px; gap: 6px;">
-                  <button class="ytdl-ch-btn" id="ytdl-v-btn-select-all">Seleccionar todos</button>
-                  <button class="ytdl-ch-btn" id="ytdl-v-btn-deselect-all">Deseleccionar todos</button>
-                </div>
-                <div class="ytdl-multi-trims-container" id="ytdl-v-selected-chapters"></div>
+                <button type="button" class="ytdl-btn-select-chapters" id="ytdl-v-btn-open-modal">
+                  <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><path d="M4 6h16v2H4zm0 5h16v2H4zm0 5h16v2H4z"/></svg>
+                  <span id="ytdl-v-txt-chapters-btn">Seleccionar Capítulos</span>
+                </button>
+                <div class="ytdl-chapters-breakdown" id="ytdl-v-chapters-breakdown" style="display:none;"></div>
               </div>
             </div>
             <button class="ytdl-dl-btn" id="ytdl-dl-video" disabled>
@@ -195,22 +184,11 @@ window.YTDL.panel = {
                 <span class="ytdl-preview-label">Previsualizar recortes</span>
               </label>
               <div class="ytdl-chapters-box" id="ytdl-a-chapters-box" style="display:none;">
-                <div class="ytdl-chapters-header">
-                  <label class="ytdl-preview-toggle" style="margin: 0; padding-left: 0;">
-                    <input type="checkbox" id="ytdl-a-chapters-cb">
-                    <span class="ytdl-toggle-track"></span>
-                    <span class="ytdl-preview-label">Descargar por Capítulos</span>
-                  </label>
-                </div>
-                <div class="ytdl-chapters-select-row" id="ytdl-a-chapters-row" style="display:none; margin-top: 8px;">
-                  <select id="ytdl-a-chapters-sel" class="ytdl-select-input"></select>
-                  <button class="ytdl-add-trim-btn" id="ytdl-a-add-chapter" title="Seleccionar múltiple (+)">+</button>
-                </div>
-                <div class="ytdl-ch-actions-row" id="ytdl-a-ch-actions" style="display:none; margin-top: 6px; gap: 6px;">
-                  <button class="ytdl-ch-btn" id="ytdl-a-btn-select-all">Seleccionar todos</button>
-                  <button class="ytdl-ch-btn" id="ytdl-a-btn-deselect-all">Deseleccionar todos</button>
-                </div>
-                <div class="ytdl-multi-trims-container" id="ytdl-a-selected-chapters"></div>
+                <button type="button" class="ytdl-btn-select-chapters" id="ytdl-a-btn-open-modal">
+                  <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><path d="M4 6h16v2H4zm0 5h16v2H4zm0 5h16v2H4z"/></svg>
+                  <span id="ytdl-a-txt-chapters-btn">Seleccionar Capítulos</span>
+                </button>
+                <div class="ytdl-chapters-breakdown" id="ytdl-a-chapters-breakdown" style="display:none;"></div>
               </div>
             </div>
             <button class="ytdl-dl-btn" id="ytdl-dl-audio">
@@ -241,11 +219,6 @@ window.YTDL.panel = {
 
           <!-- Config Tab -->
           <div class="ytdl-popup-content" data-content="config">
-            <div class="ytdl-opt-row">
-              <label>Carpeta de descarga</label>
-              <input type="text" id="ytdl-out-dir" class="ytdl-text-input" placeholder="%USERPROFILE%\Documents\YTDownloader">
-              <small>Dejar vacío para usar la carpeta por defecto.</small>
-            </div>
             <div class="ytdl-opt-row">
               <label>Seleccionar Idioma</label>
               <select id="ytdl-def-lang" class="ytdl-select-input">
@@ -333,7 +306,27 @@ window.YTDL.panel = {
               Guardar
             </button>
             <div class="ytdl-cfg-msg" id="ytdl-cfg-msg"></div>
-            <div class="ytdl-version" style="margin-top:16px;font-size:11px;color:#666;text-align:center;">v1.2.6</div>
+            <div class="ytdl-version" style="margin-top:16px;font-size:11px;color:#666;text-align:center;">v1.2.7</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Chapter Selection Modal Overlay -->
+      <div class="ytdl-modal-overlay" id="ytdl-chapters-modal" style="display:none;">
+        <div class="ytdl-modal-card">
+          <div class="ytdl-modal-header">
+            <h3 id="ytdl-modal-title">Capítulos del Video</h3>
+            <button type="button" class="ytdl-modal-close" id="ytdl-modal-close">&times;</button>
+          </div>
+          <div class="ytdl-modal-actions">
+            <button type="button" class="ytdl-ch-btn-action" id="ytdl-modal-btn-all">✓ Seleccionar todos</button>
+            <button type="button" class="ytdl-ch-btn-action ytdl-ch-btn-des" id="ytdl-modal-btn-none">✗ Deseleccionar todos</button>
+          </div>
+          <div class="ytdl-modal-body" id="ytdl-modal-list">
+            <!-- Dynamic list of chapter checkboxes -->
+          </div>
+          <div class="ytdl-modal-footer">
+            <button type="button" class="ytdl-btn-apply" id="ytdl-modal-btn-apply">Aplicar Selección</button>
           </div>
         </div>
       </div>

@@ -108,83 +108,51 @@ window.YTDL.panelEvents = {
     panel.querySelector("#ytdl-v-add-trim")?.addEventListener("click", (e) => { e.preventDefault(); window.YTDL.sliders.addCurrentTrimSlice("v"); });
     panel.querySelector("#ytdl-a-add-trim")?.addEventListener("click", (e) => { e.preventDefault(); window.YTDL.sliders.addCurrentTrimSlice("a"); });
 
-    // Chapters selection (+, Select All, Deselect All)
-    ["v", "a"].forEach(prefix => {
-      const chSel = panel.querySelector(`#ytdl-${prefix}-chapters-sel`);
-      const addChBtn = panel.querySelector(`#ytdl-${prefix}-add-chapter`);
-      const selCont = panel.querySelector(`#ytdl-${prefix}-selected-chapters`);
-      const btnSelectAll = panel.querySelector(`#ytdl-${prefix}-btn-select-all`);
-      const btnDeselectAll = panel.querySelector(`#ytdl-${prefix}-btn-deselect-all`);
 
-      const getLang = () => window.YTDL?.state?.defaultSettings?.defLang || "en";
-      const t = (k) => typeof window.YTDL_I18N_get === "function" ? window.YTDL_I18N_get(getLang(), k) : k;
 
-      if (btnSelectAll) btnSelectAll.textContent = t("selectAll");
-      if (btnDeselectAll) btnDeselectAll.textContent = t("deselectAll");
+    // ─── Chapter Modal Open Buttons ──────────────────────────────
+    const vOpenModal = panel.querySelector("#ytdl-v-btn-open-modal");
+    const aOpenModal = panel.querySelector("#ytdl-a-btn-open-modal");
+    if (vOpenModal) vOpenModal.addEventListener("click", () => this.openChaptersModal(panel, "v"));
+    if (aOpenModal) aOpenModal.addEventListener("click", () => this.openChaptersModal(panel, "a"));
 
-      const renderCh = () => {
-        if (!selCont) return;
-        selCont.textContent = "";
-        if (!window.YTDL.state[`selectedChapters_${prefix}`]) window.YTDL.state[`selectedChapters_${prefix}`] = [];
-        window.YTDL.state[`selectedChapters_${prefix}`].forEach((item, idx) => {
-          const row = document.createElement("div");
-          row.textContent = "";
-          const span = document.createElement("span");
-          span.style.cssText = "color: #ffffff !important;";
-          const capB = document.createElement("b");
-          capB.textContent = `${t("chapterPrefix")} `;
-          span.appendChild(capB);
-          span.appendChild(document.createTextNode(item.text));
+    // ─── Chapter Modal Actions (Select All, Deselect All, Close, Apply) ─
+    const modal = panel.querySelector("#ytdl-chapters-modal");
+    if (modal) {
+      const btnAll = modal.querySelector("#ytdl-modal-btn-all");
+      const btnNone = modal.querySelector("#ytdl-modal-btn-none");
+      const btnClose = modal.querySelector("#ytdl-modal-close");
+      const btnApply = modal.querySelector("#ytdl-modal-btn-apply");
 
-          const delBtn = document.createElement("button");
-          delBtn.className = "ytdl-multi-trim-del";
-          delBtn.textContent = "✖";
-          delBtn.addEventListener("click", () => {
-            window.YTDL.state[`selectedChapters_${prefix}`].splice(idx, 1);
-            renderCh();
-          });
-
-          row.appendChild(span);
-          row.appendChild(delBtn);
-          selCont.appendChild(row);
+      if (btnAll) {
+        btnAll.addEventListener("click", () => {
+          modal.querySelectorAll("#ytdl-modal-list input[type='checkbox']").forEach(cb => cb.checked = true);
+          this.updateModalSelectAllState(modal);
         });
+      }
+      if (btnNone) {
+        btnNone.addEventListener("click", () => {
+          modal.querySelectorAll("#ytdl-modal-list input[type='checkbox']").forEach(cb => cb.checked = false);
+          this.updateModalSelectAllState(modal);
+        });
+      }
+
+      const saveModalSelection = () => {
+        const prefix = modal.dataset.currentPrefix || "v";
+        const selected = [];
+        modal.querySelectorAll("#ytdl-modal-list input[type='checkbox']").forEach(cb => {
+          if (cb.checked) {
+            selected.push({ range: cb.dataset.range, title: cb.dataset.title, text: `${cb.dataset.title} (${cb.dataset.range})` });
+          }
+        });
+        window.YTDL.state[`selectedChapters_${prefix}`] = selected;
+        this.updateChaptersBreakdown(panel, prefix);
+        modal.style.display = "none";
       };
 
-      if (addChBtn && chSel) {
-        addChBtn.addEventListener("click", (e) => {
-          e.preventDefault();
-          if (!chSel.value) return;
-          const opt = chSel.options[chSel.selectedIndex];
-          if (!opt) return;
-          if (!window.YTDL.state[`selectedChapters_${prefix}`]) window.YTDL.state[`selectedChapters_${prefix}`] = [];
-          if (!window.YTDL.state[`selectedChapters_${prefix}`].some(x => x.range === chSel.value)) {
-            window.YTDL.state[`selectedChapters_${prefix}`].push({ range: chSel.value, text: opt.textContent });
-          }
-          renderCh();
-        });
-      }
-
-      if (btnSelectAll && chSel) {
-        btnSelectAll.addEventListener("click", (e) => {
-          e.preventDefault();
-          if (!window.YTDL.state[`selectedChapters_${prefix}`]) window.YTDL.state[`selectedChapters_${prefix}`] = [];
-          Array.from(chSel.options).forEach(o => {
-            if (o.value && !window.YTDL.state[`selectedChapters_${prefix}`].some(x => x.range === o.value)) {
-              window.YTDL.state[`selectedChapters_${prefix}`].push({ range: o.value, text: o.textContent });
-            }
-          });
-          renderCh();
-        });
-      }
-
-      if (btnDeselectAll) {
-        btnDeselectAll.addEventListener("click", (e) => {
-          e.preventDefault();
-          window.YTDL.state[`selectedChapters_${prefix}`] = [];
-          renderCh();
-        });
-      }
-    });
+      if (btnClose) btnClose.addEventListener("click", saveModalSelection);
+      if (btnApply) btnApply.addEventListener("click", saveModalSelection);
+    }
 
     // Include/Exclude Audio toggle in Video tab
     panel.querySelector("#ytdl-v-include-audio")?.addEventListener("change", (e) => {
@@ -227,7 +195,6 @@ window.YTDL.panelEvents = {
 
     // Save Config
     panel.querySelector("#ytdl-save-cfg").addEventListener("click", () => {
-      const dir = panel.querySelector("#ytdl-out-dir").value.trim();
       const dLang = panel.querySelector("#ytdl-def-lang")?.value || "en";
       const vfmt = panel.querySelector("#ytdl-def-vfmt").value;
       const vq = panel.querySelector("#ytdl-def-vq").value;
@@ -239,7 +206,7 @@ window.YTDL.panelEvents = {
       const dLufs = panel.querySelector("#ytdl-opt-lufs")?.checked || false;
       const dGif = panel.querySelector("#ytdl-opt-gif-export")?.checked || false;
       const dMeta = panel.querySelector("#ytdl-opt-audio-meta")?.checked || false;
-      window.YTDL.state.defaultSettings = { outputDir: dir, defLang: dLang, videoFormat: vfmt, videoQuality: vq, audioFormat: afmt, audioQuality: aq, defThumb: dThumb, defSub: dSub, defAudio: dAudio, lufsNorm: dLufs, gifExport: dGif, audioMeta: dMeta };
+      window.YTDL.state.defaultSettings = { defLang: dLang, videoFormat: vfmt, videoQuality: vq, audioFormat: afmt, audioQuality: aq, defThumb: dThumb, defSub: dSub, defAudio: dAudio, lufsNorm: dLufs, gifExport: dGif, audioMeta: dMeta };
       window.YTDL.storage.local.set({ settings: window.YTDL.state.defaultSettings }, () => {
         window.YTDL.panelI18n.applyOptionVisibilities(panel);
         window.YTDL.panelI18n.applyPanelTranslations(panel, window.YTDL.state.defaultSettings.defLang);
@@ -269,7 +236,6 @@ window.YTDL.panelEvents = {
     window.YTDL.storage.local.get("settings", (r) => {
       if (r.settings) {
         window.YTDL.state.defaultSettings = { ...window.YTDL.state.defaultSettings, ...r.settings };
-        if (r.settings.outputDir) panel.querySelector("#ytdl-out-dir").value = r.settings.outputDir;
         if (r.settings.defLang && panel.querySelector("#ytdl-def-lang")) {
           panel.querySelector("#ytdl-def-lang").value = r.settings.defLang;
         } else if (panel.querySelector("#ytdl-def-lang")) {
@@ -324,5 +290,92 @@ window.YTDL.panelEvents = {
       window.YTDL.state.panelOpen = false;
       document.removeEventListener("mousedown", outsideClick);
     });
+  },
+
+  // ─── Open Chapters Modal ──────────────────────────────────────
+  openChaptersModal(panel, prefix) {
+    if (!panel) return;
+    const modal = panel.querySelector("#ytdl-chapters-modal");
+    if (!modal) return;
+    const list = modal.querySelector("#ytdl-modal-list");
+    if (!list) return;
+
+    const chapters = window.YTDL.state.currentChapters || window.YTDL.state.videoInfo?.chapters || [];
+    if (!window.YTDL.state[`selectedChapters_${prefix}`]) {
+      window.YTDL.state[`selectedChapters_${prefix}`] = [];
+    }
+    const currentSelRanges = new Set(window.YTDL.state[`selectedChapters_${prefix}`].map(x => x.range));
+
+    list.textContent = "";
+    chapters.forEach((c, idx) => {
+      const startTime = window.YTDL.formatTime(c.start_time);
+      const endTime = window.YTDL.formatTime(c.end_time);
+      const range = `${startTime}-${endTime}`;
+
+      const item = document.createElement("label");
+      item.className = "ytdl-modal-ch-item";
+
+      const cb = document.createElement("input");
+      cb.type = "checkbox";
+      cb.dataset.range = range;
+      cb.dataset.title = c.title;
+      cb.checked = currentSelRanges.has(range);
+      cb.addEventListener("change", () => this.updateModalSelectAllState(modal));
+
+      const info = document.createElement("span");
+      info.className = "ytdl-modal-ch-info";
+      info.textContent = `${idx + 1}. ${c.title}`;
+
+      const time = document.createElement("span");
+      time.className = "ytdl-modal-ch-time";
+      time.textContent = `${startTime} - ${endTime}`;
+
+      item.appendChild(cb);
+      item.appendChild(info);
+      item.appendChild(time);
+      list.appendChild(item);
+    });
+
+    modal.dataset.currentPrefix = prefix;
+    this.updateModalSelectAllState(modal);
+    modal.style.display = "flex";
+  },
+
+  // ─── Update Modal Select All Button State ─────────────────────
+  updateModalSelectAllState(modal) {
+    if (!modal) return;
+    const btnAll = modal.querySelector("#ytdl-modal-btn-all");
+    if (!btnAll) return;
+
+    const checkboxes = Array.from(modal.querySelectorAll("#ytdl-modal-list input[type='checkbox']"));
+    const allChecked = checkboxes.length > 0 && checkboxes.every(cb => cb.checked);
+    if (allChecked) {
+      btnAll.classList.add("active");
+    } else {
+      btnAll.classList.remove("active");
+    }
+  },
+
+  updateChaptersBreakdown(panel, prefix) {
+    if (!panel) return;
+    const bd = panel.querySelector(`#ytdl-${prefix}-chapters-breakdown`);
+    if (!bd) return;
+
+    const sel = window.YTDL.state[`selectedChapters_${prefix}`] || [];
+    bd.textContent = "";
+    if (sel.length === 0) {
+      bd.style.display = "none";
+    } else {
+      bd.style.display = "block";
+      sel.forEach((c) => {
+        const badge = document.createElement("span");
+        badge.className = "ytdl-ch-badge";
+        badge.textContent = `${c.title} (${c.range})`;
+        bd.appendChild(badge);
+      });
+    }
+    if (window.YTDL?.panelI18n?.updateDownloadButtons) {
+      window.YTDL.panelI18n.updateDownloadButtons(panel);
+    }
   }
 };

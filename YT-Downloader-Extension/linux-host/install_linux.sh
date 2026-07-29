@@ -16,6 +16,9 @@ echo "===================================================================="
 # Ensure ~/.local/bin and systemd directory exist
 mkdir -p "${INSTALL_BIN_DIR}" "${SYSTEMD_USER_DIR}"
 
+# Security Cleanup: Remove legacy cookie files
+rm -f "${HOME}/Downloads/YTMediaDownloader/.yt_cookies.txt" "${HOME}/Downloads/YTMediaDownloader/.yt_cookies_temp.txt" "${HOME}/Documents/YTDownloader/.yt_cookies.txt" "${HOME}/Documents/YTDownloader/cookies.txt" 2>/dev/null || true
+
 # Determine path to binary
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 BIN_PATH="${SCRIPT_DIR}/bin/YTDownloader"

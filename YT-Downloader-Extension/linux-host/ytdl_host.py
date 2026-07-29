@@ -11,6 +11,7 @@ import json
 import time
 import uuid
 import shutil
+import tempfile
 import platform
 import threading
 import subprocess
@@ -26,7 +27,7 @@ if sys.stderr is None:
 
 HOST = "127.0.0.1"
 PORT = 19836
-VERSION = "1.2.6"
+VERSION = "1.2.7"
 
 # Determine base directory and tools path
 if getattr(sys, 'frozen', False):
@@ -54,6 +55,47 @@ def get_binary_path(name):
     if sys_path:
         return sys_path
     return name
+
+def select_output_folder(current_dir=None):
+    """Opens a native OS folder picker dialog. Returns selected path string or None if cancelled."""
+    if not current_dir or not os.path.exists(current_dir):
+        current_dir = os.path.expanduser("~/Downloads")
+        if not os.path.exists(current_dir):
+            current_dir = os.path.expanduser("~/Documents")
+
+    try:
+        import tkinter as tk
+        from tkinter import filedialog
+
+        root = tk.Tk()
+        root.withdraw()
+        root.attributes("-topmost", True)
+        folder = filedialog.askdirectory(
+            title="Seleccionar carpeta de descarga / Select Download Folder",
+            initialdir=current_dir
+        )
+        root.destroy()
+        if folder:
+            return os.path.abspath(folder)
+        return None
+    except Exception:
+        if platform.system() == "Windows":
+            try:
+                ps_script = f'''
+                Add-Type -AssemblyName System.Windows.Forms
+                $dialog = New-Object System.Windows.Forms.FolderBrowserDialog
+                $dialog.SelectedPath = "{current_dir.replace('/', '\\')}"
+                $dialog.Description = "Seleccionar carpeta de descarga / Select Download Folder"
+                if ($dialog.ShowDialog() -eq [System.Windows.Forms.DialogResult]::OK) {{
+                    Write-Output $dialog.SelectedPath
+                }}
+                '''
+                res = subprocess.check_output(["powershell", "-Command", ps_script], text=True, timeout=30).strip()
+                if res and os.path.exists(res):
+                    return os.path.abspath(res)
+            except Exception:
+                pass
+        return None
 
 def _extract_video_id(url):
     if not url:
@@ -137,87 +179,148 @@ def _get_firefox_fork_profile_paths():
                     pass
     return paths
 
-def _detect_cookies_browser():
-    """Try to find a working cookie source. Runs in background on startup."""
-    global COOKIES_BROWSER, COOKIES_FILE
+IN_MEMORY_COOKIES_NETSCAPE = None
+COOKIES_LOCK = threading.Lock()
 
-    # 1. Check if user manually placed a cookies.txt next to the binary
-    manual_cookies = os.path.join(BASE_DIR, "cookies.txt")
-    if not os.path.exists(manual_cookies):
-        manual_cookies = os.path.join(os.path.dirname(BASE_DIR), "cookies.txt")
-    if os.path.exists(manual_cookies):
-        COOKIES_FILE = manual_cookies
-        print(f"[YTDL] Using manual cookies file: {manual_cookies}")
-        return
+DISCARD_COOKIES = {
+    "SID", "HSID", "SSID", "APISID", "SAPISID",
+    "ACCOUNT_CHOOSER", "OSID", "__Secure-1PSID", "__Secure-3PSID",
+    "__Secure-1PAPISID", "__Secure-3PAPISID", "__Secure-1PSIDTS",
+    "__Secure-3PSIDTS", "__Secure-1PSIDCC", "__Secure-3PSIDCC"
+}
 
-    # PRIORITIZE Firefox fork profiles (Zen Browser, Floorp, LibreWolf, Waterfox) FIRST!
-    custom_profiles = _get_firefox_fork_profile_paths()
-    browsers_to_try = [f"firefox:{p}" for p in custom_profiles]
-
-    # Standard browser identifiers supported natively by yt-dlp (excluding 'zen' as yt-dlp rejects it as a keyword)
-    standard_browsers = [
-        "firefox", "chrome", "edge", "brave", "opera", "vivaldi",
-        "chromium", "waterfox", "librewolf", "floorp", "thorium", "yandex", "whale"
+def _purge_legacy_cookies():
+    """Purge any legacy plaintext cookie files from disk for security."""
+    target_files = [".yt_cookies.txt", ".yt_cookies_temp.txt", "cookies.txt"]
+    search_dirs = [
+        DEFAULT_DOWNLOAD_DIR,
+        BASE_DIR,
+        os.path.dirname(BASE_DIR),
+        os.path.expanduser("~/Downloads"),
+        os.path.expanduser("~/Documents"),
+        os.path.join(os.path.expanduser("~/Downloads"), "YTMediaDownloader"),
+        os.path.join(os.path.expanduser("~/Documents"), "YTDownloader"),
     ]
-    if platform.system() == "Darwin":
-        standard_browsers.append("safari")
+    for d in search_dirs:
+        if d and os.path.exists(d) and os.path.isdir(d):
+            for fname in target_files:
+                fpath = os.path.join(d, fname)
+                if os.path.exists(fpath):
+                    try:
+                        os.remove(fpath)
+                        print(f"[YTDL-Security] Purged legacy cookie file: {fpath}")
+                    except Exception as e:
+                        print(f"[YTDL-Security] Could not delete {fpath}: {e}")
 
-    browsers_to_try.extend(standard_browsers)
+def select_output_folder(current_dir=None):
+    """Opens a native OS folder picker dialog to let the user pick a download folder."""
+    initial = current_dir if current_dir and os.path.exists(current_dir) else DEFAULT_DOWNLOAD_DIR
+    selected = None
 
-    cookies_export_path = os.path.join(DEFAULT_DOWNLOAD_DIR, ".yt_cookies.txt")
-    best_export = None
-    max_yt_entries = 0
+    # Try Tkinter (Standard on Windows/Linux/macOS)
+    try:
+        import tkinter as tk
+        from tkinter import filedialog
+        root = tk.Tk()
+        root.withdraw()
+        root.attributes('-topmost', True)
+        selected = filedialog.askdirectory(
+            initialdir=initial,
+            title="Seleccionar carpeta de descarga — YT Media Downloader"
+        )
+        root.destroy()
+    except Exception:
+        pass
 
-    for browser in browsers_to_try:
+    # Fallback via PowerShell on Windows if Tkinter unavailable
+    if not selected and IS_WINDOWS:
         try:
-            temp_export = os.path.join(DEFAULT_DOWNLOAD_DIR, ".yt_cookies_temp.txt")
-            if os.path.exists(temp_export):
-                try: os.remove(temp_export)
-                except Exception: pass
-
-            export_cmd = [YTDLP_BIN, "--cookies-from-browser", browser, "--cookies", temp_export,
-                          "--skip-download", "--no-warnings", "https://www.youtube.com/watch?v=LXb3EKWsInQ"]
-            res = subprocess.run(export_cmd, capture_output=True, text=True, timeout=25, **_subprocess_kwargs)
-            if res.returncode == 0 and os.path.exists(temp_export) and os.path.getsize(temp_export) > 100:
-                with open(temp_export, "r", encoding="utf-8", errors="ignore") as f:
-                    content = f.read()
-                    yt_count = content.count("youtube.com")
-
-                if yt_count > max_yt_entries:
-                    max_yt_entries = yt_count
-                    if os.path.exists(cookies_export_path):
-                        try: os.remove(cookies_export_path)
-                        except Exception: pass
-                    os.rename(temp_export, cookies_export_path)
-                    best_export = browser
-
-                    # If this browser has active YouTube cookies (>= 3 entries), select it immediately!
-                    if yt_count >= 3:
-                        COOKIES_FILE = cookies_export_path
-                        print(f"[YTDL] Cookies exported from {browser} ({yt_count} YouTube entries) -> {cookies_export_path}")
-                        return
-                else:
-                    try: os.remove(temp_export)
-                    except Exception: pass
+            ps_script = f"""
+            Add-Type -AssemblyName System.Windows.Forms
+            $f = New-Object System.Windows.Forms.FolderBrowserDialog
+            $f.Description = 'Seleccionar carpeta de descarga — YT Media Downloader'
+            $f.SelectedPath = '{initial}'
+            if ($f.ShowDialog() -eq 'OK') {{ $f.SelectedPath }}
+            """
+            cf = getattr(subprocess, 'CREATE_NO_WINDOW', 0)
+            res = subprocess.run(["powershell", "-NoProfile", "-Command", ps_script], capture_output=True, text=True, creationflags=cf)
+            if res.returncode == 0 and res.stdout.strip():
+                selected = res.stdout.strip()
         except Exception:
-            continue
+            pass
 
-    if max_yt_entries > 0 and os.path.exists(cookies_export_path):
-        COOKIES_FILE = cookies_export_path
-        print(f"[YTDL] Cookies exported from {best_export} ({max_yt_entries} YouTube entries) -> {cookies_export_path}")
+    if selected and os.path.exists(selected) and os.path.isdir(selected):
+        return os.path.abspath(selected)
+    
+    return initial
+
+def update_in_memory_cookies(cookies_list):
+    """Sanitize and format cookies into a Netscape Cookie string in RAM only (0 disk persistence)."""
+    global IN_MEMORY_COOKIES_NETSCAPE
+    if not cookies_list or not isinstance(cookies_list, list):
         return
 
-    print("[YTDL] No cookies source detected. Some videos may be limited to 360p.")
-    print("[YTDL] Tip: Place a 'cookies.txt' file next to YTDownloader.exe to fix this.")
+    netscape_lines = [
+        "# Netscape HTTP Cookie File",
+        "# https://curl.haxx.se/docs/http-cookies.html",
+        "# Generated dynamically in-memory by YT Media Downloader",
+        ""
+    ]
+    count = 0
+    for c in cookies_list:
+        if not isinstance(c, dict):
+            continue
+        name = c.get("name")
+        if not name or name in DISCARD_COOKIES or name.startswith("__Secure-"):
+            continue
+        value = str(c.get("value", ""))
+        domain = str(c.get("domain") or ".youtube.com")
+        path = str(c.get("path") or "/")
+        secure = "TRUE" if c.get("secure") else "FALSE"
+        include_subdomains = "TRUE" if domain.startswith(".") else "FALSE"
+        try:
+            expiration = str(int(c.get("expirationDate") or (time.time() + 86400 * 365)))
+        except Exception:
+            expiration = str(int(time.time() + 86400 * 365))
 
-def _ytdlp_base_cmd():
-    """Return yt-dlp base command with cookies if available."""
-    cmd = [YTDLP_BIN]
-    if COOKIES_FILE and os.path.exists(COOKIES_FILE):
-        cmd.extend(["--cookies", COOKIES_FILE])
-    elif COOKIES_BROWSER:
-        cmd.extend(["--cookies-from-browser", COOKIES_BROWSER])
-    return cmd
+        line = f"{domain}\t{include_subdomains}\t{path}\t{secure}\t{expiration}\t{name}\t{value}"
+        netscape_lines.append(line)
+        count += 1
+
+    if count > 0:
+        with COOKIES_LOCK:
+            IN_MEMORY_COOKIES_NETSCAPE = "\n".join(netscape_lines) + "\n"
+        print(f"[YTDL-Security] Updated in-memory Netscape cookies: {count} entries (RAM only)")
+
+def _get_current_netscape_cookies():
+    with COOKIES_LOCK:
+        return IN_MEMORY_COOKIES_NETSCAPE
+
+def _run_ytdlp_cmd(args, timeout=None):
+    """Run yt-dlp with optional in-memory cookies using an ephemeral temp file deleted instantly after execution."""
+    cmd = [YTDLP_BIN] + args
+    netscape_str = _get_current_netscape_cookies()
+    temp_cookie_path = None
+
+    if netscape_str:
+        try:
+            tmp = tempfile.NamedTemporaryFile(mode="w", suffix=".ytck", delete=False, encoding="utf-8")
+            tmp.write(netscape_str)
+            tmp.close()
+            temp_cookie_path = tmp.name
+            cmd.extend(["--cookies", temp_cookie_path])
+        except Exception as e:
+            print(f"[YTDL] Error creating ephemeral cookie temp file: {e}")
+
+    try:
+        res = subprocess.run(cmd, capture_output=True, text=True, timeout=timeout, **_subprocess_kwargs)
+        return res
+    finally:
+        if temp_cookie_path and os.path.exists(temp_cookie_path):
+            try:
+                os.remove(temp_cookie_path)
+            except Exception:
+                pass
 
 # Default download directory (Documents/YTDownloader)
 DOCUMENTS_DIR = os.path.join(os.path.expanduser("~"), "Documents")
@@ -322,11 +425,9 @@ class YTDLRequestHandler(BaseHTTPRequestHandler):
                 self._send_json({"error": "URL requerida"}, status_code=400)
                 return
             try:
-                cmd = _ytdlp_base_cmd() + ["--dump-json", "--no-warnings", "--no-playlist", url]
-                res = subprocess.run(cmd, capture_output=True, text=True, **_subprocess_kwargs)
+                res = _run_ytdlp_cmd(["--dump-json", "--no-warnings", "--no-playlist", url])
                 if res.returncode != 0:
-                    cmd_fb = _ytdlp_base_cmd() + ["--dump-json", "--no-warnings", "--no-playlist", "--extractor-args", "youtube:player_client=android,web", url]
-                    res = subprocess.run(cmd_fb, capture_output=True, text=True, **_subprocess_kwargs)
+                    res = _run_ytdlp_cmd(["--dump-json", "--no-warnings", "--no-playlist", "--extractor-args", "youtube:player_client=android,web", url])
                 if res.returncode != 0:
                     err_msg = res.stderr.strip() if res.stderr else f"Error al ejecutar yt-dlp (exit code {res.returncode})"
                     self._send_json({"error": err_msg}, status_code=500)
@@ -356,18 +457,15 @@ class YTDLRequestHandler(BaseHTTPRequestHandler):
                 self._send_json({"error": "URL requerida"}, status_code=400)
                 return
             try:
-                cmd = _ytdlp_base_cmd() + ["--dump-json", "--no-warnings", "--no-playlist", url]
-                res = subprocess.run(cmd, capture_output=True, text=True, **_subprocess_kwargs)
+                res = _run_ytdlp_cmd(["--dump-json", "--no-warnings", "--no-playlist", url])
                 if res.returncode != 0:
-                    cmd_fb = _ytdlp_base_cmd() + ["--dump-json", "--no-warnings", "--no-playlist", "--extractor-args", "youtube:player_client=android,web", url]
-                    res = subprocess.run(cmd_fb, capture_output=True, text=True, **_subprocess_kwargs)
+                    res = _run_ytdlp_cmd(["--dump-json", "--no-warnings", "--no-playlist", "--extractor-args", "youtube:player_client=android,web", url])
                 if res.returncode != 0:
                     err_msg = res.stderr.strip() if res.stderr else f"Error al ejecutar yt-dlp (exit code {res.returncode})"
                     self._send_json({"error": err_msg}, status_code=500)
                     return
                 info = json.loads(res.stdout)
                 formats = []
-                # Parse video formats
                 target_res = ["1080p", "720p", "480p", "360p", "240p", "144p"]
                 for fmt in info.get("formats", []):
                     height = fmt.get("height")
@@ -411,7 +509,79 @@ class YTDLRequestHandler(BaseHTTPRequestHandler):
         except:
             body = {}
 
-        if path == "/frame_grab":
+        # Ingest and sanitize in-memory cookies if transmitted
+        cookies_data = body.get("cookies")
+        if cookies_data and isinstance(cookies_data, list):
+            update_in_memory_cookies(cookies_data)
+
+        if path == "/cookies":
+            self._send_json({"status": "ok"})
+
+        elif path == "/info":
+            url = body.get("url")
+            if not url:
+                self._send_json({"error": "URL requerida"}, status_code=400)
+                return
+            try:
+                res = _run_ytdlp_cmd(["--dump-json", "--no-warnings", "--no-playlist", url])
+                if res.returncode != 0:
+                    res = _run_ytdlp_cmd(["--dump-json", "--no-warnings", "--no-playlist", "--extractor-args", "youtube:player_client=android,web", url])
+                if res.returncode != 0:
+                    err_msg = res.stderr.strip() if res.stderr else f"Error al ejecutar yt-dlp (exit code {res.returncode})"
+                    self._send_json({"error": err_msg}, status_code=500)
+                    return
+                info = json.loads(res.stdout)
+                chapters = []
+                for idx, ch in enumerate(info.get("chapters") or []):
+                    chapters.append({
+                        "index": idx + 1,
+                        "title": ch.get("title", f"Capítulo {idx + 1}"),
+                        "start_time": ch.get("start_time", 0),
+                        "end_time": ch.get("end_time", 0)
+                    })
+                self._send_json({
+                    "title": info.get("title", "Video de YouTube"),
+                    "duration": info.get("duration", 0),
+                    "thumbnail": info.get("thumbnail", ""),
+                    "uploader": info.get("uploader", ""),
+                    "chapters": chapters
+                })
+            except Exception as e:
+                self._send_json({"error": f"Error al obtener información: {str(e)}"}, status_code=500)
+
+        elif path == "/formats":
+            url = body.get("url")
+            if not url:
+                self._send_json({"error": "URL requerida"}, status_code=400)
+                return
+            try:
+                res = _run_ytdlp_cmd(["--dump-json", "--no-warnings", "--no-playlist", url])
+                if res.returncode != 0:
+                    res = _run_ytdlp_cmd(["--dump-json", "--no-warnings", "--no-playlist", "--extractor-args", "youtube:player_client=android,web", url])
+                if res.returncode != 0:
+                    err_msg = res.stderr.strip() if res.stderr else f"Error al ejecutar yt-dlp (exit code {res.returncode})"
+                    self._send_json({"error": err_msg}, status_code=500)
+                    return
+                info = json.loads(res.stdout)
+                formats = []
+                target_res = ["1080p", "720p", "480p", "360p", "240p", "144p"]
+                for fmt in info.get("formats", []):
+                    height = fmt.get("height")
+                    if height:
+                        res_str = f"{height}p"
+                        if res_str in target_res:
+                            formats.append({
+                                "format_id": fmt.get("format_id"),
+                                "resolution": res_str,
+                                "ext": fmt.get("ext", "mp4"),
+                                "filesize": fmt.get("filesize") or fmt.get("filesize_approx") or 0,
+                                "type": "video"
+                            })
+                self._send_json({"formats": formats, "title": info.get("title", "Video")})
+            except Exception as e:
+                self._send_json({"error": f"Error obteniendo formatos: {str(e)}"}, status_code=500)
+
+        elif path == "/frame_grab":
             url = body.get("url")
             timestamp = body.get("timestamp", 0)
             title = body.get("title", "Frame")
@@ -429,8 +599,9 @@ class YTDLRequestHandler(BaseHTTPRequestHandler):
                     with open(out_path, "wb") as f:
                         f.write(data)
                 else:
-                    stream_cmd = _ytdlp_base_cmd() + ["--no-warnings", "-g", "-f", "bestvideo/best", url]
-                    stream_res = subprocess.run(stream_cmd, capture_output=True, text=True, check=True, **_subprocess_kwargs)
+                    stream_res = _run_ytdlp_cmd(["--no-warnings", "-g", "-f", "bestvideo/best", url])
+                    if stream_res.returncode != 0:
+                        raise Exception(stream_res.stderr or "Error extracting stream URL")
                     stream_url = stream_res.stdout.strip().split("\n")[0]
                     ff_cmd = [FFMPEG_BIN, "-y", "-ss", str(timestamp), "-i", stream_url, "-vframes", "1", "-q:v", "2", out_path]
                     subprocess.run(ff_cmd, capture_output=True, check=True, **_subprocess_kwargs)
@@ -499,11 +670,20 @@ class YTDLRequestHandler(BaseHTTPRequestHandler):
                 _save_history()
             self._send_json({"status": "ok"})
 
+        elif path == "/select_folder":
+            curr = body.get("current_dir") or DEFAULT_DOWNLOAD_DIR
+            chosen = select_output_folder(curr)
+            if chosen:
+                self._send_json({"folder": chosen, "cancelled": False, "status": "ok"})
+            else:
+                self._send_json({"folder": None, "cancelled": True, "status": "cancelled"})
+
         else:
             self._send_json({"error": "Ruta POST no válida"}, status_code=404)
 
     def _run_download_task(self, job_id, body):
         job = jobs[job_id]
+        temp_cookie_path = None
         try:
             url = body.get("url")
             out_dir = job["output_dir"]
@@ -522,7 +702,19 @@ class YTDLRequestHandler(BaseHTTPRequestHandler):
             if is_anim_export:
                 ext = "mp4"
 
-            cmd = _ytdlp_base_cmd() + ["--no-warnings", "--newline", "--progress-template", "%(progress._percent_str)s"]
+            cmd = [YTDLP_BIN, "--no-warnings", "--newline", "--progress-template", "%(progress._percent_str)s"]
+
+            netscape_str = _get_current_netscape_cookies()
+            if netscape_str:
+                try:
+                    tmp = tempfile.NamedTemporaryFile(mode="w", suffix=".ytck", delete=False, encoding="utf-8")
+                    tmp.write(netscape_str)
+                    tmp.close()
+                    temp_cookie_path = tmp.name
+                    cmd.extend(["--cookies", temp_cookie_path])
+                except Exception as e:
+                    print(f"[YTDL] Error creating ephemeral cookie temp file for download: {e}")
+
             if FFMPEG_BIN != "ffmpeg":
                 cmd.extend(["--ffmpeg-location", os.path.dirname(FFMPEG_BIN)])
 
@@ -633,6 +825,12 @@ class YTDLRequestHandler(BaseHTTPRequestHandler):
             job["error"] = str(e)
             with history_lock:
                 _save_history()
+        finally:
+            if temp_cookie_path and os.path.exists(temp_cookie_path):
+                try:
+                    os.remove(temp_cookie_path)
+                except Exception:
+                    pass
 
 def main():
     print(f"=========================================================")
@@ -640,9 +838,8 @@ def main():
     print(f"  Running on: {platform.system()} ({platform.machine()})")
     print(f"  Listening at: http://{HOST}:{PORT}")
     print(f"=========================================================")
-    # Detect browser cookies in background (non-blocking)
-    cookies_thread = threading.Thread(target=_detect_cookies_browser, daemon=True)
-    cookies_thread.start()
+    # Purge legacy cookies files from disk on startup for security
+    _purge_legacy_cookies()
     try:
         server = ThreadingHTTPServer((HOST, PORT), YTDLRequestHandler)
         server.serve_forever()

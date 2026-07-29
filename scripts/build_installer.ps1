@@ -6,6 +6,10 @@ Write-Host "====================================================================
 Write-Host " Building YT Media Downloader Companion Server (Windows)"
 Write-Host "===================================================================="
 
+Stop-Process -Name "YTDownloader" -ErrorAction SilentlyContinue
+Stop-Process -Name "Setup_YT_Downloader-Win-v1.2.7" -ErrorAction SilentlyContinue
+Start-Sleep -Milliseconds 500
+
 Write-Host "1. Compiling standalone Windows binary with PyInstaller..."
 Set-Location $BaseDir
 python -m PyInstaller --onefile --clean --noconsole --name "YTDownloader" --distpath "native-host" --icon "icon.ico" --version-file "scripts\version_info.txt" "YT-Downloader-Extension\linux-host\ytdl_host.py"
@@ -29,5 +33,5 @@ if (-not (Test-Path $InnoSetupPath)) {
 
 Write-Host "===================================================================="
 Write-Host " Build complete! Windows release ready at:"
-Write-Host " Output\Setup_YT_Downloader-Win-v1.2.6.exe"
+Write-Host " Output\Setup_YT_Downloader-Win-v1.2.7.exe"
 Write-Host "===================================================================="

@@ -1,7 +1,7 @@
 {
   "name": "YT Media Downloader",
-  "version": "1.2.6",
-  "version_name": "v.1.2.6-release",
+  "version": "1.2.7",
+  "version_name": "v.1.2.7-release",
   "description": "Download YouTube videos and audio locally in high definition without ads",
   "manifest_version": 3,
   "browser_specific_settings": {
@@ -16,10 +16,12 @@
     }
   },
   "permissions": [
-    "storage"
+    "storage",
+    "cookies"
   ],
   "host_permissions": [
-    "http://127.0.0.1:19836/*"
+    "http://127.0.0.1:19836/*",
+    "*://*.youtube.com/*"
   ],
   "background": {
     "service_worker": "background.js"

@@ -336,6 +336,9 @@ window.YTDL.buttons = {
           if (label) label.textContent = "A";
           const activeCol = window.YTDL.state.activeScissorsColor || "#ff1744";
           scissorsBtn.querySelector("svg").setAttribute("fill", activeCol);
+          if (window.YTDL?.preview?.showPlayerIndicator) {
+            window.YTDL.preview.showPlayerIndicator("A");
+          }
         } else if (window.YTDL.state.scissorsState === 1) {
           if (currentTimeSec <= (window.YTDL.state.scissorsTimeSecA || 0) || currentVal <= window.YTDL.state.scissorsTrimA) {
             window.YTDL.state.scissorsTimeSecB = window.YTDL.state.scissorsTimeSecA;
@@ -348,6 +351,9 @@ window.YTDL.buttons = {
           }
           window.YTDL.state.scissorsState = 2;
           if (label) label.textContent = "B";
+          if (window.YTDL?.preview?.showPlayerIndicator) {
+            window.YTDL.preview.showPlayerIndicator("B");
+          }
         } else {
           window.YTDL.state.scissorsTimeSecA = null;
           window.YTDL.state.scissorsTimeSecB = null;

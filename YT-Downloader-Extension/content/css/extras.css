@@ -340,3 +340,260 @@
   text-transform: uppercase;
   letter-spacing: 0.5px;
 }
+
+/* ─── Chapter Select Button & Summary Breakdown ──────────────── */
+.ytdl-btn-select-chapters {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 8px;
+  color: #f1f1f1;
+  padding: 8px 12px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+.ytdl-btn-select-chapters:hover {
+  background: rgba(255, 255, 255, 0.16);
+  border-color: rgba(255, 255, 255, 0.3);
+  color: #ffffff;
+}
+
+.ytdl-chapters-breakdown {
+  margin-top: 8px;
+  padding: 8px 10px;
+  background: rgba(0, 0, 0, 0.35);
+  border-radius: 6px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  font-size: 11px;
+  color: #aaa;
+  max-height: 70px;
+  overflow-y: auto;
+}
+.ytdl-breakdown-empty {
+  font-style: italic;
+  color: #777;
+}
+.ytdl-ch-badge {
+  display: inline-block;
+  background: rgba(62, 166, 255, 0.2);
+  color: #3ea6ff;
+  border: 1px solid rgba(62, 166, 255, 0.4);
+  border-radius: 4px;
+  padding: 2px 6px;
+  margin: 2px 4px 2px 0;
+  font-size: 10px;
+  font-weight: 600;
+}
+
+
+
+/* ─── Chapter Selection Modal Overlay ────────────────────────── */
+.ytdl-modal-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.82);
+  backdrop-filter: blur(6px);
+  z-index: 99999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 12px;
+}
+.ytdl-modal-card {
+  background: #1c1c1c;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 12px;
+  width: 90%;
+  max-height: 90%;
+  display: flex;
+  flex-direction: column;
+  padding: 14px;
+  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.9);
+  color: #fff;
+}
+.ytdl-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  padding-bottom: 10px;
+  margin-bottom: 10px;
+}
+.ytdl-modal-header h3 {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 700;
+  color: #ffffff;
+}
+.ytdl-modal-close {
+  background: transparent;
+  border: none;
+  color: #aaa;
+  font-size: 20px;
+  cursor: pointer;
+  padding: 0 4px;
+  line-height: 1;
+}
+.ytdl-modal-close:hover {
+  color: #ff4e45;
+}
+
+.ytdl-modal-actions {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+.ytdl-ch-btn-action {
+  flex: 1;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  color: #bbb;
+  border-radius: 6px;
+  padding: 6px 10px;
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+.ytdl-ch-btn-action:hover {
+  background: rgba(255, 255, 255, 0.16);
+  color: #ffffff;
+  border-color: rgba(255, 255, 255, 0.3);
+}
+
+.ytdl-ch-btn-action.active {
+  background: rgba(62, 166, 255, 0.15);
+  border-color: rgba(62, 166, 255, 0.35);
+  color: #3ea6ff;
+}
+.ytdl-ch-btn-action.active:hover {
+  background: rgba(62, 166, 255, 0.3);
+  color: #ffffff;
+}
+
+.ytdl-ch-btn-des:hover {
+  background: rgba(255, 78, 69, 0.2);
+  border-color: rgba(255, 78, 69, 0.4);
+  color: #ff4e45;
+}
+
+.ytdl-modal-body {
+  flex: 1;
+  overflow-y: auto;
+  margin-bottom: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding-right: 4px;
+}
+.ytdl-modal-ch-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+.ytdl-modal-ch-item:hover {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.15);
+}
+.ytdl-modal-ch-item input[type="checkbox"] {
+  accent-color: #ff0000;
+  width: 16px;
+  height: 16px;
+  cursor: pointer;
+}
+.ytdl-modal-ch-info {
+  flex: 1;
+  font-size: 11px;
+  font-weight: 500;
+  color: #ddd;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.ytdl-modal-ch-time {
+  font-size: 10px;
+  color: #888;
+  font-family: monospace;
+}
+
+.ytdl-modal-footer {
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  padding-top: 10px;
+}
+.ytdl-btn-apply {
+  width: 100%;
+  background: linear-gradient(135deg, #ff0000 0%, #cc0000 100%);
+  border: none;
+  border-radius: 8px;
+  color: #fff;
+  padding: 9px;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+.ytdl-btn-apply:hover {
+  opacity: 0.92;
+  box-shadow: 0 4px 12px rgba(255, 0, 0, 0.4);
+}
+
+/* ─── Player Overlay Animations (A, B, Loop) ─────────────────── */
+.ytdl-player-indicator-overlay {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+  z-index: 9999;
+  font-size: 42px;
+  font-weight: 900;
+  color: #ffffff;
+  background: rgba(0, 0, 0, 0.75);
+  backdrop-filter: blur(8px);
+  border-radius: 20px;
+  width: 84px;
+  height: 84px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.7);
+  opacity: 0;
+}
+
+.ytdl-anim-pulse {
+  animation: ytdlPulseFlash 0.9s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.ytdl-anim-loop {
+  animation: ytdlRotateLoop 0.9s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes ytdlPulseFlash {
+  0% { opacity: 0; transform: translate(-50%, -50%) scale(0.4); }
+  25% { opacity: 1; transform: translate(-50%, -50%) scale(1.15); }
+  65% { opacity: 1; transform: translate(-50%, -50%) scale(1.0); }
+  100% { opacity: 0; transform: translate(-50%, -50%) scale(1.25); }
+}
+
+@keyframes ytdlRotateLoop {
+  0% { opacity: 0; transform: translate(-50%, -50%) scale(0.4) rotate(0deg); }
+  25% { opacity: 1; transform: translate(-50%, -50%) scale(1.15) rotate(180deg); }
+  65% { opacity: 1; transform: translate(-50%, -50%) scale(1.0) rotate(360deg); }
+  100% { opacity: 0; transform: translate(-50%, -50%) scale(1.25) rotate(450deg); }
+}

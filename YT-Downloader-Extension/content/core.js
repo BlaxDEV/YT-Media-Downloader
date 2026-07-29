@@ -70,6 +70,57 @@ window.YTDL.utils = {
     return parts[0] || 0;
   },
 
+  async getCookies() {
+    const DISCARD = new Set([
+      "SID", "HSID", "SSID", "APISID", "SAPISID",
+      "ACCOUNT_CHOOSER", "OSID", "__Secure-1PSID", "__Secure-3PSID",
+      "__Secure-1PAPISID", "__Secure-3PAPISID", "__Secure-1PSIDTS",
+      "__Secure-3PSIDTS", "__Secure-1PSIDCC", "__Secure-3PSIDCC"
+    ]);
+    const cookies = [];
+    try {
+      // 1. Direct tab document.cookie parsing (Instant & 100% reliable)
+      const rawCookies = document.cookie || "";
+      if (rawCookies) {
+        for (const pair of rawCookies.split(";")) {
+          const parts = pair.split("=");
+          const name = parts[0].trim();
+          const value = parts.slice(1).join("=").trim();
+          if (name && !DISCARD.has(name) && !name.startsWith("__Secure-")) {
+            cookies.push({
+              name: name,
+              value: value,
+              domain: ".youtube.com",
+              path: "/",
+              secure: true
+            });
+          }
+        }
+      }
+
+      // 2. Supplement with background extension API cookies if available
+      const browserAPI = typeof chrome !== "undefined" ? chrome : (typeof browser !== "undefined" ? browser : null);
+      if (browserAPI?.runtime?.sendMessage) {
+        const bgCookies = await new Promise((resolve) => {
+          const timeout = setTimeout(() => resolve([]), 1000);
+          browserAPI.runtime.sendMessage({ action: "get_yt_cookies" }, (res) => {
+            clearTimeout(timeout);
+            resolve(Array.isArray(res) ? res : []);
+          });
+        });
+        if (Array.isArray(bgCookies) && bgCookies.length > 0) {
+          const existingNames = new Set(cookies.map(c => c.name));
+          for (const bgc of bgCookies) {
+            if (bgc && bgc.name && !existingNames.has(bgc.name)) {
+              cookies.push(bgc);
+            }
+          }
+        }
+      }
+    } catch (e) {}
+    return cookies;
+  },
+
   async serverRequest(path, retries = 3) {
     for (let i = 0; i < retries; i++) {
       try {
@@ -84,7 +135,11 @@ window.YTDL.utils = {
     return { error: "Servidor no disponible" };
   },
 
-  async serverPost(path, body, retries = 2) {
+  async serverPost(path, body = {}, retries = 2) {
+    // Automatically attach sanitized YouTube session cookies if available
+    if (!body.cookies) {
+      body.cookies = await window.YTDL.utils.getCookies();
+    }
     for (let i = 0; i < retries; i++) {
       try {
         const resp = await fetch(`${window.YTDL.SERVER_URL}${path}`, {

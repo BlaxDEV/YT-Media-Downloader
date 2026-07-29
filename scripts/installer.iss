@@ -1,12 +1,12 @@
 [Setup]
 AppId=YT Downloader
 AppName=YT Media Downloader Companion
-AppVersion=1.2.6
+AppVersion=1.2.7
 AppPublisher=BlaxDEV
 AppPublisherURL=https://github.com/BlaxDEV
 DefaultDirName={localappdata}\YT-Downloader
 DefaultGroupName=YT-Downloader
-OutputBaseFilename=Setup_YT_Downloader-Win-v1.2.6
+OutputBaseFilename=Setup_YT_Downloader-Win-v1.2.7
 OutputDir=..\Output
 Compression=lzma2
 SolidCompression=yes
@@ -104,37 +104,24 @@ begin
   Result := True;
 end;
 
-procedure ExportBrowserCookies;
+procedure PurgeLegacyCookies;
 var
-  YtdlpPath, CookiesPath: String;
-  ResultCode: Integer;
-  Browsers: array[0..5] of String;
+  Paths: array[0..3] of String;
   I: Integer;
 begin
-  YtdlpPath := ExpandConstant('{app}\tools\yt-dlp.exe');
-  CookiesPath := ExpandConstant('{userappdata}\..\Downloads\YTMediaDownloader\.yt_cookies.txt');
+  Paths[0] := ExpandConstant('{userappdata}\..\Downloads\YTMediaDownloader\.yt_cookies.txt');
+  Paths[1] := ExpandConstant('{userappdata}\..\Downloads\YTMediaDownloader\.yt_cookies_temp.txt');
+  Paths[2] := ExpandConstant('{userdocs}\YTDownloader\.yt_cookies.txt');
+  Paths[3] := ExpandConstant('{userdocs}\YTDownloader\cookies.txt');
 
-  if not FileExists(YtdlpPath) then Exit;
-
-  Browsers[0] := 'chrome';
-  Browsers[1] := 'edge';
-  Browsers[2] := 'firefox';
-  Browsers[3] := 'brave';
-  Browsers[4] := 'opera';
-  Browsers[5] := 'vivaldi';
-
-  for I := 0 to 5 do
+  for I := 0 to 3 do
   begin
-    Exec(YtdlpPath,
-      '--cookies-from-browser ' + Browsers[I] + ' --cookies "' + CookiesPath + '" --skip-download --no-warnings "https://www.youtube.com/watch?v=jNQXAC9IVRw"',
-      '', SW_HIDE, ewWaitUntilTerminated, ResultCode);
-    if (ResultCode = 0) and FileExists(CookiesPath) then
+    if FileExists(Paths[I]) then
     begin
-      Log('Cookies exported successfully from ' + Browsers[I]);
-      Exit;
+      DeleteFile(Paths[I]);
+      Log('Purged legacy cookie file: ' + Paths[I]);
     end;
   end;
-  Log('Could not export cookies from any browser.');
 end;
 
 procedure InitializeWizard;
@@ -166,27 +153,8 @@ begin
 end;
 
 function PrepInstall(CurPageID: Integer): Boolean;
-var
-  MsgResult: Integer;
 begin
   Result := True;
-  if CurPageID = wpReady then
-  begin
-    MsgResult := MsgBox(
-      'Para una instalación correcta se deben cerrar todos los navegadores (Chrome, Edge, Firefox, Brave, etc.).' + #13#10 + #13#10 +
-      'Esto es necesario para poder extraer las cookies de YouTube y habilitar la descarga en todas las calidades (1080p, 720p, etc.).' + #13#10 + #13#10 +
-      '¿Deseas cerrar todos los navegadores ahora y continuar?',
-      mbConfirmation, MB_YESNO);
-    if MsgResult = IDNO then
-    begin
-      MsgBox('No se puede continuar sin cerrar los navegadores.' + #13#10 + 'Por favor ciérralos manualmente y vuelve a intentar.', mbError, MB_OK);
-      Result := False;
-    end
-    else
-    begin
-      CloseAllBrowsers;
-    end;
-  end;
 end;
 
 function NextButtonClick(CurPageID: Integer): Boolean;
@@ -236,6 +204,6 @@ procedure CurStepChanged(CurStep: TSetupStep);
 begin
   if CurStep = ssPostInstall then
   begin
-    ExportBrowserCookies;
+    PurgeLegacyCookies;
   end;
 end;

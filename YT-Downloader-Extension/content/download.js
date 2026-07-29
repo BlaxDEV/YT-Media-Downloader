@@ -28,6 +28,28 @@ window.YTDL.download = {
     if (bar) bar.style.width = "0%";
     if (pct) pct.textContent = t("downloadStarting");
 
+    // Prompt OS Save As Folder Dialog
+    try {
+      const folderRes = await window.YTDL.serverPost("/select_folder", { 
+        current_dir: window.YTDL.state.lastSelectedFolder || window.YTDL.state.customOutputDir || "" 
+      });
+
+      if (!folderRes || folderRes.cancelled || !folderRes.folder) {
+        window.YTDL.state.isDownloading = false;
+        btn.disabled = false;
+        if (progress) progress.style.display = "none";
+        return;
+      }
+
+      window.YTDL.state.lastSelectedFolder = folderRes.folder;
+      window.YTDL.state.customOutputDir = folderRes.folder;
+    } catch (e) {
+      window.YTDL.state.isDownloading = false;
+      btn.disabled = false;
+      if (progress) progress.style.display = "none";
+      return;
+    }
+
     const pageTitle = document.title.replace(/^\(\d+\)\s*/, "").replace(/ - YouTube$/, "") || "Video";
     const durSec = window.YTDL.state.videoInfo?.duration || window.YTDL.preview?.getYouTubeVideo()?.duration || 0;
     const durationStr = durSec ? window.YTDL.formatTime(durSec) : "";
@@ -124,11 +146,12 @@ window.YTDL.download = {
       body.ext = activeChipExt;
     }
     const prefix2 = type === "video" ? "v" : "a";
-    if (panel.querySelector(`#ytdl-${prefix2}-chapters-cb`)?.checked) {
+    if (window.YTDL.state[`selectedChapters_${prefix2}`] && window.YTDL.state[`selectedChapters_${prefix2}`].length > 0) {
       body.split_chapters = true;
-      if (window.YTDL.state[`selectedChapters_${prefix2}`] && window.YTDL.state[`selectedChapters_${prefix2}`].length > 0) {
-        body.chapters = window.YTDL.state[`selectedChapters_${prefix2}`].map(x => x.range);
-      }
+      body.chapters = window.YTDL.state[`selectedChapters_${prefix2}`].map(x => x.range);
+    }
+    if (window.YTDL.state.lastSelectedFolder || window.YTDL.state.customOutputDir) {
+      body.output_dir = window.YTDL.state.lastSelectedFolder || window.YTDL.state.customOutputDir;
     }
     if (window.YTDL.state.scissorsTrims && window.YTDL.state.scissorsTrims.length > 0) {
       const dur = window.YTDL.state.videoInfo?.duration || window.YTDL.preview?.getYouTubeVideo()?.duration || 600;

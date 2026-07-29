@@ -9,6 +9,9 @@ window.YTDL.panelI18n = {
   // ─── Apply Panel Translations ───────────────────────────────
   applyPanelTranslations(panel, lang) {
     if (!panel) return;
+    if (!lang) {
+      lang = window.YTDL?.state?.currentLang || window.YTDL?.state?.defaultSettings?.defLang || (navigator.language && navigator.language.startsWith("es") ? "es" : "en");
+    }
     const t = (k) => typeof window.YTDL_I18N_get === "function" ? window.YTDL_I18N_get(lang, k) : k;
 
     // Header
@@ -35,15 +38,19 @@ window.YTDL.panelI18n = {
     if (panel.querySelector("#ytdl-opt-v-audio + span")) panel.querySelector("#ytdl-opt-v-audio + span").textContent = t("audioCb");
     if (panel.querySelector("#ytdl-video-trim .ytdl-trim-title")) panel.querySelector("#ytdl-video-trim .ytdl-trim-title").textContent = t("trimLabel");
     if (panel.querySelector("#ytdl-video-trim .ytdl-preview-label")) panel.querySelector("#ytdl-video-trim .ytdl-preview-label").textContent = t("previewCb");
-    if (panel.querySelector("#ytdl-dl-video")) {
-      let dlBtnText = t("dlVideoBtn");
-      const audioToggle = panel.querySelector("#ytdl-v-include-audio");
-      if (audioToggle && !audioToggle.checked) {
-        dlBtnText += " " + (t("noAudioNotice") || "(Sin Audio)");
-      }
-      panel.querySelector("#ytdl-dl-video").lastChild.textContent = " " + dlBtnText;
-    }
     if (panel.querySelector("#ytdl-audio-toggle-wrapper")) panel.querySelector("#ytdl-audio-toggle-wrapper").setAttribute("title", t("audioToggleTitle") || "Incluir / Excluir Audio");
+
+    // Save as button texts
+    if (panel.querySelector("#ytdl-v-save-as .ytdl-save-as-txt")) panel.querySelector("#ytdl-v-save-as .ytdl-save-as-txt").textContent = t("btnSaveAs") || "Guardar como...";
+    if (panel.querySelector("#ytdl-a-save-as .ytdl-save-as-txt")) panel.querySelector("#ytdl-a-save-as .ytdl-save-as-txt").textContent = t("btnSaveAs") || "Guardar como...";
+
+    // Chapters modal translations
+    if (panel.querySelector("#ytdl-v-txt-chapters-btn")) panel.querySelector("#ytdl-v-txt-chapters-btn").textContent = t("btnSelectChapters") || "Seleccionar Capítulos";
+    if (panel.querySelector("#ytdl-a-txt-chapters-btn")) panel.querySelector("#ytdl-a-txt-chapters-btn").textContent = t("btnSelectChapters") || "Seleccionar Capítulos";
+    if (panel.querySelector("#ytdl-modal-title")) panel.querySelector("#ytdl-modal-title").textContent = t("chModalTitle") || "Capítulos del Video";
+    if (panel.querySelector("#ytdl-modal-btn-all")) panel.querySelector("#ytdl-modal-btn-all").textContent = "✓ " + (t("btnSelectAll") || "Seleccionar todos");
+    if (panel.querySelector("#ytdl-modal-btn-none")) panel.querySelector("#ytdl-modal-btn-none").textContent = "✗ " + (t("btnDeselectAll") || "Deseleccionar todos");
+    if (panel.querySelector("#ytdl-modal-btn-apply")) panel.querySelector("#ytdl-modal-btn-apply").textContent = t("btnApplySelection") || "Aplicar Selección";
 
     // Audio tab
     const afmtRow = panel.querySelector("[data-content='audio'] .ytdl-opt-row:nth-of-type(1) label");
@@ -53,7 +60,9 @@ window.YTDL.panelI18n = {
     if (panel.querySelector("#ytdl-opt-a-audio + span")) panel.querySelector("#ytdl-opt-a-audio + span").textContent = t("audioCb");
     if (panel.querySelector("#ytdl-audio-trim .ytdl-trim-title")) panel.querySelector("#ytdl-audio-trim .ytdl-trim-title").textContent = t("trimLabel");
     if (panel.querySelector("#ytdl-audio-trim .ytdl-preview-label")) panel.querySelector("#ytdl-audio-trim .ytdl-preview-label").textContent = t("previewCb");
-    if (panel.querySelector("#ytdl-dl-audio")) panel.querySelector("#ytdl-dl-audio").lastChild.textContent = " " + t("dlAudioBtn");
+
+    // Dynamic Download Button Labels
+    this.updateDownloadButtons(panel);
 
     // History tab
     if (panel.querySelector(".ytdl-history-header span")) panel.querySelector(".ytdl-history-header span").textContent = t("histHeader");
@@ -65,34 +74,28 @@ window.YTDL.panelI18n = {
     const cfgRows = panel.querySelectorAll("[data-content='config'] .ytdl-opt-row");
     if (cfgRows[0]) {
       const lbl = cfgRows[0].querySelector("label");
-      const sm = cfgRows[0].querySelector("small");
-      if (lbl) lbl.textContent = t("cfgOutDir");
-      if (sm) sm.textContent = t("cfgOutDirSmall");
+      if (lbl) lbl.textContent = t("cfgSelectLang");
     }
     if (cfgRows[1]) {
       const lbl = cfgRows[1].querySelector("label");
-      if (lbl) lbl.textContent = t("cfgSelectLang");
+      if (lbl) lbl.textContent = t("cfgDefVfmt");
     }
     if (cfgRows[2]) {
       const lbl = cfgRows[2].querySelector("label");
-      if (lbl) lbl.textContent = t("cfgDefVfmt");
+      if (lbl) lbl.textContent = t("cfgDefVq");
     }
     if (cfgRows[3]) {
       const lbl = cfgRows[3].querySelector("label");
-      if (lbl) lbl.textContent = t("cfgDefVq");
+      if (lbl) lbl.textContent = t("cfgDefAfmt");
     }
     if (cfgRows[4]) {
       const lbl = cfgRows[4].querySelector("label");
-      if (lbl) lbl.textContent = t("cfgDefAfmt");
+      if (lbl) lbl.textContent = t("cfgDefAq");
     }
     if (cfgRows[5]) {
       const lbl = cfgRows[5].querySelector("label");
-      if (lbl) lbl.textContent = t("cfgDefAq");
-    }
-    if (cfgRows[6]) {
-      const lbl = cfgRows[6].querySelector("label");
       if (lbl) lbl.textContent = t("cfgDefCheckboxes");
-      const cbs = cfgRows[6].querySelectorAll(".ytdl-checkbox-label span");
+      const cbs = cfgRows[5].querySelectorAll(".ytdl-checkbox-label span");
       if (cbs[0]) cbs[0].textContent = t("cfgThumbCheck");
       if (cbs[1]) cbs[1].textContent = t("cfgSubCheck");
       if (cbs[2]) cbs[2].textContent = t("cfgAudioCheck");
@@ -157,6 +160,63 @@ window.YTDL.panelI18n = {
     const aExtras = panel.querySelector('[data-content="audio"] .ytdl-opt-extras');
     if (aExtras) {
       aExtras.style.display = isAudioEnabled ? "block" : "none";
+    }
+  },
+
+  // ─── Dynamic Download Button Text Updater ─────────────────────
+  updateDownloadButtons(panel) {
+    if (!panel) return;
+    const lang = window.YTDL?.state?.currentLang || window.YTDL?.state?.defaultSettings?.defLang || (navigator.language && navigator.language.startsWith("es") ? "es" : "en");
+    const t = (k) => typeof window.YTDL_I18N_get === "function" ? window.YTDL_I18N_get(lang, k) : k;
+
+    // Video Tab
+    const vChapters = window.YTDL?.state?.selectedChapters_v || [];
+    const vTrims = window.YTDL?.state?.trims_video || [];
+    const vBtn = panel.querySelector("#ytdl-dl-video");
+    if (vBtn) {
+      let label = t("dlVideoBtn");
+      if (vChapters.length > 0) {
+        if (vChapters.length === 1) {
+          label = t("dlSingleChapter");
+        } else {
+          label = (t("dlMultiChapters") || "Descargar Capítulos ({n})").replace("{n}", vChapters.length);
+        }
+      } else if (vTrims.length > 0) {
+        if (vTrims.length === 1) {
+          label = t("dlSingleTrim");
+        } else {
+          label = (t("dlMultiTrims") || "Descargar Recortes ({n})").replace("{n}", vTrims.length);
+        }
+      }
+      const audioToggle = panel.querySelector("#ytdl-v-include-audio");
+      if (audioToggle && !audioToggle.checked && vChapters.length === 0 && vTrims.length === 0) {
+        label += " " + (t("noAudioNotice") || "(Sin Audio)");
+      }
+      const textNode = vBtn.lastChild;
+      if (textNode) textNode.textContent = " " + label;
+    }
+
+    // Audio Tab
+    const aChapters = window.YTDL?.state?.selectedChapters_a || [];
+    const aTrims = window.YTDL?.state?.trims_audio || [];
+    const aBtn = panel.querySelector("#ytdl-dl-audio");
+    if (aBtn) {
+      let label = t("dlAudioBtn");
+      if (aChapters.length > 0) {
+        if (aChapters.length === 1) {
+          label = t("dlSingleChapter");
+        } else {
+          label = (t("dlMultiChapters") || "Descargar Capítulos ({n})").replace("{n}", aChapters.length);
+        }
+      } else if (aTrims.length > 0) {
+        if (aTrims.length === 1) {
+          label = t("dlSingleTrim");
+        } else {
+          label = (t("dlMultiAudios") || "Descargar Audios ({n})").replace("{n}", aTrims.length);
+        }
+      }
+      const textNode = aBtn.lastChild;
+      if (textNode) textNode.textContent = " " + label;
     }
   }
 };
