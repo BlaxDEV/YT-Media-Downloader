@@ -113,6 +113,7 @@ window.YTDL.download = {
     } else {
       body.audio_format = panel.querySelector("#ytdl-a-fmt .ytdl-chip.active")?.dataset.v || "mp3";
       body.audio_quality = panel.querySelector("#ytdl-a-q .ytdl-chip.active")?.dataset.v || "192K";
+      body.ext = body.audio_format;
 
       const dur = window.YTDL.state.videoInfo?.duration || window.YTDL.preview?.getYouTubeVideo()?.duration || 600;
       const timeAEl = panel.querySelector("#ytdl-a-time-a");

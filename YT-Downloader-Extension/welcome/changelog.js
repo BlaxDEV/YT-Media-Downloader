@@ -9,8 +9,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
   const translations = {
     en: {
-      title: "YT Media Downloader — Release v1.2.7",
-      subtitle: "What's new in v1.2.7 across the Extension and Companion Server.",
+      title: "YT Media Downloader — Release v1.2.8",
+      subtitle: "What's new in v1.2.8 across the Extension and Companion Server.",
       secTitle: "Critical Security & Zero-Disk Memory Upgrade",
       secDesc: "Master credentials (SID, HSID, SSID, APISID, SAPISID) are strictly discarded. Cookies are processed 100% in RAM with zero disk persistence, and legacy disk cookie files are purged automatically on server startup.",
       srvTitle: "Companion Server (ytdl_host.py)",
@@ -31,13 +31,13 @@ document.addEventListener("DOMContentLoaded", () => {
       extItem3D: "Center-screen badges ('A', 'B', and ♻️ Loop arrows) over the video player while trimming.",
       extItem4T: "Dynamic i18n Download Labels:",
       extItem4D: "Real-time button label states translated across 9 supported languages.",
-      ctaTitle: "Upgrade Your Companion Server to v1.2.7",
+      ctaTitle: "Upgrade Your Companion Server to v1.2.8",
       ctaDesc: "To take full advantage of the new security model and native folder picker, download the latest Companion Server executable.",
-      ctaBtn: "🚀 Download Companion Server v1.2.7 (Release Tab)"
+      ctaBtn: "🚀 Download Companion Server v1.2.8 (Release Tab)"
     },
     es: {
-      title: "YT Media Downloader — Versión v1.2.7",
-      subtitle: "Novedades de la versión v1.2.7 en la Extensión y el Servidor Companion.",
+      title: "YT Media Downloader — Versión v1.2.8",
+      subtitle: "Novedades de la versión v1.2.8 en la Extensión y el Servidor Companion.",
       secTitle: "Actualización Crítica de Seguridad y Memoria Cero-Disco",
       secDesc: "Las credenciales maestras (SID, HSID, SSID, APISID, SAPISID) son descartadas estrictamente. Las cookies se procesan 100% en memoria RAM sin persistencia en disco, y los archivos de cookies antiguos se eliminan automáticamente.",
       srvTitle: "Servidor Companion (ytdl_host.py)",
@@ -58,9 +58,9 @@ document.addEventListener("DOMContentLoaded", () => {
       extItem3D: "Insignias animadas ('A', 'B' y flechas de bucle ♻️) al recortar videos.",
       extItem4T: "Botones de Descarga Dinámicos e Idiomas:",
       extItem4D: "Estados del botón traducidos dinámicamente en los 9 idiomas soportados.",
-      ctaTitle: "Actualiza tu Servidor Companion a la versión v1.2.7",
+      ctaTitle: "Actualiza tu Servidor Companion a la versión v1.2.8",
       ctaDesc: "Para aprovechar el nuevo modelo de seguridad y el selector de carpetas nativo, descarga el ejecutable más reciente.",
-      ctaBtn: "🚀 Descargar Servidor Companion v1.2.7 (Pestaña Releases)"
+      ctaBtn: "🚀 Descargar Servidor Companion v1.2.8 (Pestaña Releases)"
     }
   };
 

@@ -27,7 +27,7 @@ if sys.stderr is None:
 
 HOST = "127.0.0.1"
 PORT = 19836
-VERSION = "1.2.7"
+VERSION = "1.2.8"
 
 # Determine base directory and tools path
 if getattr(sys, 'frozen', False):
@@ -685,10 +685,7 @@ class YTDLRequestHandler(BaseHTTPRequestHandler):
         job = jobs[job_id]
         temp_cookie_path = None
         try:
-            url = body.get("url")
-            out_dir = job["output_dir"]
             fmt_type = body.get("type", "video") # "video" or "audio"
-            ext = body.get("ext", "mp4").lower()
             trim_a = body.get("trim_a") or body.get("trim_start")
             trim_b = body.get("trim_b") or body.get("trim_end")
             trim_ranges = body.get("trim_ranges", [])
@@ -696,6 +693,14 @@ class YTDLRequestHandler(BaseHTTPRequestHandler):
             selected_chapters = body.get("chapters", [])
             lufs_norm = body.get("lufs_norm", False)
             audio_meta = body.get("audio_meta", False)
+
+            if fmt_type == "audio":
+                ext = (body.get("ext") or body.get("audio_format") or "mp3").lower()
+                valid_audio = ("best", "aac", "alac", "flac", "m4a", "mka", "mp3", "ogg", "opus", "vorbis", "wav")
+                if ext not in valid_audio:
+                    ext = "mp3"
+            else:
+                ext = body.get("ext", "mp4").lower()
 
             is_anim_export = ext in ("gif", "webp")
             target_ext = ext
@@ -737,6 +742,9 @@ class YTDLRequestHandler(BaseHTTPRequestHandler):
 
             if fmt_type == "audio":
                 cmd.extend(["-x", "--audio-format", ext])
+                audio_q = body.get("audio_quality") or body.get("quality")
+                if audio_q:
+                    cmd.extend(["--audio-quality", str(audio_q).lower()])
                 postprocessor_args = []
                 if lufs_norm:
                     postprocessor_args.extend(["-af", "loudnorm=I=-14:LRA=11:TP=-1.5"])
