@@ -119,31 +119,47 @@
 
 /* ─── Preview Badge (floating indicator) ─────────────────────── */
 #ytdl-preview-badge {
-  position: fixed;
-  bottom: 16px;
-  left: 50%;
-  transform: translateX(-50%);
-  background: #1a5fa8;
-  color: #fff;
-  font-size: 12px;
-  font-weight: 500;
-  padding: 6px 16px;
-  border-radius: 20px;
-  z-index: 999999;
-  box-shadow: 0 4px 12px rgba(26, 95, 168, 0.5);
-  animation: ytdl-badge-pulse 2s ease-in-out infinite;
-  pointer-events: none;
+  position: fixed !important;
+  top: 76px !important;
+  bottom: auto !important;
+  left: 50% !important;
+  transform: translateX(-50%) !important;
+  background: rgba(18, 18, 26, 0.92) !important;
+  color: #ffffff !important;
+  font-family: "YouTube Noto", Roboto, "Segoe UI", Arial, sans-serif !important;
+  font-size: 13px !important;
+  font-weight: 500 !important;
+  padding: 8px 24px !important;
+  border-radius: 24px !important;
+  z-index: 999999 !important;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.6), 0 0 14px rgba(255, 23, 68, 0.45) !important;
+  border: 1px solid rgba(255, 255, 255, 0.18) !important;
+  backdrop-filter: blur(12px) !important;
+  animation: ytdl-badge-pulse 2s ease-in-out infinite !important;
+  pointer-events: none !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  text-align: center !important;
+  white-space: nowrap !important;
+  letter-spacing: 0.3px !important;
 }
 
 @keyframes ytdl-badge-pulse {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.7; }
+  0%, 100% { opacity: 1; transform: translateX(-50%) scale(1); }
+  50% { opacity: 0.82; transform: translateX(-50%) scale(0.98); }
 }
 
 /* ─── Trim Overlay on YouTube Progress Bar ───────────────────── */
 #movie_player.ytdl-trim-active .ytp-progress-bar,
-.html5-video-player.ytdl-trim-active .ytp-progress-bar {
+.html5-video-player.ytdl-trim-active .ytp-progress-bar,
+ytd-reel-video-renderer.ytdl-trim-active .ytp-progress-bar,
+ytd-reel-video-renderer.ytdl-trim-active #progress-bar,
+ytd-reel-video-renderer.ytdl-trim-active ytd-progress-bar-line,
+ytd-shorts.ytdl-trim-active .ytp-progress-bar,
+ytd-shorts.ytdl-trim-active #progress-bar {
   overflow: visible !important;
+  position: relative !important;
 }
 
 #ytdl-trim-overlay {
@@ -152,11 +168,22 @@
   left: 0 !important;
   width: 100% !important;
   height: 100% !important;
-  min-height: 3px !important;
+  min-height: 4px !important;
   display: block !important;
   pointer-events: none !important;
   z-index: 99999 !important;
   overflow: visible !important;
+}
+
+#ytdl-trim-overlay.ytdl-shorts-trim-overlay {
+  position: absolute !important;
+  bottom: 0px !important;
+  top: auto !important;
+  left: 0 !important;
+  width: 100% !important;
+  height: 8px !important;
+  min-height: 8px !important;
+  background: rgba(0, 0, 0, 0.45) !important;
 }
 
 .ytdl-ov-slice {
@@ -194,13 +221,16 @@
 #movie_player.ytdl-trim-active .ytp-load-progress,
 #movie_player.ytdl-trim-active .ytp-hover-progress-light,
 .html5-video-player.ytdl-trim-active .ytp-play-progress,
-.html5-video-player.ytdl-trim-active .ytp-load-progress {
+.html5-video-player.ytdl-trim-active .ytp-load-progress,
+ytd-reel-video-renderer.ytdl-trim-active .ytp-play-progress,
+ytd-reel-video-renderer.ytdl-trim-active #progress-bar-line {
   opacity: 0 !important;
   visibility: hidden !important;
 }
 
 #movie_player.ytdl-trim-active .ytp-scrubber-button,
-.html5-video-player.ytdl-trim-active .ytp-scrubber-button {
+.html5-video-player.ytdl-trim-active .ytp-scrubber-button,
+ytd-reel-video-renderer.ytdl-trim-active .ytp-scrubber-button {
   background: var(--ytdl-active-color, #ff1744) !important;
   border-color: var(--ytdl-active-color, #ff1744) !important;
   box-shadow: 0 0 8px var(--ytdl-active-color, #ff1744) !important;
@@ -208,11 +238,13 @@
 }
 
 #movie_player.ytdl-trim-active .ytp-scrubber-container,
-.html5-video-player.ytdl-trim-active .ytp-scrubber-container {
+.html5-video-player.ytdl-trim-active .ytp-scrubber-container,
+ytd-reel-video-renderer.ytdl-trim-active .ytp-scrubber-container {
   z-index: 100000 !important;
 }
 
 #movie_player.ytdl-trim-active .ytp-progress-bar-container,
-.html5-video-player.ytdl-trim-active .ytp-progress-bar-container {
+.html5-video-player.ytdl-trim-active .ytp-progress-bar-container,
+ytd-reel-video-renderer.ytdl-trim-active .ytp-progress-bar-container {
   z-index: 9999 !important;
 }

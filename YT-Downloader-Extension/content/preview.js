@@ -16,7 +16,42 @@ window.YTDL.preview = {
 
   // ─── Get YouTube Video Element ──────────────────────────────
   getYouTubeVideo() {
+    const isShorts = window.location.pathname.startsWith("/shorts/");
+    if (isShorts) {
+      const activeReel = document.querySelector("ytd-reel-video-renderer[is-active]") || document.querySelector("ytd-shorts");
+      if (activeReel) {
+        const v = activeReel.querySelector("video");
+        if (v) return v;
+      }
+    }
     return document.querySelector("video.html5-main-video, video.video-stream, video");
+  },
+
+  // ─── Get YouTube Progress Bar Element ────────────────────────
+  getProgressBar() {
+    const isShorts = window.location.pathname.startsWith("/shorts/");
+    if (isShorts) {
+      const activeReel =
+        document.querySelector("ytd-reel-video-renderer[is-active]") ||
+        document.querySelector("ytd-reel-video-renderer:not([hidden])") ||
+        document.querySelector("ytd-shorts");
+      if (activeReel) {
+        const pb = activeReel.querySelector(
+          ".ytp-progress-bar, #progress-bar, ytd-progress-bar-line, .progress-bar-line, #progress-bar-line, ytd-shorts-player-controls .ytp-progress-bar, ytd-reel-player-overlay-renderer #progress-bar, .ytp-progress-bar-container"
+        );
+        if (pb) {
+          try {
+            pb.style.position = "relative";
+            pb.style.overflow = "visible";
+          } catch (e) {}
+          return pb;
+        }
+        const playerContainer = activeReel.querySelector("#player-container, .html5-video-player, ytd-reel-player-overlay-renderer") || activeReel;
+        if (playerContainer) return playerContainer;
+      }
+    }
+    const player = document.querySelector("#movie_player, .html5-video-player");
+    return player ? (player.querySelector(".ytp-progress-bar") || player.querySelector(".ytp-progress-bar-container")) : document.querySelector(".ytp-progress-bar");
   },
 
   // ─── Get Trim Range ─────────────────────────────────────────
@@ -72,7 +107,9 @@ window.YTDL.preview = {
 
   showPlayerIndicator(type) {
     try {
-      const player = document.querySelector("#movie_player, .html5-video-player");
+      const isShorts = window.location.pathname.startsWith("/shorts/");
+      const activeReel = isShorts ? (document.querySelector("ytd-reel-video-renderer[is-active]") || document.querySelector("ytd-shorts")) : null;
+      const player = isShorts ? (activeReel?.querySelector("#movie_player, .html5-video-player, ytd-reel-player-overlay-renderer") || activeReel) : document.querySelector("#movie_player, .html5-video-player");
       if (!player) return;
       let overlay = player.querySelector(".ytdl-player-indicator-overlay");
       if (!overlay) {
@@ -119,26 +156,30 @@ window.YTDL.preview = {
     const dur = window.YTDL.state.videoInfo?.duration || video.duration || 1;
     const curPct = video.currentTime / dur;
 
-    const hasSlices = window.YTDL.state.scissorsTrims && window.YTDL.state.scissorsTrims.length > 0;
     const isEditing = (window.YTDL.state.editingTrimIndex !== null && window.YTDL.state.editingTrimIndex !== undefined);
     const isScissorsActive = window.YTDL.state.scissorsState > 0;
     const isPreviewActive = window.YTDL.state.previewMode !== null;
 
-    const player = document.querySelector("#movie_player, .html5-video-player");
+    const isShorts = window.location.pathname.startsWith("/shorts/");
+    const activeReel = isShorts ? (document.querySelector("ytd-reel-video-renderer[is-active]") || document.querySelector("ytd-shorts")) : null;
+    const player = isShorts ? (activeReel?.querySelector("#movie_player, .html5-video-player, ytd-reel-player-overlay-renderer") || activeReel) : document.querySelector("#movie_player, .html5-video-player");
 
-    // Show overlay if editing, previewing, or scissors actively placing points
+    // Only show overlay if actively previewing, editing a slice, or scissors tool is active
     const active = isPreviewActive || isEditing || isScissorsActive;
 
     if (!active) {
       if (player) player.classList.remove("ytdl-trim-active");
+      if (activeReel) activeReel.classList.remove("ytdl-trim-active");
       this.removeProgressOverlay();
       return;
     }
 
     if (player) player.classList.add("ytdl-trim-active");
+    if (activeReel) activeReel.classList.add("ytdl-trim-active");
+
+    let range = null;
 
     // Determine current active trim range percentages
-    let range = null;
     if (isPreviewActive) {
       range = this.getTrimRange(window.YTDL.state.previewMode);
     } else if (isEditing) {
@@ -183,10 +224,17 @@ window.YTDL.preview = {
     this.init();
     video.addEventListener("timeupdate", this._timeUpdateHandler);
 
-    const player = document.querySelector("#movie_player, .html5-video-player");
+    const isShorts = window.location.pathname.startsWith("/shorts/");
+    const activeReel = isShorts ? (document.querySelector("ytd-reel-video-renderer[is-active]") || document.querySelector("ytd-shorts")) : null;
+    const player = isShorts ? (activeReel?.querySelector("#movie_player, .html5-video-player, ytd-reel-player-overlay-renderer") || activeReel) : document.querySelector("#movie_player, .html5-video-player");
+
     if (player) {
       player.classList.add("ytdl-preview-active");
       player.classList.add("ytdl-trim-active");
+    }
+    if (activeReel) {
+      activeReel.classList.add("ytdl-preview-active");
+      activeReel.classList.add("ytdl-trim-active");
     }
 
     this.showPreviewIndicator(true);
@@ -202,10 +250,16 @@ window.YTDL.preview = {
     if (video && this._timeUpdateHandler) {
       video.removeEventListener("timeupdate", this._timeUpdateHandler);
     }
-    const player = document.querySelector("#movie_player, .html5-video-player");
+
+    const isShorts = window.location.pathname.startsWith("/shorts/");
+    const activeReel = isShorts ? (document.querySelector("ytd-reel-video-renderer[is-active]") || document.querySelector("ytd-shorts")) : null;
+    const player = isShorts ? (activeReel?.querySelector("#movie_player, .html5-video-player, ytd-reel-player-overlay-renderer") || activeReel) : document.querySelector("#movie_player, .html5-video-player");
+
     if (player) {
       player.classList.remove("ytdl-preview-active");
-      // Let refreshOverlay decide whether to remove ytdl-trim-active
+    }
+    if (activeReel) {
+      activeReel.classList.remove("ytdl-preview-active");
     }
 
     this.showPreviewIndicator(false);
@@ -214,19 +268,27 @@ window.YTDL.preview = {
 
   // ─── Create Progress Overlay ────────────────────────────────
   createProgressOverlay() {
-    const existing = document.getElementById("ytdl-trim-overlay");
-    if (existing) return;
-
-    const player = document.querySelector("#movie_player, .html5-video-player");
-    if (!player) return;
-
-    const progressBar = player.querySelector(".ytp-progress-bar");
+    const progressBar = this.getProgressBar();
     if (!progressBar) return;
 
-    const overlay = document.createElement("div");
-    overlay.id = "ytdl-trim-overlay";
-    overlay.textContent = "";
-    progressBar.appendChild(overlay);
+    let overlay = document.getElementById("ytdl-trim-overlay");
+    if (overlay && overlay.parentElement !== progressBar) {
+      overlay.remove();
+      overlay = null;
+    }
+
+    if (!overlay) {
+      overlay = document.createElement("div");
+      overlay.id = "ytdl-trim-overlay";
+      overlay.textContent = "";
+
+      const isShorts = window.location.pathname.startsWith("/shorts/");
+      if (isShorts) {
+        overlay.className = "ytdl-shorts-trim-overlay";
+      }
+
+      progressBar.appendChild(overlay);
+    }
 
     const video = this.getYouTubeVideo();
     if (video) {
@@ -239,31 +301,31 @@ window.YTDL.preview = {
   // ─── Update Progress Overlay ────────────────────────────────
   updateProgressOverlay(trimStartPct, trimEndPct, currentPct) {
     let overlay = document.getElementById("ytdl-trim-overlay");
-    if (!overlay) {
+    if (!overlay || !overlay.parentElement) {
       this.createProgressOverlay();
       overlay = document.getElementById("ytdl-trim-overlay");
       if (!overlay) return;
     }
     overlay.textContent = "";
 
-    const player = document.querySelector("#movie_player, .html5-video-player");
+    const isShorts = window.location.pathname.startsWith("/shorts/");
+    const activeReel = isShorts ? (document.querySelector("ytd-reel-video-renderer[is-active]") || document.querySelector("ytd-shorts")) : null;
+    const player = isShorts ? (activeReel?.querySelector("#movie_player, .html5-video-player, ytd-reel-player-overlay-renderer") || activeReel) : document.querySelector("#movie_player, .html5-video-player");
     const video = this.getYouTubeVideo();
     const dur = window.YTDL.state.videoInfo?.duration || video?.duration || 1;
 
-    // Render only the active selection or the actively edited cut to avoid onion-skinning (individual preview style).
-
-    // 2. Render active trim highlight & dim background if trimming is active
+    // Render active trim highlight & dim background if trimming is active
     if (trimStartPct !== undefined && trimEndPct !== undefined) {
       const clamped = Math.max(trimStartPct, Math.min(trimEndPct, currentPct || 0));
       const activeColor = window.YTDL.state.activeScissorsColor || "#ff1744";
 
       const dimLeft = document.createElement("div");
       dimLeft.className = "ytdl-ov-dim ytdl-ov-dim-left";
-      dimLeft.style.cssText = `position:absolute !important;top:0 !important;height:100% !important;left:0% !important;width:${(trimStartPct * 100).toFixed(2)}% !important;background:rgba(0,0,0,0.6) !important;z-index:80 !important;pointer-events:none !important;`;
+      dimLeft.style.cssText = `position:absolute !important;top:0 !important;height:100% !important;left:0% !important;width:${(trimStartPct * 100).toFixed(2)}% !important;background:rgba(0,0,0,0.7) !important;z-index:80 !important;pointer-events:none !important;`;
 
       const dimRight = document.createElement("div");
       dimRight.className = "ytdl-ov-dim ytdl-ov-dim-right";
-      dimRight.style.cssText = `position:absolute !important;top:0 !important;height:100% !important;left:${(trimEndPct * 100).toFixed(2)}% !important;width:${((1 - trimEndPct) * 100).toFixed(2)}% !important;background:rgba(0,0,0,0.6) !important;z-index:80 !important;pointer-events:none !important;`;
+      dimRight.style.cssText = `position:absolute !important;top:0 !important;height:100% !important;left:${(trimEndPct * 100).toFixed(2)}% !important;width:${((1 - trimEndPct) * 100).toFixed(2)}% !important;background:rgba(0,0,0,0.7) !important;z-index:80 !important;pointer-events:none !important;`;
 
       const played = document.createElement("div");
       played.className = "ytdl-ov-played";
@@ -271,7 +333,7 @@ window.YTDL.preview = {
 
       const unplayed = document.createElement("div");
       unplayed.className = "ytdl-ov-unplayed";
-      unplayed.style.cssText = `position:absolute !important;top:0 !important;height:100% !important;left:${(clamped * 100).toFixed(2)}% !important;width:${((trimEndPct - clamped) * 100).toFixed(2)}% !important;background:${activeColor} !important;opacity:0.45 !important;z-index:91 !important;pointer-events:none !important;`;
+      unplayed.style.cssText = `position:absolute !important;top:0 !important;height:100% !important;left:${(clamped * 100).toFixed(2)}% !important;width:${((trimEndPct - clamped) * 100).toFixed(2)}% !important;background:${activeColor} !important;opacity:0.5 !important;z-index:91 !important;pointer-events:none !important;`;
 
       overlay.appendChild(dimLeft);
       overlay.appendChild(dimRight);
@@ -284,32 +346,33 @@ window.YTDL.preview = {
         markerA.className = "ytdl-trim-marker ytdl-trim-marker-a";
         markerA.style.cssText = `
           position: absolute !important;
-          top: -4px !important;
-          height: 16px !important;
-          width: 2px !important;
+          top: -6px !important;
+          height: 20px !important;
+          width: 3px !important;
           left: ${(trimStartPct * 100).toFixed(2)}% !important;
           background: ${activeColor} !important;
           z-index: 100001 !important;
-          box-shadow: 0 0 4px ${activeColor} !important;
+          box-shadow: 0 0 6px ${activeColor} !important;
           pointer-events: none !important;
         `;
         const dotA = document.createElement("div");
         dotA.style.cssText = `
           position: absolute !important;
-          top: -6px !important;
-          left: -4px !important;
-          width: 10px !important;
-          height: 10px !important;
+          top: -12px !important;
+          left: -6px !important;
+          width: 14px !important;
+          height: 14px !important;
           border-radius: 50% !important;
           background: ${activeColor} !important;
-          border: 1px solid #fff !important;
-          box-shadow: 0 0 4px rgba(0,0,0,0.5) !important;
-          font-size: 7px !important;
-          font-weight: bold !important;
-          color: #fff !important;
+          border: 1.5px solid #ffffff !important;
+          box-shadow: 0 2px 6px rgba(0,0,0,0.6) !important;
+          font-size: 8px !important;
+          font-weight: 800 !important;
+          color: #ffffff !important;
           display: flex !important;
           align-items: center !important;
           justify-content: center !important;
+          text-shadow: 0 1px 2px #000 !important;
         `;
         dotA.textContent = "A";
         markerA.appendChild(dotA);
@@ -321,32 +384,33 @@ window.YTDL.preview = {
         markerB.className = "ytdl-trim-marker ytdl-trim-marker-b";
         markerB.style.cssText = `
           position: absolute !important;
-          top: -4px !important;
-          height: 16px !important;
-          width: 2px !important;
+          top: -6px !important;
+          height: 20px !important;
+          width: 3px !important;
           left: ${(trimEndPct * 100).toFixed(2)}% !important;
           background: ${activeColor} !important;
           z-index: 100001 !important;
-          box-shadow: 0 0 4px ${activeColor} !important;
+          box-shadow: 0 0 6px ${activeColor} !important;
           pointer-events: none !important;
         `;
         const dotB = document.createElement("div");
         dotB.style.cssText = `
           position: absolute !important;
-          top: -6px !important;
-          left: -4px !important;
-          width: 10px !important;
-          height: 10px !important;
+          top: -12px !important;
+          left: -6px !important;
+          width: 14px !important;
+          height: 14px !important;
           border-radius: 50% !important;
           background: ${activeColor} !important;
-          border: 1px solid #fff !important;
-          box-shadow: 0 0 4px rgba(0,0,0,0.5) !important;
-          font-size: 7px !important;
-          font-weight: bold !important;
-          color: #fff !important;
+          border: 1.5px solid #ffffff !important;
+          box-shadow: 0 2px 6px rgba(0,0,0,0.6) !important;
+          font-size: 8px !important;
+          font-weight: 800 !important;
+          color: #ffffff !important;
           display: flex !important;
           align-items: center !important;
           justify-content: center !important;
+          text-shadow: 0 1px 2px #000 !important;
         `;
         dotB.textContent = "B";
         markerB.appendChild(dotB);
@@ -378,7 +442,9 @@ window.YTDL.preview = {
 
     const badge = document.createElement("div");
     badge.id = "ytdl-preview-badge";
-    badge.textContent = "Previsualizando recorte";
+    const getLang = () => window.YTDL?.state?.defaultSettings?.defLang || (navigator.language && navigator.language.startsWith("es") ? "es" : "en");
+    const msg = typeof window.YTDL_I18N_get === "function" ? window.YTDL_I18N_get(getLang(), "previewBadge") : (getLang() === "es" ? "Previsualizando recorte..." : "Preview cut range...");
+    badge.textContent = msg || "Preview cut range...";
     document.body.appendChild(badge);
   }
 };

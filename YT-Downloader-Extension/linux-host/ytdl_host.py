@@ -27,7 +27,7 @@ if sys.stderr is None:
 
 HOST = "127.0.0.1"
 PORT = 19836
-VERSION = "1.2.8"
+VERSION = "1.2.9"
 
 # Determine base directory and tools path
 if getattr(sys, 'frozen', False):
@@ -683,6 +683,8 @@ class YTDLRequestHandler(BaseHTTPRequestHandler):
 
     def _run_download_task(self, job_id, body):
         job = jobs[job_id]
+        url = job.get("url") or body.get("url", "")
+        out_dir = job.get("output_dir") or body.get("out_dir") or DEFAULT_DOWNLOAD_DIR
         temp_cookie_path = None
         try:
             fmt_type = body.get("type", "video") # "video" or "audio"

@@ -1,12 +1,12 @@
 [Setup]
 AppId=YT Downloader
 AppName=YT Media Downloader Companion
-AppVersion=1.2.8
+AppVersion=1.2.9
 AppPublisher=BlaxDEV
 AppPublisherURL=https://github.com/BlaxDEV
 DefaultDirName={localappdata}\YT-Downloader
 DefaultGroupName=YT-Downloader
-OutputBaseFilename=Setup_YT_Downloader-Win-v1.2.8
+OutputBaseFilename=Setup_YT_Downloader-Win-v1.2.9
 OutputDir=..\Output
 Compression=lzma2
 SolidCompression=yes

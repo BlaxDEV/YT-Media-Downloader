@@ -6,6 +6,18 @@
 window.YTDL = window.YTDL || {};
 
 window.YTDL.panelEvents = {
+  // ─── Clamp Position to Screen Viewport ───────────────────────
+  clampPosition(left, top, pWidth = 340, pHeight = 450) {
+    const minMargin = 8;
+    const maxLeft = Math.max(minMargin, window.innerWidth - pWidth - minMargin);
+    const maxTop = Math.max(minMargin, window.innerHeight - pHeight - minMargin);
+
+    return {
+      left: Math.min(Math.max(left, minMargin), maxLeft),
+      top: Math.min(Math.max(top, minMargin), maxTop)
+    };
+  },
+
   // ─── Setup Panel Events ─────────────────────────────────────
   setupPanelEvents(panel) {
     // Close
@@ -50,14 +62,29 @@ window.YTDL.panelEvents = {
         if (!dragging) return;
         const dx = e.clientX - startX;
         const dy = e.clientY - startY;
-        panel.style.left = (startLeft + dx) + "px";
-        panel.style.top = (startTop + dy) + "px";
+        const pWidth = panel.offsetWidth || 340;
+        const pHeight = panel.offsetHeight || 450;
+        const clamped = this.clampPosition(startLeft + dx, startTop + dy, pWidth, pHeight);
+        panel.style.left = clamped.left + "px";
+        panel.style.top = clamped.top + "px";
       });
 
       document.addEventListener("mouseup", () => {
         if (dragging) {
           dragging = false;
           panel.classList.remove("ytdl-dragging");
+          const rect = panel.getBoundingClientRect();
+          const pWidth = rect.width || 340;
+          const pHeight = rect.height || 450;
+          const clamped = this.clampPosition(rect.left, rect.top, pWidth, pHeight);
+          panel.style.left = clamped.left + "px";
+          panel.style.top = clamped.top + "px";
+
+          const savedPos = { left: clamped.left, top: clamped.top };
+          if (typeof chrome !== 'undefined' && chrome.storage?.local) {
+            chrome.storage.local.set({ ytdl_panel_pos: savedPos });
+          }
+          try { localStorage.setItem("ytdl_panel_pos", JSON.stringify(savedPos)); } catch(err){}
         }
       });
     }

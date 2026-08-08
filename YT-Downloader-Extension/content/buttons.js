@@ -13,20 +13,19 @@ window.YTDL.buttons = {
 
     const show = () => {
       if (tooltipEl) return;
-      const player = document.querySelector(".html5-video-player");
-      if (!player) return;
+      const isShorts = window.location.pathname.startsWith("/shorts/");
       
       tooltipEl = document.createElement("div");
       tooltipEl.className = "ytdl-custom-tooltip";
-      tooltipEl.style.cssText = "position:absolute; background:rgba(0,0,0,0.3); border-radius:8px; padding:6px 10px; font-size:13px; font-weight:400; font-family:'YouTube Noto',Roboto,Arial,sans-serif; color:#fff; z-index:9999; pointer-events:none; white-space:nowrap; transition:opacity 0.15s; line-height:1; backdrop-filter:blur(4px);";
+      tooltipEl.style.cssText = "position:fixed; background:rgba(20,20,28,0.92); border:1px solid rgba(255,255,255,0.15); border-radius:8px; padding:6px 12px; font-size:12px; font-weight:500; font-family:'YouTube Noto',Roboto,Arial,sans-serif; color:#fff; z-index:999999; pointer-events:none; white-space:nowrap; transition:opacity 0.15s; line-height:1.2; backdrop-filter:blur(8px); box-shadow:0 4px 14px rgba(0,0,0,0.6);";
       
       tooltipEl.textContent = "";
       const wrapper = document.createElement("div");
       wrapper.className = "ytp-tooltip-text-wrapper";
 
       const txtSpan = document.createElement("span");
-      txtSpan.style.cssText = "display:inline-block; vertical-align:middle; text-shadow: 0 0 2px rgba(0,0,0,0.3);";
-      txtSpan.textContent = (text === 'undefined' || !text) ? 'Tomar captura' : text;
+      txtSpan.style.cssText = "display:inline-block; vertical-align:middle; text-shadow: 0 0 2px rgba(0,0,0,0.4);";
+      txtSpan.textContent = (text === 'undefined' || !text) ? 'Modo Recorte' : text;
       wrapper.appendChild(txtSpan);
 
       if (shortcut) {
@@ -36,18 +35,24 @@ window.YTDL.buttons = {
         wrapper.appendChild(scSpan);
       }
       tooltipEl.appendChild(wrapper);
-      
-      player.appendChild(tooltipEl);
+      document.body.appendChild(tooltipEl);
       
       const btnRect = btn.getBoundingClientRect();
-      const playerRect = player.getBoundingClientRect();
       const tooltipRect = tooltipEl.getBoundingClientRect();
       
-      const top = btnRect.top - playerRect.top - tooltipRect.height - 24; 
-      const left = btnRect.left - playerRect.left + (btnRect.width / 2) - (tooltipRect.width / 2);
-      
-      tooltipEl.style.top = top + "px";
-      tooltipEl.style.left = left + "px";
+      if (isShorts) {
+        // En Shorts: colocar a la izquierda del botón de acción, perfectamente fuera del reproductor
+        const top = btnRect.top + (btnRect.height / 2) - (tooltipRect.height / 2);
+        const left = btnRect.left - tooltipRect.width - 12;
+        tooltipEl.style.top = Math.max(8, top) + "px";
+        tooltipEl.style.left = Math.max(8, left) + "px";
+      } else {
+        // En videos estándar: colocar encima del botón de controles
+        const top = btnRect.top - tooltipRect.height - 12;
+        const left = btnRect.left + (btnRect.width / 2) - (tooltipRect.width / 2);
+        tooltipEl.style.top = Math.max(8, top) + "px";
+        tooltipEl.style.left = Math.max(8, left) + "px";
+      }
     };
 
     const hide = () => {
@@ -64,17 +69,44 @@ window.YTDL.buttons = {
 
   // ─── Find YouTube Action Bar ───────────────────────────────
   findActionBar() {
-    const shortsSelectors = [
-      "ytd-reel-player-header-renderer #actions",
-      "ytd-reel-player-header-renderer #top-level-buttons",
-      "ytd-shorts #actions",
-      "ytd-shorts ytd-menu-renderer #top-level-buttons-computed",
-      "#page-manager ytd-shorts #action-buttons"
-    ];
+    const isShorts = window.location.pathname.startsWith("/shorts/");
 
-    for (const sel of shortsSelectors) {
-      const el = document.querySelector(sel);
-      if (el) return el;
+    if (isShorts) {
+      const activeReel =
+        document.querySelector("ytd-reel-video-renderer[is-active]") ||
+        document.querySelector("ytd-reel-video-renderer:not([hidden])") ||
+        document.querySelector("ytd-reel-video-renderer") ||
+        document.querySelector("ytd-shorts");
+
+      if (activeReel) {
+        // Priority 1: Search directly for the Like/Heart button in the active reel
+        const likeBtn = activeReel.querySelector(
+          "ytd-like-button-renderer, like-button-view-model, like-button-shape, #like-button, button[aria-label*='like' i], button[aria-label*='gusta' i]"
+        );
+        if (likeBtn) {
+          const container = likeBtn.closest(
+            "#actions-inner, #actions.ytd-reel-video-renderer, ytd-reel-player-overlay-renderer #actions, #actions:not(ytd-reel-player-header-renderer #actions), #action-buttons"
+          ) || likeBtn.parentElement;
+          if (container) return container;
+        }
+
+        // Priority 2: Right-side vertical actions container (explicitly ignoring player header)
+        const rightBar = activeReel.querySelector(
+          "#actions.ytd-reel-video-renderer, ytd-reel-player-overlay-renderer #actions, #actions-inner, #action-buttons"
+        );
+        if (rightBar) return rightBar;
+      }
+
+      const globalShortsSelectors = [
+        "ytd-shorts #actions-inner",
+        "ytd-shorts #actions.ytd-reel-video-renderer",
+        "ytd-shorts ytd-reel-player-overlay-renderer #actions",
+        "#page-manager ytd-shorts #action-buttons"
+      ];
+      for (const sel of globalShortsSelectors) {
+        const el = document.querySelector(sel);
+        if (el) return el;
+      }
     }
 
     const selectors = [
@@ -105,12 +137,19 @@ window.YTDL.buttons = {
 
     const actionBar = this.findActionBar();
     if (!actionBar) {
-      setTimeout(() => this.injectDownloadButton(), 1000);
+      setTimeout(() => this.injectDownloadButton(), 600);
       return;
     }
 
     const isShorts = window.location.pathname.startsWith("/shorts/");
     let btn = document.getElementById("ytdl-action-btn");
+
+    const expectedClass = isShorts ? "ytdl-shorts-btn" : "ytdl-fallback-btn";
+    if (btn && btn.className !== expectedClass) {
+      btn.remove();
+      btn = null;
+    }
+
     if (!btn) {
       btn = document.createElement("div");
       btn.id = "ytdl-action-btn";
@@ -125,13 +164,8 @@ window.YTDL.buttons = {
         svg.setAttribute("width", "24");
         svg.setAttribute("height", "24");
         svg.setAttribute("fill", "currentColor");
-        const circle = document.createElementNS(svgNS, "circle");
-        circle.setAttribute("cx", "12");
-        circle.setAttribute("cy", "12");
-        circle.setAttribute("r", "3.2");
         const path = document.createElementNS(svgNS, "path");
-        path.setAttribute("d", "M9 2L7.17 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2h-3.17L15 2H9zm3 15c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5z");
-        svg.appendChild(circle);
+        path.setAttribute("d", "M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z");
         svg.appendChild(path);
         btn.appendChild(svg);
       } else {
@@ -168,13 +202,42 @@ window.YTDL.buttons = {
     }
 
     if (isShorts) {
-      const likeBtn = actionBar.querySelector(
-        "ytd-like-button-renderer, button[aria-label*='like' i], #like-button"
+      const activeReel = document.querySelector("ytd-reel-video-renderer[is-active]") || document.querySelector("ytd-shorts") || document;
+      const likeBtn = activeReel.querySelector(
+        "ytd-like-button-renderer, like-button-view-model, like-button-shape, #like-button, button[aria-label*='like' i], button[aria-label*='gusta' i]"
       );
-      if (likeBtn && btn.nextSibling !== likeBtn) {
-        actionBar.insertBefore(btn, likeBtn);
-      } else if (!likeBtn && btn.parentElement !== actionBar) {
-        actionBar.appendChild(btn);
+
+      let targetParent = null;
+      let targetChild = null;
+
+      if (likeBtn) {
+        const container = likeBtn.closest(
+          "#actions-inner, #actions.ytd-reel-video-renderer, ytd-reel-player-overlay-renderer #actions, #actions:not(ytd-reel-player-header-renderer #actions), #action-buttons"
+        ) || likeBtn.parentElement;
+
+        targetParent = container;
+        targetChild = likeBtn;
+
+        if (container) {
+          let curr = likeBtn;
+          while (curr && curr.parentElement && curr.parentElement !== container) {
+            curr = curr.parentElement;
+          }
+          if (curr && curr.parentElement === container) {
+            targetChild = curr;
+          }
+        }
+      } else {
+        targetParent = actionBar;
+        targetChild = actionBar.firstElementChild;
+      }
+
+      if (targetParent && targetChild) {
+        if (btn.nextSibling !== targetChild || btn.parentElement !== targetParent) {
+          targetParent.insertBefore(btn, targetChild);
+        }
+      } else if (targetParent && btn.parentElement !== targetParent) {
+        targetParent.insertBefore(btn, targetParent.firstElementChild || null);
       }
     } else {
       const menuRenderer = actionBar.closest("ytd-menu-renderer") || actionBar.closest("#menu") || actionBar;
@@ -195,6 +258,7 @@ window.YTDL.buttons = {
       }
     }
 
+    this.injectScissorsButton();
   },
 
   // ─── Inject Camera Frame Grabber Button ─────────────────────
@@ -281,128 +345,210 @@ window.YTDL.buttons = {
   // ─── Inject Scissors Button ─────────────────────────────────
   injectScissorsButton(animate = false) {
     const isShorts = window.location.pathname.startsWith("/shorts/");
-    if (isShorts) return;
-
     let scissorsBtn = document.getElementById("ytdl-scissors-btn");
-    const rightControls = document.querySelector(".ytp-right-controls");
-    if (!rightControls) return;
+    const getLang = () => window.YTDL?.state?.defaultSettings?.defLang || "en";
+    const scisTitle = typeof window.YTDL_I18N_get === "function" ? window.YTDL_I18N_get(getLang(), "scissorsTooltip") : "Modo Recorte";
 
-    if (!scissorsBtn) {
-      const getLang = () => window.YTDL?.state?.defaultSettings?.defLang || "en";
-      const scisTitle = typeof YTDL_I18N_get === "function" ? YTDL_I18N_get(getLang(), "scissorsTooltip") : "Modo Recorte";
-      scissorsBtn = document.createElement("button");
-      scissorsBtn.id = "ytdl-scissors-btn";
-      scissorsBtn.className = "ytp-button";
-      this.bindTooltip(scissorsBtn, scisTitle);
-      scissorsBtn.style.cssText = "width:48px; height:100%; opacity:0.9; display:none; align-items:center; justify-content:center; position:relative; border:none; background:none; cursor:pointer; padding:0;";
-      scissorsBtn.textContent = "";
-      const svgNS = "http://www.w3.org/2000/svg";
-      const scisSvg = document.createElementNS(svgNS, "svg");
-      scisSvg.setAttribute("viewBox", "0 0 24 24");
-      scisSvg.setAttribute("width", "24");
-      scisSvg.setAttribute("height", "24");
-      scisSvg.setAttribute("fill", "#bbb");
-      const scisPath = document.createElementNS(svgNS, "path");
-      scisPath.setAttribute("d", "M9.64 7.64c.23-.5.36-1.05.36-1.64 0-2.21-1.79-4-4-4S2 3.79 2 6s1.79 4 4 4c.59 0 1.14-.13 1.64-.36L10 12l-2.36 2.36C7.14 14.13 6.59 14 6 14c-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4c0-.59-.13-1.14-.36-1.64L12 14l7 7h3v-1.09l-9.91-9.91zM6 8c-1.1 0-2-.89-2-2s.9-2 2-2 2 .89 2 2-.9 2-2 2zm0 12c-1.1 0-2-.89-2-2s.9-2 2-2 2 .89 2 2-.9 2-2 2zm6-7.5c-.28 0-.5-.22-.5-.5s.22-.5.5-.5.5.22.5.5-.22.5-.5.5zM19 3l-6 6 2 2 7-7V3h-3z");
-      scisSvg.appendChild(scisPath);
+    if (isShorts) {
+      const actionBtn = document.getElementById("ytdl-action-btn");
+      if (scissorsBtn && !scissorsBtn.classList.contains("ytdl-shorts-scissors-btn")) {
+        scissorsBtn.remove();
+        scissorsBtn = null;
+      }
 
-      const scisLbl = document.createElement("span");
-      scisLbl.id = "ytdl-scissors-label";
-      scisLbl.style.cssText = "font-size:12px; font-weight:bold; color:#fff; position:absolute; bottom:6px; right:4px; text-shadow: 1px 1px 2px #000;";
+      if (!scissorsBtn) {
+        scissorsBtn = document.createElement("button");
+        scissorsBtn.id = "ytdl-scissors-btn";
+        scissorsBtn.className = "ytdl-shorts-btn ytdl-shorts-scissors-btn";
+        scissorsBtn.style.display = "none";
+        this.bindTooltip(scissorsBtn, scisTitle);
+        scissorsBtn.textContent = "";
 
-      scissorsBtn.appendChild(scisSvg);
-      scissorsBtn.appendChild(scisLbl);
+        const svgNS = "http://www.w3.org/2000/svg";
+        const scisSvg = document.createElementNS(svgNS, "svg");
+        scisSvg.setAttribute("viewBox", "0 0 24 24");
+        scisSvg.setAttribute("width", "24");
+        scisSvg.setAttribute("height", "24");
+        scisSvg.setAttribute("fill", "#ffffff");
+        const scisPath = document.createElementNS(svgNS, "path");
+        scisPath.setAttribute("d", "M9.64 7.64c.23-.5.36-1.05.36-1.64 0-2.21-1.79-4-4-4S2 3.79 2 6s1.79 4 4 4c.59 0 1.14-.13 1.64-.36L10 12l-2.36 2.36C7.14 14.13 6.59 14 6 14c-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4c0-.59-.13-1.14-.36-1.64L12 14l7 7h3v-1.09l-9.91-9.91zM6 8c-1.1 0-2-.89-2-2s.9-2 2-2 2 .89 2 2-.9 2-2 2zm0 12c-1.1 0-2-.89-2-2s.9-2 2-2 2 .89 2 2-.9 2-2 2zm6-7.5c-.28 0-.5-.22-.5-.5s.22-.5.5-.5.5.22.5.5-.22.5-.5.5zM19 3l-6 6 2 2 7-7V3h-3z");
+        scisSvg.appendChild(scisPath);
 
-      scissorsBtn.addEventListener("click", (e) => {
-        e.preventDefault();
-        e.stopPropagation();
+        const scisLbl = document.createElement("span");
+        scisLbl.id = "ytdl-scissors-label";
 
-        const video = window.YTDL.preview.getYouTubeVideo();
-        if (!video) return;
+        scissorsBtn.appendChild(scisSvg);
+        scissorsBtn.appendChild(scisLbl);
 
-        const dur = window.YTDL.state.videoInfo?.duration || video.duration || 1;
-        const currentTimeSec = video.currentTime;
-        const currentVal = Math.round((currentTimeSec / dur) * 1000);
-        const label = document.getElementById("ytdl-scissors-label");
+        scissorsBtn.addEventListener("click", (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          this.handleScissorsClick(scissorsBtn);
+        });
+      }
 
-        const isEditingSlice = (window.YTDL.state.editingTrimIndex !== null && window.YTDL.state.editingTrimIndex !== undefined);
-
-        if (window.YTDL.state.scissorsState === 0) {
-          window.YTDL.state.scissorsTimeSecA = currentTimeSec;
-          window.YTDL.state.scissorsTimeSecB = null;
-          window.YTDL.state.scissorsTrimA = currentVal;
-          window.YTDL.state.scissorsTrimB = null;
-          window.YTDL.state.scissorsState = 1;
-          if (label) label.textContent = "A";
-          const activeCol = window.YTDL.state.activeScissorsColor || "#ff1744";
-          scissorsBtn.querySelector("svg").setAttribute("fill", activeCol);
-          if (window.YTDL?.preview?.showPlayerIndicator) {
-            window.YTDL.preview.showPlayerIndicator("A");
-          }
-        } else if (window.YTDL.state.scissorsState === 1) {
-          if (currentTimeSec <= (window.YTDL.state.scissorsTimeSecA || 0) || currentVal <= window.YTDL.state.scissorsTrimA) {
-            window.YTDL.state.scissorsTimeSecB = window.YTDL.state.scissorsTimeSecA;
-            window.YTDL.state.scissorsTimeSecA = currentTimeSec;
-            window.YTDL.state.scissorsTrimB = window.YTDL.state.scissorsTrimA;
-            window.YTDL.state.scissorsTrimA = currentVal;
-          } else {
-            window.YTDL.state.scissorsTimeSecB = currentTimeSec;
-            window.YTDL.state.scissorsTrimB = currentVal;
-          }
-          window.YTDL.state.scissorsState = 2;
-          if (label) label.textContent = "B";
-          if (window.YTDL?.preview?.showPlayerIndicator) {
-            window.YTDL.preview.showPlayerIndicator("B");
-          }
-        } else {
-          window.YTDL.state.scissorsTimeSecA = null;
-          window.YTDL.state.scissorsTimeSecB = null;
-          window.YTDL.state.scissorsTrimA = null;
-          window.YTDL.state.scissorsTrimB = null;
-          window.YTDL.state.scissorsState = 0;
-          if (label) label.textContent = "";
-          scissorsBtn.querySelector("svg").setAttribute("fill", "#bbb");
+      if (actionBtn && actionBtn.parentElement) {
+        if (scissorsBtn.nextSibling !== actionBtn || scissorsBtn.parentElement !== actionBtn.parentElement) {
+          actionBtn.parentElement.insertBefore(scissorsBtn, actionBtn);
         }
+      }
+    } else {
+      const rightControls = document.querySelector(".ytp-right-controls");
+      if (!rightControls) return;
 
-        this.applyScissorsToPanel(window.YTDL.state.scissorsState === 0);
+      if (scissorsBtn && scissorsBtn.classList.contains("ytdl-shorts-scissors-btn")) {
+        scissorsBtn.remove();
+        scissorsBtn = null;
+      }
 
-        if (window.YTDL.state.scissorsState > 0) {
-          window.YTDL.preview.startPreview("v", false);
-          const popup = document.getElementById("ytdl-popup-panel");
-          if (popup) {
-            const activeTab = popup.querySelector('.ytdl-popup-content.active');
-            const isAudio = activeTab && activeTab.dataset.content === 'audio';
-            const prefix = isAudio ? 'a' : 'v';
-            const previewCb = popup.querySelector(`#ytdl-${prefix}-preview-cb`);
-            if (previewCb && !previewCb.checked) {
-              previewCb.checked = true;
-            }
-          }
-        } else {
-          window.YTDL.preview.stopPreview();
-        }
-      });
+      if (!scissorsBtn) {
+        scissorsBtn = document.createElement("button");
+        scissorsBtn.id = "ytdl-scissors-btn";
+        scissorsBtn.className = "ytp-button";
+        this.bindTooltip(scissorsBtn, scisTitle);
+        scissorsBtn.style.cssText = "width:48px; height:100%; opacity:0.9; display:none; align-items:center; justify-content:center; position:relative; border:none; background:none; cursor:pointer; padding:0;";
+        scissorsBtn.textContent = "";
+        const svgNS = "http://www.w3.org/2000/svg";
+        const scisSvg = document.createElementNS(svgNS, "svg");
+        scisSvg.setAttribute("viewBox", "0 0 24 24");
+        scisSvg.setAttribute("width", "24");
+        scisSvg.setAttribute("height", "24");
+        scisSvg.setAttribute("fill", "#bbb");
+        const scisPath = document.createElementNS(svgNS, "path");
+        scisPath.setAttribute("d", "M9.64 7.64c.23-.5.36-1.05.36-1.64 0-2.21-1.79-4-4-4S2 3.79 2 6s1.79 4 4 4c.59 0 1.14-.13 1.64-.36L10 12l-2.36 2.36C7.14 14.13 6.59 14 6 14c-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4c0-.59-.13-1.14-.36-1.64L12 14l7 7h3v-1.09l-9.91-9.91zM6 8c-1.1 0-2-.89-2-2s.9-2 2-2 2 .89 2 2-.9 2-2 2zm0 12c-1.1 0-2-.89-2-2s.9-2 2-2 2 .89 2 2-.9 2-2 2zm6-7.5c-.28 0-.5-.22-.5-.5s.22-.5.5-.5.5.22.5.5-.22.5-.5.5zM19 3l-6 6 2 2 7-7V3h-3z");
+        scisSvg.appendChild(scisPath);
 
-      rightControls.insertBefore(scissorsBtn, rightControls.firstChild);
-      this.injectCameraBtn(rightControls, scissorsBtn);
-    } else if (!document.getElementById("ytdl-camera-btn")) {
-      this.injectCameraBtn(rightControls, scissorsBtn);
+        const scisLbl = document.createElement("span");
+        scisLbl.id = "ytdl-scissors-label";
+        scisLbl.style.cssText = "font-size:12px; font-weight:bold; color:#fff; position:absolute; bottom:6px; right:4px; text-shadow: 1px 1px 2px #000;";
+
+        scissorsBtn.appendChild(scisSvg);
+        scissorsBtn.appendChild(scisLbl);
+
+        scissorsBtn.addEventListener("click", (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          this.handleScissorsClick(scissorsBtn);
+        });
+
+        rightControls.insertBefore(scissorsBtn, rightControls.firstChild);
+        this.injectCameraBtn(rightControls, scissorsBtn);
+      } else if (!document.getElementById("ytdl-camera-btn")) {
+        this.injectCameraBtn(rightControls, scissorsBtn);
+      }
     }
 
-    if (window.YTDL.state.formatsData) {
+    if (window.YTDL.state.scissorsUnlockedForVideo || window.YTDL.state.formatsData) {
       this.showScissorsButton(animate);
+    } else {
+      this.hideScissorsButton(true);
+    }
+  },
+
+  // ─── Set Scissor Icon State ─────────────────────────────────
+  setScissorsIconState(scissorsBtn, state) {
+    if (!scissorsBtn) return;
+    const isShorts = window.location.pathname.startsWith("/shorts/");
+    const svg = scissorsBtn.querySelector("svg");
+    const label = scissorsBtn.querySelector("#ytdl-scissors-label");
+
+    if (state === 0) {
+      if (svg) svg.setAttribute("fill", isShorts ? "#ffffff" : "#bbb");
+      if (label) label.textContent = "";
+    } else if (state === 1) {
+      if (svg) svg.setAttribute("fill", "#00e676");
+      if (label) {
+        label.textContent = "A";
+        label.style.color = "#00e676";
+      }
+    } else if (state === 2) {
+      if (svg) svg.setAttribute("fill", "#ff1744");
+      if (label) {
+        label.textContent = "B";
+        label.style.color = "#ff1744";
+      }
+    }
+  },
+
+  // ─── Handle Scissors Button Click ───────────────────────────
+  handleScissorsClick(scissorsBtn) {
+    const video = window.YTDL.preview.getYouTubeVideo();
+    if (!video) return;
+
+    const dur = window.YTDL.state.videoInfo?.duration || video.duration || 1;
+    const currentTimeSec = video.currentTime;
+    const currentVal = Math.round((currentTimeSec / dur) * 1000);
+    const label = document.getElementById("ytdl-scissors-label");
+
+    if (window.YTDL.state.scissorsState === 0) {
+      window.YTDL.state.scissorsTimeSecA = currentTimeSec;
+      window.YTDL.state.scissorsTimeSecB = null;
+      window.YTDL.state.scissorsTrimA = currentVal;
+      window.YTDL.state.scissorsTrimB = null;
+      window.YTDL.state.scissorsState = 1;
+      if (label) label.textContent = "A";
+      const activeCol = window.YTDL.state.activeScissorsColor || "#ff1744";
+      const svg = scissorsBtn.querySelector("svg");
+      if (svg) svg.setAttribute("fill", activeCol);
+      if (window.YTDL?.preview?.showPlayerIndicator) {
+        window.YTDL.preview.showPlayerIndicator("A");
+      }
+    } else if (window.YTDL.state.scissorsState === 1) {
+      if (currentTimeSec <= (window.YTDL.state.scissorsTimeSecA || 0) || currentVal <= window.YTDL.state.scissorsTrimA) {
+        window.YTDL.state.scissorsTimeSecB = window.YTDL.state.scissorsTimeSecA;
+        window.YTDL.state.scissorsTimeSecA = currentTimeSec;
+        window.YTDL.state.scissorsTrimB = window.YTDL.state.scissorsTrimA;
+        window.YTDL.state.scissorsTrimA = currentVal;
+      } else {
+        window.YTDL.state.scissorsTimeSecB = currentTimeSec;
+        window.YTDL.state.scissorsTrimB = currentVal;
+      }
+      window.YTDL.state.scissorsState = 2;
+      if (label) label.textContent = "B";
+      if (window.YTDL?.preview?.showPlayerIndicator) {
+        window.YTDL.preview.showPlayerIndicator("B");
+      }
+    } else {
+      window.YTDL.state.scissorsTimeSecA = null;
+      window.YTDL.state.scissorsTimeSecB = null;
+      window.YTDL.state.scissorsTrimA = null;
+      window.YTDL.state.scissorsTrimB = null;
+      window.YTDL.state.scissorsState = 0;
+      if (label) label.textContent = "";
+      const isShorts = window.location.pathname.startsWith("/shorts/");
+      const svg = scissorsBtn.querySelector("svg");
+      if (svg) svg.setAttribute("fill", isShorts ? "#ffffff" : "#bbb");
+    }
+
+    this.applyScissorsToPanel(window.YTDL.state.scissorsState === 0);
+
+    if (window.YTDL.state.scissorsState > 0) {
+      window.YTDL.preview.startPreview("v", false);
+      const popup = document.getElementById("ytdl-popup-panel");
+      if (popup) {
+        const activeTab = popup.querySelector('.ytdl-popup-content.active');
+        const isAudio = activeTab && activeTab.dataset.content === 'audio';
+        const prefix = isAudio ? 'a' : 'v';
+        const previewCb = popup.querySelector(`#ytdl-${prefix}-preview-cb`);
+        if (previewCb && !previewCb.checked) {
+          previewCb.checked = true;
+        }
+      }
+    } else {
+      window.YTDL.preview.stopPreview();
+    }
+    if (window.YTDL.preview && typeof window.YTDL.preview.refreshOverlay === "function") {
+      window.YTDL.preview.refreshOverlay();
     }
   },
 
   // ─── Show Scissors Button ───────────────────────────────────
   showScissorsButton(animate = false) {
     const isShorts = window.location.pathname.startsWith("/shorts/");
-    if (isShorts) return;
-
     const scissorsBtn = document.getElementById("ytdl-scissors-btn");
     const cameraBtn = document.getElementById("ytdl-camera-btn");
     if (scissorsBtn) {
-      scissorsBtn.style.display = "inline-flex";
+      scissorsBtn.style.display = isShorts ? "flex" : "inline-flex";
       if (animate) {
         scissorsBtn.classList.remove("ytdl-scissors-show");
         void scissorsBtn.offsetWidth;
@@ -441,8 +587,9 @@ window.YTDL.buttons = {
     if (label) label.textContent = "";
     const scissorsBtn = document.getElementById("ytdl-scissors-btn");
     if (scissorsBtn) {
+      const isShorts = window.location.pathname.startsWith("/shorts/");
       const svg = scissorsBtn.querySelector("svg");
-      if (svg) svg.setAttribute("fill", "#bbb");
+      if (svg) svg.setAttribute("fill", isShorts ? "#ffffff" : "#bbb");
     }
     window.YTDL.preview.stopPreview();
     if (window.YTDL.preview && typeof window.YTDL.preview.refreshOverlay === "function") {

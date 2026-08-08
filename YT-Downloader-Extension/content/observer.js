@@ -50,6 +50,22 @@ window.YTDL.observer = {
     });
 
     observer.observe(document.body, { childList: true, subtree: true });
+
+    // Continuous check for Shorts and SPA navigation to guarantee button injection
+    setInterval(() => {
+      if (window.YTDL.isVideoPage()) {
+        const isShorts = window.location.pathname.startsWith("/shorts/");
+        const btn = document.getElementById("ytdl-action-btn");
+        if (isShorts) {
+          const activeReel = document.querySelector("ytd-reel-video-renderer[is-active]") || document.querySelector("ytd-shorts");
+          if (!btn || !activeReel || !activeReel.contains(btn)) {
+            window.YTDL.buttons.injectDownloadButton();
+          }
+        } else if (!btn) {
+          window.YTDL.buttons.injectDownloadButton();
+        }
+      }
+    }, 1000);
   }
 };
 

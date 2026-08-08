@@ -1,7 +1,7 @@
 import os
 import tarfile
 
-VERSION = "1.2.8"
+VERSION = "1.2.9"
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 LINUX_HOST_DIR = os.path.join(BASE_DIR, "linux-host")
 OUTPUT_DIR = os.path.join(BASE_DIR, "Output")

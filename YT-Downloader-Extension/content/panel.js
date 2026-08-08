@@ -306,7 +306,7 @@ window.YTDL.panel = {
               Guardar
             </button>
             <div class="ytdl-cfg-msg" id="ytdl-cfg-msg"></div>
-            <div class="ytdl-version" style="margin-top:16px;font-size:11px;color:#666;text-align:center;">v1.2.8</div>
+            <div class="ytdl-version" style="margin-top:16px;font-size:11px;color:#666;text-align:center;">v1.2.9</div>
           </div>
         </div>
       </div>
@@ -350,13 +350,56 @@ window.YTDL.panel = {
     const panel = this.createPanel();
     document.body.appendChild(panel);
 
-    const btn = document.getElementById("ytdl-action-btn");
-    if (btn) {
-      const rect = btn.getBoundingClientRect();
+    const applyPos = (savedPos) => {
+      const isShorts = window.location.pathname.startsWith("/shorts/");
+      const btn = document.getElementById("ytdl-action-btn");
+      const pWidth = panel.offsetWidth || 340;
+      const pHeight = panel.offsetHeight || 450;
+      let targetLeft, targetTop;
+
+      if (savedPos && typeof savedPos.left === "number" && typeof savedPos.top === "number") {
+        targetLeft = savedPos.left;
+        targetTop = savedPos.top;
+      } else if (btn) {
+        const rect = btn.getBoundingClientRect();
+        if (isShorts) {
+          // Posicionar al lado del botón en Shorts (a la izquierda)
+          targetLeft = rect.left - pWidth - 12;
+          targetTop = rect.top;
+        } else {
+          // Posicionar centrado sobre el botón en video estándar
+          targetLeft = rect.left + rect.width / 2 - pWidth / 2;
+          targetTop = rect.top - pHeight - 12;
+        }
+      } else {
+        targetLeft = window.innerWidth / 2 - pWidth / 2;
+        targetTop = window.innerHeight / 2 - pHeight / 2;
+      }
+
+      const clamper = window.YTDL.panelEvents?.clampPosition || ((l, t) => ({ left: Math.max(8, l), top: Math.max(8, t) }));
+      const clamped = clamper(targetLeft, targetTop, pWidth, pHeight);
+
       panel.style.position = "fixed";
-      panel.style.bottom = (window.innerHeight - rect.top + 8) + "px";
-      panel.style.left = (rect.left + rect.width / 2 - 170) + "px";
+      panel.style.left = clamped.left + "px";
+      panel.style.top = clamped.top + "px";
+      panel.style.bottom = "auto";
       panel.style.right = "auto";
+    };
+
+    let localSaved = null;
+    try {
+      const raw = localStorage.getItem("ytdl_panel_pos");
+      if (raw) localSaved = JSON.parse(raw);
+    } catch(e){}
+
+    applyPos(localSaved);
+
+    if (typeof chrome !== 'undefined' && chrome.storage?.local) {
+      chrome.storage.local.get("ytdl_panel_pos", (res) => {
+        if (res && res.ytdl_panel_pos) {
+          applyPos(res.ytdl_panel_pos);
+        }
+      });
     }
 
     requestAnimationFrame(() => panel.classList.add("ytdl-popup-show"));
