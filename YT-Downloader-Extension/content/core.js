@@ -121,11 +121,30 @@ window.YTDL.utils = {
     return cookies;
   },
 
+  getPoToken() {
+    try {
+      if (window.ytcfg && typeof window.ytcfg.get === 'function') {
+        const token = window.ytcfg.get('PO_TOKEN') || window.ytcfg.get('POTOKEN');
+        if (token && typeof token === 'string' && !token.startsWith('Cgt')) return token;
+      }
+      if (window.yt && window.yt.config_ && (window.yt.config_.PO_TOKEN || window.yt.config_.POTOKEN)) {
+        const token = window.yt.config_.PO_TOKEN || window.yt.config_.POTOKEN;
+        if (token && typeof token === 'string' && !token.startsWith('Cgt')) return token;
+      }
+    } catch (e) {}
+    return null;
+  },
+
   async serverRequest(path, retries = 3) {
     for (let i = 0; i < retries; i++) {
       try {
         const resp = await fetch(`${window.YTDL.SERVER_URL}${path}`);
-        return await resp.json();
+        const resJson = await resp.json();
+        if (resJson && resJson.version && resJson.version !== "1.3.0") {
+          window.YTDL.state.companionOutdated = true;
+          window.YTDL.state.companionVersion = resJson.version;
+        }
+        return resJson;
       } catch (e) {
         if (i < retries - 1) {
           await new Promise(r => setTimeout(r, 1000));
@@ -136,9 +155,13 @@ window.YTDL.utils = {
   },
 
   async serverPost(path, body = {}, retries = 2) {
-    // Automatically attach sanitized YouTube session cookies if available
+    // Automatically attach sanitized YouTube session cookies and PO-Token if available
     if (!body.cookies) {
       body.cookies = await window.YTDL.utils.getCookies();
+    }
+    if (!body.po_token) {
+      const po = window.YTDL.utils.getPoToken();
+      if (po) body.po_token = po;
     }
     for (let i = 0; i < retries; i++) {
       try {
@@ -147,7 +170,12 @@ window.YTDL.utils = {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(body)
         });
-        return await resp.json();
+        const resJson = await resp.json();
+        if (resJson && resJson.version && resJson.version !== "1.3.0") {
+          window.YTDL.state.companionOutdated = true;
+          window.YTDL.state.companionVersion = resJson.version;
+        }
+        return resJson;
       } catch (e) {
         if (i < retries - 1) {
           await new Promise(r => setTimeout(r, 1000));

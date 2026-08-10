@@ -15,6 +15,36 @@ window.YTDL.videoData = {
       this.renderQualities();
       return;
     }
+
+    // Reset selection and trim state for new video URL (without stopping active downloads)
+    if (window.YTDL.state.currentVideoUrl !== currentUrl) {
+      window.YTDL.state.selectedPlaylistItems_v = [];
+      window.YTDL.state.selectedPlaylistItems_a = [];
+      window.YTDL.state.selectedChapters_v = [];
+      window.YTDL.state.selectedChapters_a = [];
+      window.YTDL.state.trims_video = [];
+      window.YTDL.state.trims_audio = [];
+      window.YTDL.state.scissorsTrims = [];
+      window.YTDL.state.currentChapters = [];
+      window.YTDL.state.playlistInfo = null;
+      window.YTDL.state.formatsData = null;
+      window.YTDL.state.videoInfo = null;
+
+      const panel = document.getElementById("ytdl-popup-panel");
+      if (panel) {
+        if (window.YTDL?.panelEvents?.updatePlaylistBreakdown) {
+          window.YTDL.panelEvents.updatePlaylistBreakdown(panel, "v");
+          window.YTDL.panelEvents.updatePlaylistBreakdown(panel, "a");
+        }
+        if (window.YTDL?.panelEvents?.updateChaptersBreakdown) {
+          window.YTDL.panelEvents.updateChaptersBreakdown(panel, "v");
+          window.YTDL.panelEvents.updateChaptersBreakdown(panel, "a");
+        }
+        if (window.YTDL?.panelI18n?.updateDownloadButtons) {
+          window.YTDL.panelI18n.updateDownloadButtons(panel);
+        }
+      }
+    }
     
     window.YTDL.state.currentVideoUrl = currentUrl;
     
@@ -49,6 +79,18 @@ window.YTDL.videoData = {
     }
 
     window.YTDL.state.formatsData = data;
+
+    if (window.YTDL.state.currentVideoUrl.includes("list=")) {
+      try {
+        const plData = await window.YTDL.serverPost("/playlist_info", { url: window.YTDL.state.currentVideoUrl });
+        if (plData && !plData.error && Array.isArray(plData.items)) {
+          window.YTDL.state.playlistInfo = plData;
+        }
+      } catch (e) {}
+    } else {
+      window.YTDL.state.playlistInfo = null;
+    }
+
     this.renderQualities();
   },
 
@@ -62,7 +104,7 @@ window.YTDL.videoData = {
 
     if (loading) loading.style.display = "none";
 
-    const targetRes = ["1080p", "720p", "480p", "360p", "240p", "144p"];
+    const targetRes = ["4K", "1440p", "1080p", "720p", "480p", "360p", "240p", "144p"];
     const selectedFmt = document.querySelector("#ytdl-v-fmt .ytdl-chip.active")?.dataset.v || "mp4";
 
     const videoFormats = window.YTDL.state.formatsData?.formats?.filter(f =>
@@ -91,8 +133,17 @@ window.YTDL.videoData = {
       const rawSize = fmt.filesize || 0;
       const ext = fmt.ext || selectedFmt;
       let sizeText = selectedFmt.toUpperCase();
-      if (fmt.filesize) {
-        sizeText = `~${(fmt.filesize / 1048576).toFixed(0)} MB`;
+      if (fmt.filesize && fmt.filesize > 0) {
+        const mb = fmt.filesize / 1048576;
+        if (mb >= 1024) {
+          sizeText = `~${(mb / 1024).toFixed(1)} GB`;
+        } else if (mb >= 10) {
+          sizeText = `~${mb.toFixed(0)} MB`;
+        } else if (mb >= 1) {
+          sizeText = `~${mb.toFixed(1)} MB`;
+        } else {
+          sizeText = `~${(fmt.filesize / 1024).toFixed(0)} KB`;
+        }
       }
 
       const btn = document.createElement("button");
@@ -191,6 +242,17 @@ window.YTDL.videoData = {
         }
         if (window.YTDL?.panelEvents?.updateChaptersBreakdown) {
           window.YTDL.panelEvents.updateChaptersBreakdown(panel, prefix);
+        }
+      });
+
+      const plItems = window.YTDL.state.playlistInfo?.items || [];
+      ["v", "a"].forEach(prefix => {
+        const plBox = panel.querySelector(`#ytdl-${prefix}-playlist-box`);
+        if (plBox) {
+          plBox.style.display = plItems.length > 0 ? "block" : "none";
+        }
+        if (window.YTDL?.panelEvents?.updatePlaylistBreakdown) {
+          window.YTDL.panelEvents.updatePlaylistBreakdown(panel, prefix);
         }
       });
 

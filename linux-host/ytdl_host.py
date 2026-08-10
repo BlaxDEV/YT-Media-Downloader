@@ -27,7 +27,7 @@ if sys.stderr is None:
 
 HOST = "127.0.0.1"
 PORT = 19836
-VERSION = "1.2.9"
+VERSION = "1.3.0"
 
 # Determine base directory and tools path
 if getattr(sys, 'frozen', False):
@@ -56,56 +56,15 @@ def get_binary_path(name):
         return sys_path
     return name
 
-def select_output_folder(current_dir=None):
-    """Opens a native OS folder picker dialog. Returns selected path string or None if cancelled."""
-    if not current_dir or not os.path.exists(current_dir):
-        current_dir = os.path.expanduser("~/Downloads")
-        if not os.path.exists(current_dir):
-            current_dir = os.path.expanduser("~/Documents")
-
-    try:
-        import tkinter as tk
-        from tkinter import filedialog
-
-        root = tk.Tk()
-        root.withdraw()
-        root.attributes("-topmost", True)
-        folder = filedialog.askdirectory(
-            title="Seleccionar carpeta de descarga / Select Download Folder",
-            initialdir=current_dir
-        )
-        root.destroy()
-        if folder:
-            return os.path.abspath(folder)
-        return None
-    except Exception:
-        if platform.system() == "Windows":
-            try:
-                ps_script = f'''
-                Add-Type -AssemblyName System.Windows.Forms
-                $dialog = New-Object System.Windows.Forms.FolderBrowserDialog
-                $dialog.SelectedPath = "{current_dir.replace('/', '\\')}"
-                $dialog.Description = "Seleccionar carpeta de descarga / Select Download Folder"
-                if ($dialog.ShowDialog() -eq [System.Windows.Forms.DialogResult]::OK) {{
-                    Write-Output $dialog.SelectedPath
-                }}
-                '''
-                res = subprocess.check_output(["powershell", "-Command", ps_script], text=True, timeout=30).strip()
-                if res and os.path.exists(res):
-                    return os.path.abspath(res)
-            except Exception:
-                pass
-        return None
-
 def _extract_video_id(url):
     if not url:
         return ""
     if "v=" in url:
-        return url.split("v=")[1].split("&")[0]
+        return url.split("v=")[1].split("&")[0].split("#")[0]
     elif "youtu.be/" in url:
-        return url.split("youtu.be/")[1].split("?")[0]
+        return url.split("youtu.be/")[1].split("?")[0].split("#")[0]
     elif "/shorts/" in url:
-        return url.split("/shorts/")[1].split("?")[0]
+        return url.split("/shorts/")[1].split("?")[0].split("#")[0]
     return ""
 
 YTDLP_BIN = get_binary_path("yt-dlp")
@@ -182,6 +141,70 @@ def _get_firefox_fork_profile_paths():
 IN_MEMORY_COOKIES_NETSCAPE = None
 COOKIES_LOCK = threading.Lock()
 
+PO_TOKEN = None
+PO_TOKEN_LOCK = threading.Lock()
+
+def update_po_token(token):
+    global PO_TOKEN
+    if token and isinstance(token, str):
+        with PO_TOKEN_LOCK:
+            PO_TOKEN = token.strip()
+            print(f"[YTDL-Security] Updated PO-Token: {PO_TOKEN[:15]}... (RAM only)")
+
+def _get_current_po_token():
+    with PO_TOKEN_LOCK:
+        return PO_TOKEN
+
+def _height_to_res_str(h):
+    if not h or not isinstance(h, (int, float)):
+        return None
+    if h >= 2160: return "4K"
+    if h >= 1440: return "1440p"
+    if h >= 1080: return "1080p"
+    if h >= 720: return "720p"
+    if h >= 480: return "480p"
+    if h >= 360: return "360p"
+    if h >= 240: return "240p"
+    return "144p"
+
+def _extract_video_formats(info):
+    formats = []
+    duration = info.get("duration") or 0
+    target_res = ["4K", "1440p", "1080p", "720p", "480p", "360p", "240p", "144p"]
+
+    # Find best audio stream size to add to video-only DASH streams
+    best_audio_size = 0
+    for fmt in info.get("formats", []):
+        acodec = fmt.get("acodec", "")
+        vcodec = fmt.get("vcodec", "none")
+        if acodec and acodec != "none" and (vcodec == "none" or not fmt.get("height")):
+            a_size = fmt.get("filesize") or fmt.get("filesize_approx") or 0
+            if a_size > best_audio_size:
+                best_audio_size = a_size
+
+    for fmt in info.get("formats", []):
+        height = fmt.get("height")
+        res_str = _height_to_res_str(height)
+        if res_str and res_str in target_res:
+            vcodec = fmt.get("vcodec", "")
+            if vcodec and vcodec != "none":
+                f_size = fmt.get("filesize") or fmt.get("filesize_approx") or 0
+                if not f_size and duration:
+                    tbr = fmt.get("tbr") or fmt.get("vbr") or 0
+                    if tbr:
+                        f_size = int((tbr * 1000 * duration) / 8)
+                # Add best audio size for realistic combined download estimate
+                if f_size and best_audio_size:
+                    f_size += best_audio_size
+                formats.append({
+                    "format_id": fmt.get("format_id"),
+                    "resolution": res_str,
+                    "ext": fmt.get("ext", "mp4"),
+                    "filesize": f_size,
+                    "type": "video"
+                })
+    return formats
+
 DISCARD_COOKIES = {
     "SID", "HSID", "SSID", "APISID", "SAPISID",
     "ACCOUNT_CHOOSER", "OSID", "__Secure-1PSID", "__Secure-3PSID",
@@ -226,7 +249,7 @@ def select_output_folder(current_dir=None):
         root.attributes('-topmost', True)
         selected = filedialog.askdirectory(
             initialdir=initial,
-            title="Seleccionar carpeta de descarga — YT Media Downloader"
+            title="Select Download Folder — YT Media Downloader"
         )
         root.destroy()
     except Exception:
@@ -238,7 +261,7 @@ def select_output_folder(current_dir=None):
             ps_script = f"""
             Add-Type -AssemblyName System.Windows.Forms
             $f = New-Object System.Windows.Forms.FolderBrowserDialog
-            $f.Description = 'Seleccionar carpeta de descarga — YT Media Downloader'
+            $f.Description = 'Select Download Folder — YT Media Downloader'
             $f.SelectedPath = '{initial}'
             if ($f.ShowDialog() -eq 'OK') {{ $f.SelectedPath }}
             """
@@ -297,10 +320,14 @@ def _get_current_netscape_cookies():
         return IN_MEMORY_COOKIES_NETSCAPE
 
 def _run_ytdlp_cmd(args, timeout=None):
-    """Run yt-dlp with optional in-memory cookies using an ephemeral temp file deleted instantly after execution."""
+    """Run yt-dlp with optional in-memory cookies and PO-Token using an ephemeral temp file deleted instantly after execution."""
     cmd = [YTDLP_BIN] + args
     netscape_str = _get_current_netscape_cookies()
+    po_token_str = _get_current_po_token()
     temp_cookie_path = None
+
+    if po_token_str:
+        cmd.extend(["--extractor-args", f"youtube:po_token=web+{po_token_str}"])
 
     if netscape_str:
         try:
@@ -329,6 +356,7 @@ os.makedirs(DEFAULT_DOWNLOAD_DIR, exist_ok=True)
 
 # In-memory job tracking and persistent disk history
 jobs = {}
+jobs_lock = threading.Lock()
 history = []
 history_lock = threading.Lock()
 HISTORY_FILE = os.path.join(DEFAULT_DOWNLOAD_DIR, ".ytdl_history.json")
@@ -404,8 +432,15 @@ class YTDLRequestHandler(BaseHTTPRequestHandler):
         path = parsed.path
         query = parse_qs(parsed.query)
 
-        if path == "/ping":
-            self._send_json({"status": "ok", "version": VERSION, "platform": platform.system()})
+        if path == "/ping" or path == "/status":
+            self._send_json({
+                "status": "ok",
+                "version": VERSION,
+                "platform": platform.system(),
+                "has_cookies": bool(_get_current_netscape_cookies()),
+                "has_potoken": bool(_get_current_po_token()),
+                "features": ["po_token", "playlist_queue", "audio_studio", "trimming", "cookie_bypass"]
+            })
 
         elif path == "/history":
             with history_lock:
@@ -422,14 +457,14 @@ class YTDLRequestHandler(BaseHTTPRequestHandler):
         elif path == "/info":
             url = query.get("url", [""])[0]
             if not url:
-                self._send_json({"error": "URL requerida"}, status_code=400)
+                self._send_json({"error": "URL is required"}, status_code=400)
                 return
             try:
                 res = _run_ytdlp_cmd(["--dump-json", "--no-warnings", "--no-playlist", url])
                 if res.returncode != 0:
                     res = _run_ytdlp_cmd(["--dump-json", "--no-warnings", "--no-playlist", "--extractor-args", "youtube:player_client=android,web", url])
                 if res.returncode != 0:
-                    err_msg = res.stderr.strip() if res.stderr else f"Error al ejecutar yt-dlp (exit code {res.returncode})"
+                    err_msg = res.stderr.strip() if res.stderr else f"Error executing yt-dlp (exit code {res.returncode})"
                     self._send_json({"error": err_msg}, status_code=500)
                     return
                 info = json.loads(res.stdout)
@@ -437,57 +472,60 @@ class YTDLRequestHandler(BaseHTTPRequestHandler):
                 for idx, ch in enumerate(info.get("chapters") or []):
                     chapters.append({
                         "index": idx + 1,
-                        "title": ch.get("title", f"Capítulo {idx + 1}"),
+                        "title": ch.get("title", f"Chapter {idx + 1}"),
                         "start_time": ch.get("start_time", 0),
                         "end_time": ch.get("end_time", 0)
                     })
                 self._send_json({
-                    "title": info.get("title", "Video de YouTube"),
+                    "title": info.get("title", "YouTube Video"),
                     "duration": info.get("duration", 0),
                     "thumbnail": info.get("thumbnail", ""),
                     "uploader": info.get("uploader", ""),
                     "chapters": chapters
                 })
             except Exception as e:
-                self._send_json({"error": f"Error al obtener información: {str(e)}"}, status_code=500)
+                self._send_json({"error": f"Error fetching video info: {str(e)}"}, status_code=500)
 
         elif path == "/formats":
             url = query.get("url", [""])[0]
             if not url:
-                self._send_json({"error": "URL requerida"}, status_code=400)
+                self._send_json({"error": "URL is required"}, status_code=400)
                 return
             try:
                 res = _run_ytdlp_cmd(["--dump-json", "--no-warnings", "--no-playlist", url])
                 if res.returncode != 0:
-                    res = _run_ytdlp_cmd(["--dump-json", "--no-warnings", "--no-playlist", "--extractor-args", "youtube:player_client=android,web", url])
+                    res = _run_ytdlp_cmd(["--dump-json", "--no-warnings", "--no-playlist", "--extractor-args", "youtube:player_client=android,ios,mweb,web", url])
                 if res.returncode != 0:
-                    err_msg = res.stderr.strip() if res.stderr else f"Error al ejecutar yt-dlp (exit code {res.returncode})"
+                    err_msg = res.stderr.strip() if res.stderr else f"Error executing yt-dlp (exit code {res.returncode})"
                     self._send_json({"error": err_msg}, status_code=500)
                     return
                 info = json.loads(res.stdout)
-                formats = []
-                target_res = ["1080p", "720p", "480p", "360p", "240p", "144p"]
-                for fmt in info.get("formats", []):
-                    height = fmt.get("height")
-                    if height:
-                        res_str = f"{height}p"
-                        if res_str in target_res:
-                            formats.append({
-                                "format_id": fmt.get("format_id"),
-                                "resolution": res_str,
-                                "ext": fmt.get("ext", "mp4"),
-                                "filesize": fmt.get("filesize") or fmt.get("filesize_approx") or 0,
-                                "type": "video"
-                            })
-                self._send_json({"formats": formats, "title": info.get("title", "Video")})
+                formats = _extract_video_formats(info)
+
+                # Fallback: if single resolution returned, retry with multi-client player_client
+                if len(set(f["resolution"] for f in formats)) <= 1:
+                    retry_res = _run_ytdlp_cmd(["--dump-json", "--no-warnings", "--no-playlist", "--extractor-args", "youtube:player_client=android,ios,mweb,web", url])
+                    if retry_res.returncode == 0:
+                        retry_info = json.loads(retry_res.stdout)
+                        retry_formats = _extract_video_formats(retry_info)
+                        if len(retry_formats) > len(formats):
+                            formats = retry_formats
+                            info = retry_info
+
+                self._send_json({
+                    "formats": formats,
+                    "title": info.get("title", "Video"),
+                    "subtitles": list((info.get("subtitles") or {}).keys()),
+                    "automatic_captions": list((info.get("automatic_captions") or {}).keys())
+                })
             except Exception as e:
-                self._send_json({"error": f"Error obteniendo formatos: {str(e)}"}, status_code=500)
+                self._send_json({"error": f"Error fetching formats: {str(e)}"}, status_code=500)
 
         elif path == "/progress":
             job_id = query.get("id", [""])[0]
             job = jobs.get(job_id)
             if not job:
-                self._send_json({"error": "Trabajo no encontrado"}, status_code=404)
+                self._send_json({"error": "Job not found"}, status_code=404)
                 return
             self._send_json({
                 "progress": job["progress"],
@@ -496,7 +534,7 @@ class YTDLRequestHandler(BaseHTTPRequestHandler):
             })
 
         else:
-            self._send_json({"error": "Ruta no válida"}, status_code=404)
+            self._send_json({"error": "Invalid path"}, status_code=404)
 
     def do_POST(self):
         parsed = urlparse(self.path)
@@ -514,20 +552,25 @@ class YTDLRequestHandler(BaseHTTPRequestHandler):
         if cookies_data and isinstance(cookies_data, list):
             update_in_memory_cookies(cookies_data)
 
-        if path == "/cookies":
-            self._send_json({"status": "ok"})
+        # Ingest PO-Token if transmitted
+        potoken_data = body.get("po_token") or body.get("potoken")
+        if potoken_data:
+            update_po_token(potoken_data)
+
+        if path == "/cookies" or path == "/po_token":
+            self._send_json({"status": "ok", "has_potoken": bool(_get_current_po_token())})
 
         elif path == "/info":
             url = body.get("url")
             if not url:
-                self._send_json({"error": "URL requerida"}, status_code=400)
+                self._send_json({"error": "URL is required"}, status_code=400)
                 return
             try:
                 res = _run_ytdlp_cmd(["--dump-json", "--no-warnings", "--no-playlist", url])
                 if res.returncode != 0:
                     res = _run_ytdlp_cmd(["--dump-json", "--no-warnings", "--no-playlist", "--extractor-args", "youtube:player_client=android,web", url])
                 if res.returncode != 0:
-                    err_msg = res.stderr.strip() if res.stderr else f"Error al ejecutar yt-dlp (exit code {res.returncode})"
+                    err_msg = res.stderr.strip() if res.stderr else f"Error executing yt-dlp (exit code {res.returncode})"
                     self._send_json({"error": err_msg}, status_code=500)
                     return
                 info = json.loads(res.stdout)
@@ -535,51 +578,100 @@ class YTDLRequestHandler(BaseHTTPRequestHandler):
                 for idx, ch in enumerate(info.get("chapters") or []):
                     chapters.append({
                         "index": idx + 1,
-                        "title": ch.get("title", f"Capítulo {idx + 1}"),
+                        "title": ch.get("title", f"Chapter {idx + 1}"),
                         "start_time": ch.get("start_time", 0),
                         "end_time": ch.get("end_time", 0)
                     })
                 self._send_json({
-                    "title": info.get("title", "Video de YouTube"),
+                    "title": info.get("title", "YouTube Video"),
                     "duration": info.get("duration", 0),
                     "thumbnail": info.get("thumbnail", ""),
                     "uploader": info.get("uploader", ""),
                     "chapters": chapters
                 })
             except Exception as e:
-                self._send_json({"error": f"Error al obtener información: {str(e)}"}, status_code=500)
+                self._send_json({"error": f"Error fetching video info: {str(e)}"}, status_code=500)
 
         elif path == "/formats":
             url = body.get("url")
             if not url:
-                self._send_json({"error": "URL requerida"}, status_code=400)
+                self._send_json({"error": "URL is required"}, status_code=400)
                 return
             try:
                 res = _run_ytdlp_cmd(["--dump-json", "--no-warnings", "--no-playlist", url])
                 if res.returncode != 0:
-                    res = _run_ytdlp_cmd(["--dump-json", "--no-warnings", "--no-playlist", "--extractor-args", "youtube:player_client=android,web", url])
+                    res = _run_ytdlp_cmd(["--dump-json", "--no-warnings", "--no-playlist", "--extractor-args", "youtube:player_client=android,ios,mweb,web", url])
                 if res.returncode != 0:
-                    err_msg = res.stderr.strip() if res.stderr else f"Error al ejecutar yt-dlp (exit code {res.returncode})"
+                    err_msg = res.stderr.strip() if res.stderr else f"Error executing yt-dlp (exit code {res.returncode})"
                     self._send_json({"error": err_msg}, status_code=500)
                     return
                 info = json.loads(res.stdout)
-                formats = []
-                target_res = ["1080p", "720p", "480p", "360p", "240p", "144p"]
-                for fmt in info.get("formats", []):
-                    height = fmt.get("height")
-                    if height:
-                        res_str = f"{height}p"
-                        if res_str in target_res:
-                            formats.append({
-                                "format_id": fmt.get("format_id"),
-                                "resolution": res_str,
-                                "ext": fmt.get("ext", "mp4"),
-                                "filesize": fmt.get("filesize") or fmt.get("filesize_approx") or 0,
-                                "type": "video"
-                            })
-                self._send_json({"formats": formats, "title": info.get("title", "Video")})
+                formats = _extract_video_formats(info)
+
+                # Fallback: if single resolution returned, retry with multi-client player_client
+                if len(set(f["resolution"] for f in formats)) <= 1:
+                    retry_res = _run_ytdlp_cmd(["--dump-json", "--no-warnings", "--no-playlist", "--extractor-args", "youtube:player_client=android,ios,mweb,web", url])
+                    if retry_res.returncode == 0:
+                        retry_info = json.loads(retry_res.stdout)
+                        retry_formats = _extract_video_formats(retry_info)
+                        if len(retry_formats) > len(formats):
+                            formats = retry_formats
+                            info = retry_info
+
+                self._send_json({
+                    "formats": formats,
+                    "title": info.get("title", "Video"),
+                    "subtitles": list((info.get("subtitles") or {}).keys()),
+                    "automatic_captions": list((info.get("automatic_captions") or {}).keys())
+                })
             except Exception as e:
-                self._send_json({"error": f"Error obteniendo formatos: {str(e)}"}, status_code=500)
+                self._send_json({"error": f"Error fetching formats: {str(e)}"}, status_code=500)
+
+        elif path == "/playlist_info":
+            url = body.get("url")
+            if not url:
+                self._send_json({"error": "URL is required"}, status_code=400)
+                return
+            try:
+                res = _run_ytdlp_cmd(["--flat-playlist", "--dump-json", "--no-warnings", "--playlist-end", "100", url])
+                if res.returncode != 0:
+                    err_msg = res.stderr.strip() if res.stderr else f"Error fetching playlist info (exit code {res.returncode})"
+                    self._send_json({"error": err_msg}, status_code=500)
+                    return
+                
+                items = []
+                playlist_title = "Playlist"
+                lines = [line.strip() for line in res.stdout.strip().split("\n") if line.strip()]
+                for idx, line in enumerate(lines):
+                    try:
+                        item_json = json.loads(line)
+                        p_title = item_json.get("playlist_title") or item_json.get("playlist")
+                        if p_title:
+                            playlist_title = p_title
+                        
+                        v_id = item_json.get("id") or _extract_video_id(item_json.get("url") or "")
+                        v_url = f"https://www.youtube.com/watch?v={v_id}" if v_id else (item_json.get("url") or url)
+                        dur_val = item_json.get("duration") or 0
+                        dur_str = item_json.get("duration_string") or (f"{int(dur_val//60)}:{int(dur_val%60):02d}" if dur_val else "")
+                        
+                        items.append({
+                            "index": idx + 1,
+                            "id": v_id,
+                            "title": item_json.get("title") or f"Video {idx + 1}",
+                            "duration_str": dur_str,
+                            "url": v_url
+                        })
+                    except Exception:
+                        pass
+                
+                self._send_json({
+                    "status": "ok",
+                    "playlist_title": playlist_title,
+                    "total_videos": len(items),
+                    "items": items
+                })
+            except Exception as e:
+                self._send_json({"error": f"Error fetching playlist: {str(e)}"}, status_code=500)
 
         elif path == "/frame_grab":
             url = body.get("url")
@@ -612,7 +704,7 @@ class YTDLRequestHandler(BaseHTTPRequestHandler):
         elif path == "/download":
             url = body.get("url")
             if not url:
-                self._send_json({"error": "URL requerida"}, status_code=400)
+                self._send_json({"error": "URL is required"}, status_code=400)
                 return
 
             job_id = str(uuid.uuid4())[:8]
@@ -638,7 +730,7 @@ class YTDLRequestHandler(BaseHTTPRequestHandler):
             jobs[job_id] = {
                 "id": job_id,
                 "url": url,
-                "title": body.get("title", "Descargando..."),
+                "title": body.get("title", "Downloading..."),
                 "type": fmt_type,
                 "quality": quality,
                 "format": fmt_ext,
@@ -679,7 +771,7 @@ class YTDLRequestHandler(BaseHTTPRequestHandler):
                 self._send_json({"folder": None, "cancelled": True, "status": "cancelled"})
 
         else:
-            self._send_json({"error": "Ruta POST no válida"}, status_code=404)
+            self._send_json({"error": "Invalid POST path"}, status_code=404)
 
     def _run_download_task(self, job_id, body):
         job = jobs[job_id]
@@ -710,6 +802,23 @@ class YTDLRequestHandler(BaseHTTPRequestHandler):
                 ext = "mp4"
 
             cmd = [YTDLP_BIN, "--no-warnings", "--newline", "--progress-template", "%(progress._percent_str)s"]
+
+            # Attach PO-Token if present in payload or global memory
+            po_token_val = body.get("po_token") or body.get("potoken")
+            if po_token_val:
+                update_po_token(po_token_val)
+            cur_po = _get_current_po_token()
+            if cur_po:
+                cmd.extend(["--extractor-args", f"youtube:po_token=web+{cur_po}"])
+
+            # Playlist & Rate Throttling
+            if body.get("is_playlist") or "list=" in url:
+                sleep_val = body.get("sleep_interval", 3)
+                cmd.extend([
+                    "--sleep-requests", "1.5",
+                    "--sleep-interval", str(sleep_val),
+                    "--max-sleep-interval", str(int(sleep_val) + 3)
+                ])
 
             netscape_str = _get_current_netscape_cookies()
             if netscape_str:

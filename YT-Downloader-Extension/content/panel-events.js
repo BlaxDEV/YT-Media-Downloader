@@ -181,6 +181,56 @@ window.YTDL.panelEvents = {
       if (btnApply) btnApply.addEventListener("click", saveModalSelection);
     }
 
+    // ─── Playlist Modal Open Buttons ─────────────────────────────
+    const vOpenPlModal = panel.querySelector("#ytdl-v-btn-open-playlist-modal");
+    const aOpenPlModal = panel.querySelector("#ytdl-a-btn-open-playlist-modal");
+    if (vOpenPlModal) vOpenPlModal.addEventListener("click", () => this.openPlaylistModal(panel, "v"));
+    if (aOpenPlModal) aOpenPlModal.addEventListener("click", () => this.openPlaylistModal(panel, "a"));
+
+    // ─── Playlist Modal Actions ──────────────────────────────────
+    const plModal = panel.querySelector("#ytdl-playlist-modal");
+    if (plModal) {
+      const btnAll = plModal.querySelector("#ytdl-pl-modal-btn-all");
+      const btnNone = plModal.querySelector("#ytdl-pl-modal-btn-none");
+      const btnClose = plModal.querySelector("#ytdl-pl-modal-close");
+      const btnApply = plModal.querySelector("#ytdl-pl-modal-btn-apply");
+
+      if (btnAll) {
+        btnAll.addEventListener("click", () => {
+          plModal.querySelectorAll("#ytdl-pl-modal-list input[type='checkbox']").forEach(cb => cb.checked = true);
+          this.updatePlaylistSelectAllState(plModal);
+        });
+      }
+      if (btnNone) {
+        btnNone.addEventListener("click", () => {
+          plModal.querySelectorAll("#ytdl-pl-modal-list input[type='checkbox']").forEach(cb => cb.checked = false);
+          this.updatePlaylistSelectAllState(plModal);
+        });
+      }
+
+      const savePlModalSelection = () => {
+        const prefix = plModal.dataset.currentPrefix || "v";
+        const selected = [];
+        plModal.querySelectorAll("#ytdl-pl-modal-list input[type='checkbox']").forEach(cb => {
+          if (cb.checked) {
+            selected.push({
+              index: parseInt(cb.dataset.index || "0"),
+              id: cb.dataset.id,
+              title: cb.dataset.title,
+              url: cb.dataset.url,
+              duration_str: cb.dataset.durationStr
+            });
+          }
+        });
+        window.YTDL.state[`selectedPlaylistItems_${prefix}`] = selected;
+        this.updatePlaylistBreakdown(panel, prefix);
+        plModal.style.display = "none";
+      };
+
+      if (btnClose) btnClose.addEventListener("click", savePlModalSelection);
+      if (btnApply) btnApply.addEventListener("click", savePlModalSelection);
+    }
+
     // Include/Exclude Audio toggle in Video tab
     panel.querySelector("#ytdl-v-include-audio")?.addEventListener("change", (e) => {
       const isAudioOn = e.target.checked;
@@ -400,6 +450,97 @@ window.YTDL.panelEvents = {
         badge.textContent = `${c.title} (${c.range})`;
         bd.appendChild(badge);
       });
+    }
+    if (window.YTDL?.panelI18n?.updateDownloadButtons) {
+      window.YTDL.panelI18n.updateDownloadButtons(panel);
+    }
+  },
+
+  // ─── Open Playlist Modal ──────────────────────────────────────
+  openPlaylistModal(panel, prefix) {
+    if (!panel) return;
+    const modal = panel.querySelector("#ytdl-playlist-modal");
+    if (!modal) return;
+    const list = modal.querySelector("#ytdl-pl-modal-list");
+    if (!list) return;
+
+    const items = window.YTDL.state.playlistInfo?.items || [];
+    if (!window.YTDL.state[`selectedPlaylistItems_${prefix}`]) {
+      window.YTDL.state[`selectedPlaylistItems_${prefix}`] = [];
+    }
+    const currentSelIds = new Set(window.YTDL.state[`selectedPlaylistItems_${prefix}`].map(x => x.id));
+
+    list.textContent = "";
+    items.forEach((item, idx) => {
+      const row = document.createElement("label");
+      row.className = "ytdl-modal-ch-item";
+
+      const cb = document.createElement("input");
+      cb.type = "checkbox";
+      cb.dataset.index = item.index || (idx + 1);
+      cb.dataset.id = item.id || "";
+      cb.dataset.title = item.title || "";
+      cb.dataset.url = item.url || "";
+      cb.dataset.durationStr = item.duration_str || "";
+      cb.checked = currentSelIds.has(item.id);
+      cb.addEventListener("change", () => this.updatePlaylistSelectAllState(modal));
+
+      const info = document.createElement("span");
+      info.className = "ytdl-modal-ch-info";
+      info.textContent = `${item.index || (idx + 1)}. ${item.title}`;
+
+      const time = document.createElement("span");
+      time.className = "ytdl-modal-ch-time";
+      time.textContent = item.duration_str || "";
+
+      row.appendChild(cb);
+      row.appendChild(info);
+      row.appendChild(time);
+      list.appendChild(row);
+    });
+
+    modal.dataset.currentPrefix = prefix;
+    this.updatePlaylistSelectAllState(modal);
+    modal.style.display = "flex";
+  },
+
+  // ─── Update Playlist Select All Button State ──────────────────
+  updatePlaylistSelectAllState(modal) {
+    if (!modal) return;
+    const btnAll = modal.querySelector("#ytdl-pl-modal-btn-all");
+    if (!btnAll) return;
+
+    const checkboxes = Array.from(modal.querySelectorAll("#ytdl-pl-modal-list input[type='checkbox']"));
+    const allChecked = checkboxes.length > 0 && checkboxes.every(cb => cb.checked);
+    if (allChecked) {
+      btnAll.classList.add("active");
+    } else {
+      btnAll.classList.remove("active");
+    }
+  },
+
+  updatePlaylistBreakdown(panel, prefix) {
+    if (!panel) return;
+    const bd = panel.querySelector(`#ytdl-${prefix}-playlist-breakdown`);
+    if (!bd) return;
+
+    const sel = window.YTDL.state[`selectedPlaylistItems_${prefix}`] || [];
+    bd.textContent = "";
+    if (sel.length === 0) {
+      bd.style.display = "none";
+    } else {
+      bd.style.display = "block";
+      const badge = document.createElement("span");
+      badge.className = "ytdl-ch-badge";
+      badge.style.background = "rgba(62, 166, 255, 0.2)";
+      badge.style.color = "#3ea6ff";
+      badge.style.border = "1px solid rgba(62, 166, 255, 0.4)";
+      
+      const getLang = () => window.YTDL?.state?.defaultSettings?.defLang || "en";
+      const t = (k) => typeof window.YTDL_I18N_get === "function" ? window.YTDL_I18N_get(getLang(), k) : k;
+      const countTpl = t("plSelectedCount") || "{n} video(s) seleccionado(s)";
+      badge.textContent = countTpl.replace("{n}", sel.length);
+      bd.appendChild(badge);
     }
     if (window.YTDL?.panelI18n?.updateDownloadButtons) {
       window.YTDL.panelI18n.updateDownloadButtons(panel);

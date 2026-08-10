@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>YT Media Downloader - What's New in v1.2.9</title>
+  <title>YT Media Downloader - What's New in v1.3.0</title>
   <link rel="stylesheet" href="welcome.css">
   <style>
     .changelog-grid {
@@ -94,6 +94,7 @@
     }
     .changelog-download-btn,
     .changelog-kofi-btn,
+    .changelog-github-btn,
     .changelog-review-btn {
       display: inline-flex;
       align-items: center;
@@ -114,6 +115,18 @@
       transform: translateY(-2px);
       box-shadow: 0 6px 20px rgba(255, 95, 95, 0.6);
       color: #ffffff;
+    }
+    .changelog-github-btn {
+      background: linear-gradient(135deg, #2b3137 0%, #1b1f23 100%);
+      color: #ffffff;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+    }
+    .changelog-github-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(255, 255, 255, 0.25);
+      color: #ffffff;
+      border-color: rgba(255, 255, 255, 0.4);
     }
     .changelog-review-btn {
       background: linear-gradient(135deg, #ff9400 0%, #e05d00 100%);
@@ -148,8 +161,8 @@
           <svg viewBox="0 0 24 24" width="40" height="40" fill="#ff2a2a"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></svg>
         </div>
         <div class="header-titles">
-          <h1 id="cl-title">YT Media Downloader — Release v1.2.9</h1>
-          <p class="welcome-subtitle" id="cl-subtitle">What's new in v1.2.9 across the Extension and Companion Server.</p>
+          <h1 id="cl-title">YT Media Downloader — Release v1.3.0</h1>
+          <p class="welcome-subtitle" id="cl-subtitle">What's new in v1.3.0 across the Extension and Companion Server.</p>
           <div class="creator-badge">
             <span id="i18n-subtitleCreator">created by BlaxDEV</span>
           </div>
@@ -179,14 +192,14 @@
         <div class="changelog-card-header">
           <div class="changelog-card-icon">🎬</div>
           <div>
-            <h2 id="cl-ext-title">YouTube Shorts & Modal Upgrades</h2>
+            <h2 id="cl-ext-title">PO-Token Anti-Bot & Playlist Engine</h2>
           </div>
         </div>
         <ul class="changelog-list">
-          <li><strong id="cl-ext-item1-t">Shorts Action Bar Positioning:</strong> <span id="cl-ext-item1-d">The download button now sits right above the Heart (Like) button on YouTube Shorts.</span></li>
-          <li><strong id="cl-ext-item2-t">Shorts Modal Birthplace:</strong> <span id="cl-ext-item2-d">The Download window opens right alongside the Shorts action bar for seamless user experience.</span></li>
-          <li><strong id="cl-ext-item3-t">Position Memory & Screen Clamping:</strong> <span id="cl-ext-item3-d">Remembers where you dragged the window, strictly preventing it from leaving the visible browser screen.</span></li>
-          <li><strong id="cl-ext-item4-t">Changelog Single Viewport Layout:</strong> <span id="cl-ext-item4-d">Eliminated top and bottom layout clipping for clean, smooth fit across all monitor resolutions.</span></li>
+          <li><strong id="cl-ext-item1-t">PO-Token Auto-Injection:</strong> <span id="cl-ext-item1-d">Automatically captures live session PO-Tokens and forwards them to the backend to bypass YouTube anti-bot limits.</span></li>
+          <li><strong id="cl-ext-item2-t">Playlist Queue & Rate Throttling:</strong> <span id="cl-ext-item2-d">Processes video batches sequentially with smart sleep intervals to prevent HTTP 429 rate limit bans.</span></li>
+          <li><strong id="cl-ext-item3-t">Companion Server Version Check:</strong> <span id="cl-ext-item3-d">Extension pings companion status and displays a clear warning if the server installer is older than v1.3.0.</span></li>
+          <li><strong id="cl-ext-item4-t">YouTube Shorts & Modal Upgrades:</strong> <span id="cl-ext-item4-d">Maintains full Shorts action bar integration and draggable screen clamping.</span></li>
         </ul>
       </div>
 
@@ -195,36 +208,39 @@
         <div class="changelog-card-header">
           <div class="changelog-card-icon">🖥️</div>
           <div>
-            <h2 id="cl-srv-title">Companion Server & Engine (v1.2.9)</h2>
-            <span class="changelog-sub-badge" id="cl-srv-subtitle">No cambios en el Companion, v1.2.8-estable y funcional</span>
+            <h2 id="cl-srv-title">Companion Server & Engine (v1.3.0)</h2>
+            <span class="changelog-sub-badge" id="cl-srv-subtitle">Companion Server v1.3.0 Update Required!</span>
           </div>
         </div>
         <ul class="changelog-list">
-          <li><strong id="cl-srv-item1-t">Zero-Disk Cookie Security:</strong> <span id="cl-srv-item1-d">Processes active player cookies exclusively in RAM with instant 0-byte file cleanup.</span></li>
-          <li><strong id="cl-srv-item2-t">Native OS Folder Selector:</strong> <span id="cl-srv-item2-d">Opens native Windows/Linux folder picker windows, remembering the last selected folder.</span></li>
-          <li><strong id="cl-srv-item3-t">Legacy Cookie Auto-Purge:</strong> <span id="cl-srv-item3-d">Automatically purges legacy cookie files (.yt_cookies.txt, cookies.txt) on server startup.</span></li>
-          <li><strong id="cl-srv-item4-t">Updated Engine Dependencies:</strong> <span id="cl-srv-item4-d">Ensures smooth 1080p, 4K, 60fps and audio extraction capabilities.</span></li>
+          <li><strong id="cl-srv-item1-t">PO-Token Parameter Support:</strong> <span id="cl-srv-item1-d">Ingests PO-Tokens and passes --extractor-args youtube:po_token=web+... to yt-dlp.</span></li>
+          <li><strong id="cl-srv-item2-t">100% English Installer & Dialogs:</strong> <span id="cl-srv-item2-d">All maintenance wizard dialogs and native folder picker titles are standardized in English.</span></li>
+          <li><strong id="cl-srv-item3-t">Zero-Disk Cookie & Token Security:</strong> <span id="cl-srv-item3-d">Processes session cookies and tokens exclusively in RAM with 0-byte disk footprint.</span></li>
+          <li><strong id="cl-srv-item4-t">Engine & Dependency Alignment:</strong> <span id="cl-srv-item4-d">Guarantees smooth 1080p, 4K, 60fps and audio processing across Windows & Linux.</span></li>
         </ul>
       </div>
     </div>
 
     <!-- Support & Rating CTA Box -->
     <div class="changelog-cta-box">
-      <div class="changelog-cta-title" id="cl-cta-title">💖 ¡Apoya el proyecto o deja una valoración!</div>
-      <div class="changelog-cta-desc" id="cl-cta-desc">Si disfrutas de la extensión, agradecería muchísimo tu calificación en la tienda de Mozilla Add-ons para tener más visibilidad, ¡o invítame un cafecito en Ko-Fi!</div>
+      <div class="changelog-cta-title" id="cl-cta-title">💖 Support the project or leave a review!</div>
+      <div class="changelog-cta-desc" id="cl-cta-desc">If you find this app helpful, a review on the Mozilla Add-ons store is immensely appreciated to gain visibility, or consider buying me a Ko-Fi!</div>
       <div class="changelog-btn-group">
         <a href="https://ko-fi.com/blaxdev" target="_blank" class="changelog-kofi-btn" id="cl-cta-kofi">
-          <span>☕ ¡Buy me a Ko-Fi!</span>
+          <span>☕ Buy me a Ko-Fi!</span>
+        </a>
+        <a href="https://github.com/BlaxDEV/Youtube-Downloader" target="_blank" class="changelog-github-btn" id="cl-cta-github">
+          <span>⭐ View on GitHub</span>
         </a>
         <a href="https://addons.mozilla.org/firefox/addon/yt-media-downloader/" target="_blank" class="changelog-review-btn" id="cl-cta-review">
-          <span>⭐ Calificar en Mozilla Add-ons</span>
+          <span>⭐ Rate on Firefox Add-ons</span>
         </a>
       </div>
     </div>
 
     <!-- Footer -->
     <footer class="welcome-footer">
-      <p><span id="i18n-footerCreator">created by BlaxDEV</span> | YT Media Downloader Extension v1.2.9</p>
+      <p><span id="i18n-footerCreator">created by BlaxDEV</span> | YT Media Downloader Extension v1.3.0</p>
     </footer>
   </div>
 

@@ -147,6 +147,15 @@ window.YTDL.download = {
       body.ext = activeChipExt;
     }
     const prefix2 = type === "video" ? "v" : "a";
+    const selectedPlaylist = window.YTDL.state[`selectedPlaylistItems_${prefix2}`] || [];
+    if (selectedPlaylist.length > 0) {
+      if (window.YTDL.state.lastSelectedFolder || window.YTDL.state.customOutputDir) {
+        body.output_dir = window.YTDL.state.lastSelectedFolder || window.YTDL.state.customOutputDir;
+      }
+      await this.downloadPlaylistBatch(type, selectedPlaylist, body);
+      return;
+    }
+
     if (window.YTDL.state[`selectedChapters_${prefix2}`] && window.YTDL.state[`selectedChapters_${prefix2}`].length > 0) {
       body.split_chapters = true;
       body.chapters = window.YTDL.state[`selectedChapters_${prefix2}`].map(x => x.range);
@@ -177,6 +186,90 @@ window.YTDL.download = {
       window.YTDL.state.isDownloading = false;
       btn.disabled = false;
     }
+  },
+
+  // ─── Playlist Batch Download ─────────────────────────────────
+  async downloadPlaylistBatch(type, items, baseBody) {
+    const panel = document.getElementById("ytdl-popup-panel");
+    const btn = panel?.querySelector(`#ytdl-dl-${type}`);
+    const bar = panel?.querySelector(`#ytdl-${type === "video" ? "v" : "a"}-bar`);
+    const pct = panel?.querySelector(`#ytdl-${type === "video" ? "v" : "a"}-pct`);
+    const prefix = type === "video" ? "v" : "a";
+
+    const getLang = () => window.YTDL?.state?.defaultSettings?.defLang || "en";
+    const t = (k) => typeof window.YTDL_I18N_get === "function" ? window.YTDL_I18N_get(getLang(), k) : k;
+
+    for (let i = 0; i < items.length; i++) {
+      const item = items[i];
+      if (pct) pct.textContent = `[${i + 1}/${items.length}] ${item.title.slice(0, 20)}...`;
+      if (bar) bar.style.width = `${Math.round((i / items.length) * 100)}%`;
+
+      const itemBody = {
+        ...baseBody,
+        url: item.url,
+        title: item.title,
+        duration_str: item.duration_str || ""
+      };
+
+      const res = await window.YTDL.serverPost("/download", itemBody);
+      if (res?.id) {
+        await this.pollProgressSync(type, res.id, i + 1, items.length, item.title);
+      }
+    }
+
+    if (bar) bar.style.width = "100%";
+    if (pct) pct.textContent = t("histComplete") || "¡Descarga de Playlist completada!";
+    window.YTDL.state.isDownloading = false;
+    if (btn) {
+      btn.disabled = false;
+      btn.classList.add("ytdl-btn-success");
+      setTimeout(() => btn.classList.remove("ytdl-btn-success"), 3000);
+    }
+
+    // Reset selected playlist items after completion
+    window.YTDL.state[`selectedPlaylistItems_${prefix}`] = [];
+    if (window.YTDL?.panelEvents?.updatePlaylistBreakdown) {
+      window.YTDL.panelEvents.updatePlaylistBreakdown(panel, prefix);
+    }
+  },
+
+  pollProgressSync(type, id, currentIdx, totalCount, itemTitle) {
+    return new Promise((resolve) => {
+      const prefix = type === "video" ? "v" : "a";
+      let errorCount = 0;
+
+      const check = async () => {
+        const panel = document.getElementById("ytdl-popup-panel");
+        const bar = panel?.querySelector(`#ytdl-${prefix}-bar`);
+        const pct = panel?.querySelector(`#ytdl-${prefix}-pct`);
+        const data = await window.YTDL.serverRequest(`/progress?id=${id}`);
+
+        if (!data || data.error) {
+          errorCount++;
+          if (errorCount > 5) {
+            resolve();
+            return;
+          }
+          setTimeout(check, 1000);
+          return;
+        }
+
+        errorCount = 0;
+        if (data.progress !== undefined) {
+          const itemPct = Math.min(100, Math.round(data.progress));
+          const overallPct = Math.round(((currentIdx - 1 + itemPct / 100) / totalCount) * 100);
+          if (bar) bar.style.width = overallPct + "%";
+          if (pct) pct.textContent = `[${currentIdx}/${totalCount}] ${itemPct}% - ${itemTitle.slice(0, 20)}...`;
+        }
+
+        if (data.status === "complete" || data.status === "error") {
+          resolve();
+          return;
+        }
+        setTimeout(check, 1000);
+      };
+      check();
+    });
   },
 
   // ─── Poll Progress ──────────────────────────────────────────

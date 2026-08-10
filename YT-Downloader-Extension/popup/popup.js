@@ -20,9 +20,39 @@ document.addEventListener("DOMContentLoaded", () => {
 
   let currentLang = getBrowserLang();
 
+  function formatLocalDate(lang) {
+    const releaseDate = new Date(2026, 7, 10); // August 10, 2026
+    const localeMap = {
+      en: 'en-US',
+      es: 'es-ES',
+      pt: 'pt-BR',
+      fr: 'fr-FR',
+      de: 'de-DE',
+      it: 'it-IT',
+      ru: 'ru-RU',
+      ja: 'ja-JP',
+      zh: 'zh-CN'
+    };
+    try {
+      const loc = localeMap[lang] || navigator.language || 'en-US';
+      return new Intl.DateTimeFormat(loc, { year: 'numeric', month: 'numeric', day: 'numeric' }).format(releaseDate);
+    } catch (e) {
+      return "10/8/2026";
+    }
+  }
+
   function applyPopupTranslations(lang) {
     currentLang = lang || getBrowserLang();
     const t = (k) => window.YTDL_I18N_get(currentLang, k);
+    const manifest = (typeof chrome !== "undefined" && chrome.runtime?.getManifest) ? chrome.runtime.getManifest() : ((typeof browser !== "undefined" && browser.runtime?.getManifest) ? browser.runtime.getManifest() : null);
+    if (manifest && manifest.version) {
+      const versionEl = document.getElementById("popupVersion");
+      if (versionEl) versionEl.textContent = `v${manifest.version}`;
+    }
+    const dateEl = document.getElementById("popupDate");
+    if (dateEl) {
+      dateEl.textContent = formatLocalDate(currentLang);
+    }
     if (document.getElementById("i18n-popupSubtitle")) document.getElementById("i18n-popupSubtitle").textContent = t("appSubtitle") || "Video & Audio Downloader Pro";
     if (document.getElementById("i18n-popupVersionLabel")) document.getElementById("i18n-popupVersionLabel").textContent = t("popupVersionLabel") || "Version:";
     if (document.getElementById("i18n-popupUpdatedLabel")) document.getElementById("i18n-popupUpdatedLabel").textContent = t("popupUpdatedLabel") || "Last Updated:";

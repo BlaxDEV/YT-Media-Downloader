@@ -1,8 +1,8 @@
 # YT Media Downloader — Video & Audio Downloader
-**Created by [BlaxDEV](https://github.com/BlaxDEV)** · *Version v1.2.9 (Release — Shorts & Modal Upgrades)*
+**Created by [BlaxDEV](https://github.com/BlaxDEV)** · *Version v1.3.0 (Release — PO-Token Anti-Bot & Playlist Queue Engine)*
 
 <p align="center">
-  <img src="https://img.shields.io/badge/Version-v1.2.9-ff1744?style=for-the-badge&logo=youtube&logoColor=white" alt="Version v1.2.9" />
+  <img src="https://img.shields.io/badge/Version-v1.3.0-ff1744?style=for-the-badge&logo=youtube&logoColor=white" alt="Version v1.3.0" />
   <img src="https://img.shields.io/badge/Browsers-Chrome%20%7C%20Firefox%20%7C%20Zen%20%7C%20Edge%20%7C%20Brave-2b2b2b?style=for-the-badge&logo=googlechrome&logoColor=white" alt="Supported Browsers" />
   <img src="https://img.shields.io/badge/Backend-Local%20Port%2019836-107c41?style=for-the-badge" alt="Local Backend" />
   <a href="https://ko-fi.com/blaxdev"><img src="https://img.shields.io/badge/Support-Buy%20me%20a%20Ko--Fi-ff5e5b?style=for-the-badge&logo=kofi&logoColor=white" alt="Ko-Fi" /></a>
@@ -12,9 +12,9 @@
 
 ## Verified Compatible Browsers & Cookie Bypass Engine
 
-YT Media Downloader includes a smart local companion engine that automatically extracts YouTube session cookies to **bypass 360p resolution caps, anti-bot throttling, and age restrictions** without requiring manual configuration.
+YT Media Downloader includes a smart local companion engine that automatically extracts YouTube session cookies and **PO-Tokens** to **bypass 360p resolution caps, anti-bot throttling (HTTP 429), and age restrictions** without requiring manual configuration.
 
-| Engine Family | Manifest Target | Supported & Verified Browsers | Auto Cookie Bypass | Status |
+| Engine Family | Manifest Target | Supported & Verified Browsers | Auto Cookie & PO-Token Bypass | Status |
 | :--- | :---: | :--- | :---: | :---: |
 | **Chromium** | `Chrome (MV3)` | **Google Chrome**, **Microsoft Edge**, **Brave**, **Opera / Opera GX**, **Vivaldi**, **Thorium**, **Yandex**, **Naver Whale** | ✅ Automatic | **Verified** |
 | **Gecko** | `Firefox (Gecko)` | **Mozilla Firefox**, **Zen Browser**, **Floorp**, **LibreWolf**, **Waterfox** | ✅ Automatic *(Native & Profile Scan)* | **Verified** |
@@ -27,6 +27,7 @@ YT Media Downloader includes a smart local companion engine that automatically e
 **YT Media Downloader** is a powerful, ad-free, high-performance browser extension designed to give you complete control over your YouTube downloads and precision clips directly from the video player.
 
 - **1080p, 4K & 60FPS Video Downloads**: Automatically merges high-definition video streams and standalone audio tracks without quality loss or watermarks.
+- **PO-Token Anti-Bot Engine & Playlist Support**: Automatic generation and injection of YouTube PO-Tokens combined with smart rate throttling to prevent HTTP 429 rate limit bans during playlist downloads.
 - **YouTube Shorts & Native Player Integration**: Download button seamlessly positioned right above the Like (heart) button on YouTube Shorts, opening the download modal directly alongside the Shorts action bar.
 - **Precision Trimming Mode & Exact Frame Grabber (`📷 / ✂️`)**: Click the scissors icon or camera button inside the YouTube player controls to mark exact start/end timestamps and capture snapshots.
 - **Multi-Trim & Chapter Batching (`+` / `📚`)**: Add up to 10 distinct slices per video or batch-download all YouTube chapters in one click into separate split files.
@@ -35,7 +36,7 @@ YT Media Downloader includes a smart local companion engine that automatically e
 - **Single Viewport Layout**: Optimized single-page layout eliminating layout clipping and unwanted scrollbars.
 - **Interactive History & Real Video Titles**: Real-time progress monitoring, persistent history with real video titles, and a dedicated Clear History button (`🗑️`).
 - **Multi-Language Audio, Subtitles & Custom Output**: Select multi-language dubbed audio tracks, closed captions (.srt), and custom download directories across 9 UI languages with native OS folder picker support.
-- **Zero-Disk Security & Cookie Privacy**: Active player cookies are processed entirely in RAM with instant 0-byte cleanup and automatic legacy cookie file purging on server startup.
+- **Zero-Disk Security & Cookie Privacy**: Active player cookies and tokens are processed entirely in RAM with instant 0-byte cleanup and automatic legacy cookie file purging on server startup.
 - **Zero Ads, Zero Tracking, Zero Paywalls**: 100% clean experience powered locally on your own machine.
 
 ---
@@ -44,22 +45,22 @@ YT Media Downloader includes a smart local companion engine that automatically e
 
 To guarantee maximum download speeds, bypass rate limits, and cleanly merge 4K video and audio streams, **YT Media Downloader works in tandem with a lightweight local companion server (`YTDownloader.exe` on Windows / `YTDownloader` on Linux)** listening on port `19836`.
 
-### Step 1: Download & Start the Companion Server
-#### For Windows (`Setup_YT_Downloader-Win-v1.2.9.exe`)
+### Step 1: Download & Start the Companion Server (v1.3.0 Required)
+#### For Windows (`Setup_YT_Downloader-Win-v1.3.0.exe`)
 1. Go to the [**Releases Tab**](../../releases) of this GitHub repository.
-2. Download `Setup_YT_Downloader-Win-v1.2.9.exe`.
+2. Download `Setup_YT_Downloader-Win-v1.3.0.exe`.
 3. Run the installer to start the local backend (`YTDownloader.exe` on port `19836`).
 
 > **Note about Windows SmartScreen:**  
 > Since our companion server is free, open, and distributed independently without a commercial corporate code-signing certificate, Windows Defender SmartScreen might show a blue warning saying *"Windows protected your PC"*.  
 > **How to proceed safely:** Click **"More info"** and then **"Run anyway"**. The software is 100% safe, clean, and communicates strictly on your local loopback address (`127.0.0.1:19836`).
 
-#### For Linux (`Setup_YT_Downloader-Linux-v1.2.9.tar.gz`)
-1. Download `Setup_YT_Downloader-Linux-v1.2.9.tar.gz` from the [**Releases Tab**](../../releases).
+#### For Linux (`Setup_YT_Downloader-Linux-v1.3.0.tar.gz`)
+1. Download `Setup_YT_Downloader-Linux-v1.3.0.tar.gz` from the [**Releases Tab**](../../releases).
 2. Extract the archive and run the automated installation script:
    ```bash
-   tar -xzf Setup_YT_Downloader-Linux-v1.2.9.tar.gz
-   cd Setup_YT_Downloader-Linux-v1.2.9
+   tar -xzf Setup_YT_Downloader-Linux-v1.3.0.tar.gz
+   cd Setup_YT_Downloader-Linux-v1.3.0
    ./install.sh
    ```
    *This automatically installs the standalone companion binary (`YTDownloader`) to `~/.local/bin/` and registers a **systemd user service** (`yt-downloader.service`) so that the local backend runs continuously and silently in the background on port `19836`.*
@@ -68,12 +69,12 @@ To guarantee maximum download speeds, bypass rate limits, and cleanly merge 4K v
 > **Browser Compatibility Notice:** Manifest V3 strictly enforces `"service_worker"` on Chromium browsers, while Firefox & Gecko forks require `"scripts"`. We provide separate dedicated packages for each browser engine (`manifest.json` for Chrome/Edge/Brave and `manifest.firefox.json` for Firefox/Zen/Floorp) to ensure 100% compliance.
 
 - **Chromium Browsers (Chrome, Edge, Brave, Opera, Vivaldi, Thorium):**
-  1. Download `YT-Media-Downloader-Extension-Chrome-v1.2.9.zip` from the [Releases](../../releases) tab and extract it.
+  1. Download `YT-Media-Downloader-Extension-Chrome-v1.3.0.rar` (or `.zip`) from the [Releases](../../releases) tab and extract it.
   2. Open `chrome://extensions` in your browser.
   3. Enable **Developer mode** in the top right corner.
   4. Click **Load unpacked** and select the extracted folder.
 - **Gecko Browsers (Firefox, Zen Browser, Floorp, LibreWolf, Waterfox):**
-  1. Download `YT-Media-Downloader-Extension-Firefox-v1.2.9.zip` from the [Releases](../../releases) tab.
+  1. Download `YT-Media-Downloader-Extension-Firefox-v1.3.0.rar` (or `.zip`) from the [Releases](../../releases) tab.
   2. Load via `about:debugging` -> **This Firefox** -> **Load Temporary Add-on**, or install directly via Firefox/Zen addon settings.
 
 ### Step 3: Enjoy on YouTube!
@@ -109,10 +110,10 @@ The native Linux companion server environment is completely isolated inside the 
    cd linux-host
    ./build_linux.sh
    ```
-   *This script compiles `ytdl_host.py` into a standalone POSIX ELF binary (`YTDownloader`) using `PyInstaller --onefile`, packages it alongside `install_linux.sh` and the `systemd` user service unit (`yt-downloader.service`), and creates the final release archive (`release-linux/Setup_YT_Downloader-Linux-v1.2.9.tar.gz`).*
+   *This script compiles `ytdl_host.py` into a standalone POSIX ELF binary (`YTDownloader`) using `PyInstaller --onefile`, packages it alongside `install_linux.sh` and the `systemd` user service unit (`yt-downloader.service`), and creates the final release archive (`release-linux/Setup_YT_Downloader-Linux-v1.3.0.tar.gz`).*
 
 ### 2. Build the WebExtension ZIP
-To package the clean browser extension into POSIX-compliant archives (`YT-Media-Downloader-Extension-Chrome-v1.2.9.zip` and `YT-Media-Downloader-Extension-Firefox-v1.2.9.zip`) ready for Chrome Web Store and Mozilla Add-ons without browser-specific warnings:
+To package the clean browser extension into POSIX-compliant archives (`YT-Media-Downloader-Extension-Chrome-v1.3.0.zip` and `YT-Media-Downloader-Extension-Firefox-v1.3.0.zip`) ready for Chrome Web Store and Mozilla Add-ons without browser-specific warnings:
 ```powershell
 python scripts/pack_extension.py
 ```
@@ -130,7 +131,7 @@ python scripts/pack_extension.py
 - **Solution:** Ensure `YTDownloader.exe` (on Windows) or the `yt-downloader.service` systemd service (on Linux: check with `systemctl --user status yt-downloader.service`) is running on your PC and listening on port `19836`. Check your antivirus or firewall settings if the local loopback connection is blocked.
 
 #### Rate limit errors during heavy downloads
-- **Solution:** If you download dozens of videos in rapid succession, YouTube may temporarily throttle requests. Wait a few minutes or switch to a different quality setting.
+- **Solution:** Ensure you are using Companion Server **v1.3.0** which includes automatic PO-Token injection and rate throttling. If downloading hundreds of videos in rapid succession, wait a few minutes or switch to a different quality setting.
 
 #### Download button not appearing on YouTube
 - **Solution:** Refresh the YouTube page (`F5`). Check that the extension is enabled in your browser's extension manager.
@@ -151,5 +152,5 @@ If **YT Media Downloader** saves you time and enhances your workflow, consider s
 
 ---
 
-*Created by BlaxDEV — Video & Audio Downloader Pro v1.2.9*
+*Created by BlaxDEV — Video & Audio Downloader Pro v1.3.0*
 

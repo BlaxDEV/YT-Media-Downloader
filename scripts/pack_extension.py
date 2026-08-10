@@ -68,7 +68,21 @@ if __name__ == '__main__':
 
     zip_chrome = os.path.join(output_dir, f'YT-Media-Downloader-Extension-Chrome-v{version}.zip')
     zip_firefox = os.path.join(output_dir, f'YT-Media-Downloader-Extension-Firefox-v{version}.zip')
+    rar_chrome = os.path.join(output_dir, f'YT-Media-Downloader-Extension-Chrome-v{version}.rar')
+    rar_firefox = os.path.join(output_dir, f'YT-Media-Downloader-Extension-Firefox-v{version}.rar')
     
     create_posix_zip(ext_dir, zip_chrome, target_browser='chrome')
     if os.path.exists(os.path.join(ext_dir, 'manifest.firefox.json')):
         create_posix_zip(ext_dir, zip_firefox, target_browser='firefox')
+
+    import subprocess
+    winrar_exe = r"C:\Program Files\WinRAR\Rar.exe"
+    if os.path.exists(winrar_exe):
+        for z_path, r_path in [(zip_chrome, rar_chrome), (zip_firefox, rar_firefox)]:
+            if os.path.exists(z_path):
+                print(f"Creating RAR archive: {r_path}...")
+                res = subprocess.run([winrar_exe, "a", "-ep1", "-m5", r_path, z_path], capture_output=True, text=True)
+                if res.returncode == 0 and os.path.exists(r_path):
+                    print(f"Successfully created: {r_path} ({os.path.getsize(r_path)} bytes)")
+                    os.remove(z_path)
+

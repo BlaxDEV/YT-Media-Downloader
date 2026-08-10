@@ -1,12 +1,12 @@
 [Setup]
 AppId=YT Downloader
 AppName=YT Media Downloader Companion
-AppVersion=1.2.9
+AppVersion=1.3.0
 AppPublisher=BlaxDEV
 AppPublisherURL=https://github.com/BlaxDEV
 DefaultDirName={localappdata}\YT-Downloader
 DefaultGroupName=YT-Downloader
-OutputBaseFilename=Setup_YT_Downloader-Win-v1.2.9
+OutputBaseFilename=Setup_YT_Downloader-Win-v1.3.0
 OutputDir=..\Output
 Compression=lzma2
 SolidCompression=yes
@@ -131,12 +131,12 @@ begin
   if IsMaintenanceMode then
   begin
     MaintenancePage := CreateInputOptionPage(wpWelcome,
-      'Mantenimiento de YT Media Downloader', 'El servidor ya se encuentra instalado en tu sistema.',
-      '¿Qué deseas hacer?', True, False);
+      'YT Media Downloader Companion Maintenance', 'The Companion Server is already installed on your system.',
+      'What would you like to do?', True, False);
       
-    MaintenancePage.Add('Reparar / Actualizar servidor (Reinstalar)');
-    MaintenancePage.Add('Verificar servidor y encenderlo (Ignorar instalación)');
-    MaintenancePage.Add('Desinstalar programa completamente');
+    MaintenancePage.Add('Repair / Update Companion Server (Reinstall)');
+    MaintenancePage.Add('Verify server and start in background (Skip installation)');
+    MaintenancePage.Add('Uninstall program completely');
     
     MaintenancePage.SelectedValueIndex := 0;
   end;
@@ -172,7 +172,7 @@ begin
 
   if (IsMaintenanceMode) and (CurPageID = MaintenancePage.ID) then
   begin
-    if MaintenancePage.SelectedValueIndex = 2 then // Desinstalar
+    if MaintenancePage.SelectedValueIndex = 2 then // Uninstall
     begin
       KillProcess('YTDownloader.exe');
       Sleep(500);
@@ -181,29 +181,43 @@ begin
       begin
         UninstallStr := RemoveQuotes(UninstallStr);
         Exec(UninstallStr, '/SILENT /VERYSILENT', '', SW_SHOW, ewWaitUntilTerminated, ResultCode);
-        MsgBox('Desinstalación completada con éxito. El programa se cerrará.', mbInformation, MB_OK);
+        MsgBox('Uninstallation completed successfully. The installer will now close.', mbInformation, MB_OK);
         Result := False;
         WizardForm.Close;
       end;
     end
-    else if MaintenancePage.SelectedValueIndex = 1 then // Verificar y encender
+    else if MaintenancePage.SelectedValueIndex = 1 then // Verify & Start
     begin
       Exec(ExpandConstant('{app}\YTDownloader.exe'), '--hidden', '', SW_HIDE, ewNoWait, ResultCode);
-      MsgBox('Servidor verificado e iniciado en segundo plano. El programa se cerrará.', mbInformation, MB_OK);
+      MsgBox('Server verified and started in the background. The installer will now close.', mbInformation, MB_OK);
       Result := False;
       WizardForm.Close;
     end
-    else // Reparar
+    else // Repair / Update
     begin
+      // Kill old companion before overwriting files
+      KillProcess('YTDownloader.exe');
+      Sleep(800);
       Result := PrepInstall(wpReady);
     end;
   end;
 end;
 
 procedure CurStepChanged(CurStep: TSetupStep);
+var
+  ResultCode: Integer;
 begin
+  if CurStep = ssInstall then
+  begin
+    // Ensure old process is dead right before file copy begins
+    KillProcess('YTDownloader.exe');
+    Sleep(500);
+  end;
+
   if CurStep = ssPostInstall then
   begin
     PurgeLegacyCookies;
+    // Auto-launch the new companion server after install/repair
+    Exec(ExpandConstant('{app}\YTDownloader.exe'), '', '', SW_HIDE, ewNoWait, ResultCode);
   end;
 end;

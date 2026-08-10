@@ -121,6 +121,13 @@ window.YTDL.panel = {
                 </button>
                 <div class="ytdl-chapters-breakdown" id="ytdl-v-chapters-breakdown" style="display:none;"></div>
               </div>
+              <div class="ytdl-chapters-box" id="ytdl-v-playlist-box" style="display:none; margin-top:8px;">
+                <button type="button" class="ytdl-btn-select-chapters" id="ytdl-v-btn-open-playlist-modal">
+                  <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><path d="M4 10h12v2H4zm0-4h12v2H4zm0 8h8v2H4zm10 0v6l5-3z"/></svg>
+                  <span id="ytdl-v-txt-playlist-btn">Seleccionar Playlist</span>
+                </button>
+                <div class="ytdl-chapters-breakdown" id="ytdl-v-playlist-breakdown" style="display:none;"></div>
+              </div>
             </div>
             <button class="ytdl-dl-btn" id="ytdl-dl-video" disabled>
               <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></svg>
@@ -190,6 +197,13 @@ window.YTDL.panel = {
                 </button>
                 <div class="ytdl-chapters-breakdown" id="ytdl-a-chapters-breakdown" style="display:none;"></div>
               </div>
+              <div class="ytdl-chapters-box" id="ytdl-a-playlist-box" style="display:none; margin-top:8px;">
+                <button type="button" class="ytdl-btn-select-chapters" id="ytdl-a-btn-open-playlist-modal">
+                  <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><path d="M4 10h12v2H4zm0-4h12v2H4zm0 8h8v2H4zm10 0v6l5-3z"/></svg>
+                  <span id="ytdl-a-txt-playlist-btn">Seleccionar Playlist</span>
+                </button>
+                <div class="ytdl-chapters-breakdown" id="ytdl-a-playlist-breakdown" style="display:none;"></div>
+              </div>
             </div>
             <button class="ytdl-dl-btn" id="ytdl-dl-audio">
               <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></svg>
@@ -220,7 +234,7 @@ window.YTDL.panel = {
           <!-- Config Tab -->
           <div class="ytdl-popup-content" data-content="config">
             <div class="ytdl-opt-row">
-              <label>Seleccionar Idioma</label>
+              <label id="i18n-cfgSelectLang">Seleccionar Idioma</label>
               <select id="ytdl-def-lang" class="ytdl-select-input">
                 <option value="en">English (Default)</option>
                 <option value="es">Español (Spanish)</option>
@@ -234,7 +248,7 @@ window.YTDL.panel = {
               </select>
             </div>
             <div class="ytdl-opt-row">
-              <label>Formato de video por defecto</label>
+              <label id="i18n-cfgDefVfmt">Formato de video por defecto</label>
               <select id="ytdl-def-vfmt" class="ytdl-select-input">
                 <option value="mp4">MP4</option>
                 <option value="webm">WebM</option>
@@ -242,7 +256,7 @@ window.YTDL.panel = {
               </select>
             </div>
             <div class="ytdl-opt-row">
-              <label>Calidad de video por defecto</label>
+              <label id="i18n-cfgDefVq">Calidad de video por defecto</label>
               <select id="ytdl-def-vq" class="ytdl-select-input">
                 <option value="1080p">1080p</option>
                 <option value="720p">720p</option>
@@ -253,60 +267,63 @@ window.YTDL.panel = {
               </select>
             </div>
             <div class="ytdl-opt-row">
-              <label>Formato de audio por defecto</label>
+              <label id="i18n-cfgDefAfmt">Formato de audio por defecto</label>
               <select id="ytdl-def-afmt" class="ytdl-select-input">
                 <option value="mp3">MP3</option>
                 <option value="m4a">M4A</option>
                 <option value="opus">Opus</option>
-                <option value="wav">WAV</option>
+                <option value="flac">FLAC</option>
               </select>
             </div>
             <div class="ytdl-opt-row">
-              <label>Calidad de audio por defecto</label>
+              <label id="i18n-cfgDefAq">Calidad de audio por defecto</label>
               <select id="ytdl-def-aq" class="ytdl-select-input">
-                <option value="320K">320 kbps</option>
-                <option value="192K">192 kbps</option>
-                <option value="128K">128 kbps</option>
+                <option value="128K">128k</option>
+                <option value="192K">192k</option>
+                <option value="256K">256k</option>
+                <option value="320K">320k</option>
+                <option value="0">Max</option>
               </select>
             </div>
-            <div class="ytdl-opt-row">
-              <label>Habilitar opciones en pestaña Video/Audio</label>
-              <div class="ytdl-def-checkboxes">
-                <label class="ytdl-checkbox-label">
-                  <input type="checkbox" id="ytdl-def-thumb">
-                  <span>Descargar miniatura (.JPG)</span>
-                </label>
-                <label class="ytdl-checkbox-label">
-                  <input type="checkbox" id="ytdl-def-sub">
-                  <span>Descargar subtítulos (.SRT)</span>
-                </label>
-                <label class="ytdl-checkbox-label">
-                  <input type="checkbox" id="ytdl-def-audio">
-                  <span>Pista de audio multi-idioma</span>
-                </label>
+            <div class="ytdl-opt-extras">
+              <div class="ytdl-opt-row" style="margin-bottom: 8px;">
+                <label style="font-weight: 600; color: #fff;" id="i18n-cfgDefCheckboxes">Habilitar opciones en pestaña Video/Audio</label>
               </div>
-              <div class="ytdl-opt-section-title" id="ytdl-cfg-additional-title">Opciones adicionales</div>
-              <div class="ytdl-def-checkboxes">
-                <label class="ytdl-checkbox-label">
-                  <input type="checkbox" id="ytdl-opt-lufs">
-                  <span id="ytdl-lbl-lufs">Normalización de Volumen de Audio (LUFS)</span>
-                </label>
-                <label class="ytdl-checkbox-label">
-                  <input type="checkbox" id="ytdl-opt-gif-export">
-                  <span id="ytdl-lbl-gif">Activar exportación como GIF / WebP Animado</span>
-                </label>
-                <label class="ytdl-checkbox-label">
-                  <input type="checkbox" id="ytdl-opt-audio-meta">
-                  <span id="ytdl-lbl-meta">Descarga automática de Metadata de Audio</span>
-                </label>
+              <label class="ytdl-checkbox-label">
+                <input type="checkbox" id="ytdl-def-thumb">
+                <span id="i18n-cfgThumbCheck">Descargar miniatura (.JPG)</span>
+              </label>
+              <label class="ytdl-checkbox-label">
+                <input type="checkbox" id="ytdl-def-sub">
+                <span id="i18n-cfgSubCheck">Descargar subtítulos (.SRT)</span>
+              </label>
+              <label class="ytdl-checkbox-label">
+                <input type="checkbox" id="ytdl-def-audio">
+                <span id="i18n-cfgAudioCheck">Usar pista de audio multi-idioma</span>
+              </label>
+
+              <div class="ytdl-opt-row" style="margin-top: 14px; margin-bottom: 8px;">
+                <label style="font-weight: 600; color: #fff;" id="i18n-cfgAdditionalTitle">Opciones Adicionales</label>
               </div>
+              <label class="ytdl-checkbox-label">
+                <input type="checkbox" id="ytdl-opt-lufs">
+                <span id="ytdl-lbl-lufs">Normalización de Volumen de Audio (LUFS)</span>
+              </label>
+              <label class="ytdl-checkbox-label">
+                <input type="checkbox" id="ytdl-opt-gif-export">
+                <span id="ytdl-lbl-gif">Activar exportación como GIF / WebP Animado</span>
+              </label>
+              <label class="ytdl-checkbox-label">
+                <input type="checkbox" id="ytdl-opt-audio-meta">
+                <span id="ytdl-lbl-meta">Descarga automática de Metadata de Audio</span>
+              </label>
             </div>
             <button class="ytdl-dl-btn" id="ytdl-save-cfg">
               <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>
-              Guardar
+              <span id="i18n-saveBtn">Guardar</span>
             </button>
             <div class="ytdl-cfg-msg" id="ytdl-cfg-msg"></div>
-            <div class="ytdl-version" style="margin-top:16px;font-size:11px;color:#666;text-align:center;">v1.2.9</div>
+            <div class="ytdl-version" style="margin-top:16px;font-size:11px;color:#666;text-align:center;">v1.3.0</div>
           </div>
         </div>
       </div>
@@ -327,6 +344,26 @@ window.YTDL.panel = {
           </div>
           <div class="ytdl-modal-footer">
             <button type="button" class="ytdl-btn-apply" id="ytdl-modal-btn-apply">Aplicar Selección</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Playlist Selection Modal Overlay -->
+      <div class="ytdl-modal-overlay" id="ytdl-playlist-modal" style="display:none;">
+        <div class="ytdl-modal-card">
+          <div class="ytdl-modal-header">
+            <h3 id="ytdl-pl-modal-title">Videos de la Playlist</h3>
+            <button type="button" class="ytdl-modal-close" id="ytdl-pl-modal-close">&times;</button>
+          </div>
+          <div class="ytdl-modal-actions">
+            <button type="button" class="ytdl-ch-btn-action" id="ytdl-pl-modal-btn-all">✓ Seleccionar todos</button>
+            <button type="button" class="ytdl-ch-btn-action ytdl-ch-btn-des" id="ytdl-pl-modal-btn-none">✗ Deseleccionar todos</button>
+          </div>
+          <div class="ytdl-modal-body" id="ytdl-pl-modal-list">
+            <!-- Dynamic list of playlist video checkboxes -->
+          </div>
+          <div class="ytdl-modal-footer">
+            <button type="button" class="ytdl-btn-apply" id="ytdl-pl-modal-btn-apply">Aplicar Selección</button>
           </div>
         </div>
       </div>

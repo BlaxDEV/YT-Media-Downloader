@@ -12,6 +12,9 @@ window.YTDL.panelI18n = {
     if (!lang) {
       lang = window.YTDL?.state?.currentLang || window.YTDL?.state?.defaultSettings?.defLang || (navigator.language && navigator.language.startsWith("es") ? "es" : "en");
     }
+    if (window.YTDL?.state) {
+      window.YTDL.state.currentLang = lang;
+    }
     const t = (k) => typeof window.YTDL_I18N_get === "function" ? window.YTDL_I18N_get(lang, k) : k;
 
     // Header
@@ -47,6 +50,8 @@ window.YTDL.panelI18n = {
     // Chapters modal translations
     if (panel.querySelector("#ytdl-v-txt-chapters-btn")) panel.querySelector("#ytdl-v-txt-chapters-btn").textContent = t("btnSelectChapters") || "Seleccionar Capítulos";
     if (panel.querySelector("#ytdl-a-txt-chapters-btn")) panel.querySelector("#ytdl-a-txt-chapters-btn").textContent = t("btnSelectChapters") || "Seleccionar Capítulos";
+    if (panel.querySelector("#ytdl-v-txt-playlist-btn")) panel.querySelector("#ytdl-v-txt-playlist-btn").textContent = t("btnSelectPlaylist") || "Seleccionar Playlist";
+    if (panel.querySelector("#ytdl-a-txt-playlist-btn")) panel.querySelector("#ytdl-a-txt-playlist-btn").textContent = t("btnSelectPlaylist") || "Seleccionar Playlist";
     if (panel.querySelector("#ytdl-modal-title")) panel.querySelector("#ytdl-modal-title").textContent = t("chModalTitle") || "Capítulos del Video";
     if (panel.querySelector("#ytdl-modal-btn-all")) panel.querySelector("#ytdl-modal-btn-all").textContent = "✓ " + (t("btnSelectAll") || "Seleccionar todos");
     if (panel.querySelector("#ytdl-modal-btn-none")) panel.querySelector("#ytdl-modal-btn-none").textContent = "✗ " + (t("btnDeselectAll") || "Deseleccionar todos");
@@ -71,48 +76,24 @@ window.YTDL.panelI18n = {
     if (panel.querySelector("#ytdl-a-open-folder-btn")) panel.querySelector("#ytdl-a-open-folder-btn").textContent = "📁 " + t("histOpenFolder");
 
     // Config tab
-    const cfgRows = panel.querySelectorAll("[data-content='config'] .ytdl-opt-row");
-    if (cfgRows[0]) {
-      const lbl = cfgRows[0].querySelector("label");
-      if (lbl) lbl.textContent = t("cfgSelectLang");
-    }
-    if (cfgRows[1]) {
-      const lbl = cfgRows[1].querySelector("label");
-      if (lbl) lbl.textContent = t("cfgDefVfmt");
-    }
-    if (cfgRows[2]) {
-      const lbl = cfgRows[2].querySelector("label");
-      if (lbl) lbl.textContent = t("cfgDefVq");
-    }
-    if (cfgRows[3]) {
-      const lbl = cfgRows[3].querySelector("label");
-      if (lbl) lbl.textContent = t("cfgDefAfmt");
-    }
-    if (cfgRows[4]) {
-      const lbl = cfgRows[4].querySelector("label");
-      if (lbl) lbl.textContent = t("cfgDefAq");
-    }
-    if (cfgRows[5]) {
-      const lbl = cfgRows[5].querySelector("label");
-      if (lbl) lbl.textContent = t("cfgDefCheckboxes");
-      const cbs = cfgRows[5].querySelectorAll(".ytdl-checkbox-label span");
-      if (cbs[0]) cbs[0].textContent = t("cfgThumbCheck");
-      if (cbs[1]) cbs[1].textContent = t("cfgSubCheck");
-      if (cbs[2]) cbs[2].textContent = t("cfgAudioCheck");
-    }
-    if (panel.querySelector("#ytdl-cfg-additional-title")) panel.querySelector("#ytdl-cfg-additional-title").textContent = t("cfgAdditionalTitle") || "Opciones adicionales";
+    if (panel.querySelector("#i18n-cfgSelectLang")) panel.querySelector("#i18n-cfgSelectLang").textContent = t("cfgSelectLang");
+    if (panel.querySelector("#i18n-cfgDefVfmt")) panel.querySelector("#i18n-cfgDefVfmt").textContent = t("cfgDefVfmt");
+    if (panel.querySelector("#i18n-cfgDefVq")) panel.querySelector("#i18n-cfgDefVq").textContent = t("cfgDefVq");
+    if (panel.querySelector("#i18n-cfgDefAfmt")) panel.querySelector("#i18n-cfgDefAfmt").textContent = t("cfgDefAfmt");
+    if (panel.querySelector("#i18n-cfgDefAq")) panel.querySelector("#i18n-cfgDefAq").textContent = t("cfgDefAq");
+    if (panel.querySelector("#i18n-cfgDefCheckboxes")) panel.querySelector("#i18n-cfgDefCheckboxes").textContent = t("cfgDefCheckboxes");
+    if (panel.querySelector("#i18n-cfgThumbCheck")) panel.querySelector("#i18n-cfgThumbCheck").textContent = t("cfgThumbCheck");
+    if (panel.querySelector("#i18n-cfgSubCheck")) panel.querySelector("#i18n-cfgSubCheck").textContent = t("cfgSubCheck");
+    if (panel.querySelector("#i18n-cfgAudioCheck")) panel.querySelector("#i18n-cfgAudioCheck").textContent = t("cfgAudioCheck");
+    if (panel.querySelector("#i18n-cfgAdditionalTitle")) panel.querySelector("#i18n-cfgAdditionalTitle").textContent = t("cfgAdditionalTitle") || "Opciones adicionales";
     if (panel.querySelector("#ytdl-lbl-lufs")) panel.querySelector("#ytdl-lbl-lufs").textContent = t("cfgLufsNorm") || "Normalización de Volumen de Audio (LUFS)";
     if (panel.querySelector("#ytdl-lbl-gif")) panel.querySelector("#ytdl-lbl-gif").textContent = t("cfgGifExport") || "Activar exportación como GIF / WebP Animado";
     if (panel.querySelector("#ytdl-lbl-meta")) panel.querySelector("#ytdl-lbl-meta").textContent = t("cfgAudioMeta") || "Descarga automática de Metadata de Audio";
+    if (panel.querySelector("#i18n-saveBtn")) panel.querySelector("#i18n-saveBtn").textContent = t("saveBtn") || "Guardar";
 
     if (panel.querySelector("#ytdl-v-add-trim")) panel.querySelector("#ytdl-v-add-trim").setAttribute("title", t("optAddTrim") || "+");
     if (panel.querySelector("#ytdl-a-add-trim")) panel.querySelector("#ytdl-a-add-trim").setAttribute("title", t("optAddTrim") || "+");
     panel.querySelectorAll(".ytdl-chapters-header .ytdl-preview-label").forEach(s => { s.textContent = t("optChapters") || "Descargar por Capítulos"; });
-
-    if (panel.querySelector("#ytdl-save-cfg")) panel.querySelector("#ytdl-save-cfg").lastChild.textContent = " " + t("saveBtn");
-
-    const actionBtnSpan = document.querySelector("#ytdl-action-btn span");
-    if (actionBtnSpan) actionBtnSpan.textContent = t("ytDownloadBtn");
 
     if (panel.querySelector("#ytdl-history-list") && window.YTDL?.history?.loadHistoryData) {
       window.YTDL.history.loadHistoryData(panel);
@@ -170,12 +151,15 @@ window.YTDL.panelI18n = {
     const t = (k) => typeof window.YTDL_I18N_get === "function" ? window.YTDL_I18N_get(lang, k) : k;
 
     // Video Tab
+    const vPlaylist = window.YTDL?.state?.selectedPlaylistItems_v || [];
     const vChapters = window.YTDL?.state?.selectedChapters_v || [];
     const vTrims = window.YTDL?.state?.trims_video || [];
     const vBtn = panel.querySelector("#ytdl-dl-video");
     if (vBtn) {
       let label = t("dlVideoBtn");
-      if (vChapters.length > 0) {
+      if (vPlaylist.length > 0) {
+        label = (t("dlMultiPlaylist") || "Descargar Playlist ({n})").replace("{n}", vPlaylist.length);
+      } else if (vChapters.length > 0) {
         if (vChapters.length === 1) {
           label = t("dlSingleChapter");
         } else {
@@ -189,7 +173,7 @@ window.YTDL.panelI18n = {
         }
       }
       const audioToggle = panel.querySelector("#ytdl-v-include-audio");
-      if (audioToggle && !audioToggle.checked && vChapters.length === 0 && vTrims.length === 0) {
+      if (audioToggle && !audioToggle.checked && vPlaylist.length === 0 && vChapters.length === 0 && vTrims.length === 0) {
         label += " " + (t("noAudioNotice") || "(Sin Audio)");
       }
       const textNode = vBtn.lastChild;
@@ -197,12 +181,15 @@ window.YTDL.panelI18n = {
     }
 
     // Audio Tab
+    const aPlaylist = window.YTDL?.state?.selectedPlaylistItems_a || [];
     const aChapters = window.YTDL?.state?.selectedChapters_a || [];
     const aTrims = window.YTDL?.state?.trims_audio || [];
     const aBtn = panel.querySelector("#ytdl-dl-audio");
     if (aBtn) {
       let label = t("dlAudioBtn");
-      if (aChapters.length > 0) {
+      if (aPlaylist.length > 0) {
+        label = (t("dlMultiPlaylist") || "Descargar Playlist ({n})").replace("{n}", aPlaylist.length);
+      } else if (aChapters.length > 0) {
         if (aChapters.length === 1) {
           label = t("dlSingleChapter");
         } else {
