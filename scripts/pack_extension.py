@@ -84,5 +84,4 @@ if __name__ == '__main__':
                 res = subprocess.run([winrar_exe, "a", "-ep1", "-m5", r_path, z_path], capture_output=True, text=True)
                 if res.returncode == 0 and os.path.exists(r_path):
                     print(f"Successfully created: {r_path} ({os.path.getsize(r_path)} bytes)")
-                    os.remove(z_path)
 
