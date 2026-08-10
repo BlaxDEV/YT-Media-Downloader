@@ -69,12 +69,12 @@ To guarantee maximum download speeds, bypass rate limits, and cleanly merge 4K v
 > **Browser Compatibility Notice:** Manifest V3 strictly enforces `"service_worker"` on Chromium browsers, while Firefox & Gecko forks require `"scripts"`. We provide separate dedicated packages for each browser engine (`manifest.json` for Chrome/Edge/Brave and `manifest.firefox.json` for Firefox/Zen/Floorp) to ensure 100% compliance.
 
 - **Chromium Browsers (Chrome, Edge, Brave, Opera, Vivaldi, Thorium):**
-  1. Download `YT-Media-Downloader-Extension-Chrome-v1.3.0.rar` (or `.zip`) from the [Releases](../../releases) tab and extract it.
+  1. Download `YT-Media-Downloader-Extension-Chrome-v1.3.0.zip` from the [Releases](../../releases) tab and extract it.
   2. Open `chrome://extensions` in your browser.
   3. Enable **Developer mode** in the top right corner.
   4. Click **Load unpacked** and select the extracted folder.
 - **Gecko Browsers (Firefox, Zen Browser, Floorp, LibreWolf, Waterfox):**
-  1. Download `YT-Media-Downloader-Extension-Firefox-v1.3.0.rar` (or `.zip`) from the [Releases](../../releases) tab.
+  1. Download `YT-Media-Downloader-Extension-Firefox-v1.3.0.zip` from the [Releases](../../releases) tab.
   2. Load via `about:debugging` -> **This Firefox** -> **Load Temporary Add-on**, or install directly via Firefox/Zen addon settings.
 
 ### Step 3: Enjoy on YouTube!
