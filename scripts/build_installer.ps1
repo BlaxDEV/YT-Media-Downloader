@@ -12,7 +12,7 @@ Start-Sleep -Milliseconds 500
 
 Write-Host "1. Compiling standalone Windows binary with PyInstaller..."
 Set-Location $BaseDir
-python -m PyInstaller --onefile --clean --noconsole --name "YTDownloader" --distpath "native-host" --icon "icon.ico" --version-file "scripts\version_info.txt" "YT-Downloader-Extension\linux-host\ytdl_host.py"
+python -m PyInstaller --onefile --clean --noconsole --name "YTDownloader" --distpath "native-host" --icon "icon.ico" --version-file "scripts\version_info.txt" "linux-host\ytdl_host.py"
 
 Write-Host "2. Packaging with Inno Setup..."
 # Look for Inno Setup in common locations

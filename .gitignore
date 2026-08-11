@@ -19,3 +19,7 @@ tmp_staging/
 mozilla-png/
 scripts/annotate_mozilla_png.py
 
+# IDE & Editor Configuration
+.agents/
+.vscode/
+.idea/

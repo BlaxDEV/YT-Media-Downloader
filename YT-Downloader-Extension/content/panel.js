@@ -400,11 +400,11 @@ window.YTDL.panel = {
       } else if (btn) {
         const rect = btn.getBoundingClientRect();
         if (isShorts) {
-          // Posicionar al lado del botón en Shorts (a la izquierda)
+          // Position to the left of the action button on Shorts
           targetLeft = rect.left - pWidth - 12;
           targetTop = rect.top;
         } else {
-          // Posicionar centrado sobre el botón en video estándar
+          // Position centered above the download button on standard video
           targetLeft = rect.left + rect.width / 2 - pWidth / 2;
           targetTop = rect.top - pHeight - 12;
         }

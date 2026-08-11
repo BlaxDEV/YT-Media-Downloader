@@ -94,7 +94,7 @@ This repository is completely open-source and transparent. You can easily compil
 
 ### 1. Build the Companion Server
 #### For Windows (`Setup_YT_Downloader.exe`)
-The local backend service for Windows is driven by `scripts/ytdl_host.py` alongside local video processing tools.
+The local backend service for Windows is driven by `linux-host/ytdl_host.py` alongside local video processing tools.
 1. Place the required binaries (`ffmpeg.exe`, `ffprobe.exe`, `yt-dlp.exe`) inside the `tools/` directory.
 2. Run the automated PowerShell build script from the root of the repository:
    ```powershell

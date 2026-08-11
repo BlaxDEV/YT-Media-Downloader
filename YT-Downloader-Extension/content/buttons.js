@@ -41,13 +41,13 @@ window.YTDL.buttons = {
       const tooltipRect = tooltipEl.getBoundingClientRect();
       
       if (isShorts) {
-        // En Shorts: colocar a la izquierda del botón de acción, perfectamente fuera del reproductor
+        // Shorts: position to the left of the action button outside the video viewport
         const top = btnRect.top + (btnRect.height / 2) - (tooltipRect.height / 2);
         const left = btnRect.left - tooltipRect.width - 12;
         tooltipEl.style.top = Math.max(8, top) + "px";
         tooltipEl.style.left = Math.max(8, left) + "px";
       } else {
-        // En videos estándar: colocar encima del botón de controles
+        // Standard video: position centered above the player controls button
         const top = btnRect.top - tooltipRect.height - 12;
         const left = btnRect.left + (btnRect.width / 2) - (tooltipRect.width / 2);
         tooltipEl.style.top = Math.max(8, top) + "px";
