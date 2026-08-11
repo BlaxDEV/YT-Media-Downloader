@@ -6,6 +6,7 @@ dist/
 *.spec
 
 # Build outputs & tools
+Output/
 native-host/
 native-host-test/
 tools/
