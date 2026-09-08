@@ -140,7 +140,7 @@ window.YTDL.utils = {
       try {
         const resp = await fetch(`${window.YTDL.SERVER_URL}${path}`);
         const resJson = await resp.json();
-        if (resJson && resJson.version && resJson.version !== "1.3.0") {
+        if (resJson && resJson.version && resJson.version !== "1.3.1") {
           window.YTDL.state.companionOutdated = true;
           window.YTDL.state.companionVersion = resJson.version;
         }
@@ -171,7 +171,7 @@ window.YTDL.utils = {
           body: JSON.stringify(body)
         });
         const resJson = await resp.json();
-        if (resJson && resJson.version && resJson.version !== "1.3.0") {
+        if (resJson && resJson.version && resJson.version !== "1.3.1") {
           window.YTDL.state.companionOutdated = true;
           window.YTDL.state.companionVersion = resJson.version;
         }

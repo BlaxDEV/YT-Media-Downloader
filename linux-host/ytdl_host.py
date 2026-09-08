@@ -27,7 +27,7 @@ if sys.stderr is None:
 
 HOST = "127.0.0.1"
 PORT = 19836
-VERSION = "1.3.0"
+VERSION = "1.3.1"
 
 # Determine base directory and tools path
 if getattr(sys, 'frozen', False):
@@ -137,6 +137,60 @@ def _get_firefox_fork_profile_paths():
                 except Exception:
                     pass
     return paths
+
+def _is_browser_installed(browser_name):
+    """Checks if standard browser profile directories exist on the operating system."""
+    if IS_WINDOWS:
+        appdata = os.getenv("APPDATA", "")
+        localappdata = os.getenv("LOCALAPPDATA", "")
+        paths = {
+            "firefox": os.path.join(appdata, "Mozilla", "Firefox", "Profiles"),
+            "chrome": os.path.join(localappdata, "Google", "Chrome", "User Data"),
+            "edge": os.path.join(localappdata, "Microsoft", "Edge", "User Data"),
+            "brave": os.path.join(localappdata, "BraveSoftware", "Brave-Browser", "User Data"),
+            "opera": os.path.join(appdata, "Opera Software", "Opera Stable"),
+        }
+        p = paths.get(browser_name.lower())
+        return bool(p and os.path.exists(p))
+    return False
+
+def get_browser_cookies_args():
+    """Find available browser profile cookies as fallback/supplement to bypass YouTube 403 Forbidden."""
+    fork_paths = _get_firefox_fork_profile_paths()
+    if fork_paths:
+        for fp in fork_paths:
+            ck_file = os.path.join(fp, "cookies.sqlite")
+            if os.path.exists(ck_file) and os.path.getsize(ck_file) > 0:
+                return ["--cookies-from-browser", f"firefox:{fp}"]
+        return ["--cookies-from-browser", f"firefox:{fork_paths[0]}"]
+    for b in ["firefox", "chrome", "edge", "brave", "opera"]:
+        if _is_browser_installed(b):
+            return ["--cookies-from-browser", b]
+    return []
+
+def get_js_runtime_args():
+    """Detect external JavaScript runtime (Node.js, Deno, QuickJS) for solving YouTube n-challenges."""
+    # 1. Local tools folder
+    for name in ["node", "deno", "quickjs", "qjs"]:
+        local_bin = os.path.join(TOOLS_DIR, f"{name}{EXT}")
+        if os.path.exists(local_bin):
+            return ["--js-runtimes", f"{name}:{local_bin}"]
+    # 2. System PATH
+    for name in ["node", "deno", "quickjs", "qjs", "bun"]:
+        sys_bin = shutil.which(name)
+        if sys_bin:
+            return ["--js-runtimes", f"{name}:{sys_bin}"]
+    # 3. Common Windows paths
+    if IS_WINDOWS:
+        common_paths = [
+            r"C:\Program Files\nodejs\node.exe",
+            r"C:\Program Files (x86)\nodejs\node.exe",
+            os.path.expandvars(r"%LOCALAPPDATA%\Programs\node\node.exe"),
+        ]
+        for p in common_paths:
+            if os.path.exists(p):
+                return ["--js-runtimes", f"node:{p}"]
+    return []
 
 IN_MEMORY_COOKIES_NETSCAPE = None
 COOKIES_LOCK = threading.Lock()
@@ -322,6 +376,11 @@ def _get_current_netscape_cookies():
 def _run_ytdlp_cmd(args, timeout=None):
     """Run yt-dlp with optional in-memory cookies and PO-Token using an ephemeral temp file deleted instantly after execution."""
     cmd = [YTDLP_BIN] + args
+    
+    js_args = get_js_runtime_args()
+    if js_args:
+        cmd.extend(js_args)
+
     netscape_str = _get_current_netscape_cookies()
     po_token_str = _get_current_po_token()
     temp_cookie_path = None
@@ -329,7 +388,10 @@ def _run_ytdlp_cmd(args, timeout=None):
     if po_token_str:
         cmd.extend(["--extractor-args", f"youtube:po_token=web+{po_token_str}"])
 
-    if netscape_str:
+    browser_cookies = get_browser_cookies_args()
+    if browser_cookies:
+        cmd.extend(browser_cookies)
+    elif netscape_str:
         try:
             tmp = tempfile.NamedTemporaryFile(mode="w", suffix=".ytck", delete=False, encoding="utf-8")
             tmp.write(netscape_str)
@@ -408,6 +470,7 @@ _load_history()
 
 class ThreadingHTTPServer(ThreadingMixIn, HTTPServer):
     daemon_threads = True
+    allow_reuse_address = True
 
 class YTDLRequestHandler(BaseHTTPRequestHandler):
     def _send_cors_headers(self):
@@ -803,6 +866,11 @@ class YTDLRequestHandler(BaseHTTPRequestHandler):
 
             cmd = [YTDLP_BIN, "--no-warnings", "--newline", "--progress-template", "%(progress._percent_str)s"]
 
+            # Attach JS runtime for solving YouTube challenges (avoids 403 Forbidden)
+            js_args = get_js_runtime_args()
+            if js_args:
+                cmd.extend(js_args)
+
             # Attach PO-Token if present in payload or global memory
             po_token_val = body.get("po_token") or body.get("potoken")
             if po_token_val:
@@ -821,7 +889,10 @@ class YTDLRequestHandler(BaseHTTPRequestHandler):
                 ])
 
             netscape_str = _get_current_netscape_cookies()
-            if netscape_str:
+            browser_cookies = get_browser_cookies_args()
+            if browser_cookies:
+                cmd.extend(browser_cookies)
+            elif netscape_str:
                 try:
                     tmp = tempfile.NamedTemporaryFile(mode="w", suffix=".ytck", delete=False, encoding="utf-8")
                     tmp.write(netscape_str)
@@ -852,7 +923,7 @@ class YTDLRequestHandler(BaseHTTPRequestHandler):
                     cmd.extend(["--download-sections", f"*{trim_a}-{trim_b}"])
 
             if fmt_type == "audio":
-                cmd.extend(["-x", "--audio-format", ext])
+                cmd.extend(["-f", "bestaudio/best", "-x", "--audio-format", ext])
                 audio_q = body.get("audio_quality") or body.get("quality")
                 if audio_q:
                     cmd.extend(["--audio-quality", str(audio_q).lower()])
@@ -889,12 +960,16 @@ class YTDLRequestHandler(BaseHTTPRequestHandler):
 
             process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, **_subprocess_kwargs)
 
+            last_lines = []
             while True:
                 line = process.stdout.readline()
                 if not line and process.poll() is not None:
                     break
                 if line:
                     line = line.strip()
+                    last_lines.append(line)
+                    if len(last_lines) > 20:
+                        last_lines.pop(0)
                     if "%" in line:
                         try:
                             clean_pct = line.replace("%", "").strip()
@@ -937,6 +1012,9 @@ class YTDLRequestHandler(BaseHTTPRequestHandler):
                         pass
             else:
                 job["status"] = "error"
+                err_text = "\n".join(l for l in last_lines if "ERROR:" in l or "WARNING:" in l) or (last_lines[-1] if last_lines else "Download process exited with non-zero status")
+                job["error"] = err_text
+                print(f"[YTDL] Error downloading {job_id}: {err_text}")
             with history_lock:
                 _save_history()
         except Exception as e:
@@ -959,8 +1037,23 @@ def main():
     print(f"=========================================================")
     # Purge legacy cookies files from disk on startup for security
     _purge_legacy_cookies()
+    server = None
+    for attempt in range(5):
+        try:
+            server = ThreadingHTTPServer((HOST, PORT), YTDLRequestHandler)
+            break
+        except Exception as e:
+            if attempt < 4:
+                time.sleep(1)
+            else:
+                try:
+                    err_log = os.path.join(DEFAULT_DOWNLOAD_DIR, "server_error.log")
+                    with open(err_log, "a", encoding="utf-8") as f:
+                        f.write(f"[{time.ctime()}] Fatal error starting server: {e}\n")
+                except Exception:
+                    pass
+                sys.exit(1)
     try:
-        server = ThreadingHTTPServer((HOST, PORT), YTDLRequestHandler)
         server.serve_forever()
     except KeyboardInterrupt:
         print("\n[YTDL] Server stopped by user.")
