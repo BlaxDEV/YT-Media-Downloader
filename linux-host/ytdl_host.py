@@ -504,6 +504,53 @@ def _check_item_exists(item):
 
 _load_history()
 
+def cancel_job(job_id):
+    """Cancels an active download job, terminating its process tree and updating history."""
+    with jobs_lock:
+        job = jobs.get(job_id)
+        if not job:
+            return False
+        job["cancelled"] = True
+        job["status"] = "cancelled"
+        job["progress"] = 0.0
+
+    proc = job.get("process")
+    if proc and proc.poll() is None:
+        try:
+            if IS_WINDOWS:
+                subprocess.run(
+                    ["taskkill", "/F", "/T", "/PID", str(proc.pid)],
+                    capture_output=True,
+                    creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0)
+                )
+            else:
+                proc.terminate()
+                try:
+                    proc.wait(timeout=2)
+                except subprocess.TimeoutExpired:
+                    proc.kill()
+        except Exception as e:
+            print(f"[YTDL] Error terminating process for {job_id}: {e}")
+
+    with history_lock:
+        for h in history:
+            if h.get("id") == job_id:
+                h["status"] = "cancelled"
+                h["progress"] = 0.0
+                h["error"] = "Cancelled by user"
+        _save_history()
+
+    fname = job.get("filename")
+    if fname:
+        part_file = f"{fname}.part"
+        for fpath in (fname, part_file):
+            if os.path.exists(fpath):
+                try:
+                    os.remove(fpath)
+                except Exception:
+                    pass
+    return True
+
 class ThreadingHTTPServer(ThreadingMixIn, HTTPServer):
     daemon_threads = True
     allow_reuse_address = True
@@ -546,6 +593,10 @@ class YTDLRequestHandler(BaseHTTPRequestHandler):
                 history_data = []
                 for job in history:
                     item = dict(job)
+                    live_job = jobs.get(item.get("id"))
+                    if live_job:
+                        item["progress"] = live_job.get("progress", item.get("progress", 0))
+                        item["status"] = live_job.get("status", item.get("status"))
                     if item.get("status") == "complete":
                         item["file_exists"] = _check_item_exists(item)
                     else:
@@ -863,13 +914,29 @@ class YTDLRequestHandler(BaseHTTPRequestHandler):
                 _save_history()
             self._send_json({"status": "ok"})
 
-        elif path == "/select_folder":
-            curr = body.get("current_dir") or DEFAULT_DOWNLOAD_DIR
-            chosen = select_output_folder(curr)
-            if chosen:
-                self._send_json({"folder": chosen, "cancelled": False, "status": "ok"})
+        elif path == "/cancel":
+            job_id = body.get("id")
+            if not job_id:
+                self._send_json({"error": "Job ID is required"}, status_code=400)
+                return
+            ok = cancel_job(job_id)
+            self._send_json({"status": "ok" if ok else "not_found", "cancelled": ok})
+
+        elif path == "/open_folder":
+            folder = body.get("path") or DEFAULT_DOWNLOAD_DIR
+            if os.path.exists(folder):
+                try:
+                    if IS_WINDOWS:
+                        os.startfile(folder)
+                    elif platform.system() == "Darwin":
+                        subprocess.run(["open", folder])
+                    else:
+                        subprocess.run(["xdg-open", folder])
+                    self._send_json({"status": "ok"})
+                except Exception as e:
+                    self._send_json({"error": str(e)}, status_code=500)
             else:
-                self._send_json({"folder": None, "cancelled": True, "status": "cancelled"})
+                self._send_json({"error": "Folder does not exist"}, status_code=404)
 
         else:
             self._send_json({"error": "Invalid POST path"}, status_code=404)
@@ -918,13 +985,19 @@ class YTDLRequestHandler(BaseHTTPRequestHandler):
                 cmd.extend(["--extractor-args", f"youtube:po_token=web+{cur_po}"])
 
             # Playlist & Rate Throttling
-            if body.get("is_playlist") or "list=" in url:
+            is_playlist = bool(body.get("is_playlist", False))
+            if is_playlist:
                 sleep_val = body.get("sleep_interval", 3)
                 cmd.extend([
                     "--sleep-requests", "1.5",
                     "--sleep-interval", str(sleep_val),
                     "--max-sleep-interval", str(int(sleep_val) + 3)
                 ])
+            else:
+                cmd.append("--no-playlist")
+                v_id = _extract_video_id(url)
+                if v_id and "list=" in url:
+                    url = f"https://www.youtube.com/watch?v={v_id}"
 
             netscape_str = _get_current_netscape_cookies()
             browser_cookies = get_browser_cookies_args()
@@ -1016,9 +1089,12 @@ class YTDLRequestHandler(BaseHTTPRequestHandler):
             cmd.extend(["-o", out_template, url])
 
             process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, **_subprocess_kwargs)
+            job["process"] = process
 
             last_lines = []
             while True:
+                if job.get("cancelled") or job.get("status") == "cancelled":
+                    break
                 line = process.stdout.readline()
                 if not line and process.poll() is not None:
                     break
@@ -1039,6 +1115,13 @@ class YTDLRequestHandler(BaseHTTPRequestHandler):
                             fname = line.split(prefix)[-1].strip().strip('"').strip("'")
                             if fname:
                                 job["filename"] = fname
+
+            if job.get("cancelled") or job.get("status") == "cancelled":
+                job["status"] = "cancelled"
+                job["progress"] = 0.0
+                with history_lock:
+                    _save_history()
+                return
 
             if process.returncode == 0:
                 if is_anim_export and job.get("filename") and os.path.exists(job["filename"]):
@@ -1068,10 +1151,14 @@ class YTDLRequestHandler(BaseHTTPRequestHandler):
                     except Exception:
                         pass
             else:
-                job["status"] = "error"
-                err_text = "\n".join(l for l in last_lines if "ERROR:" in l or "WARNING:" in l) or (last_lines[-1] if last_lines else "Download process exited with non-zero status")
-                job["error"] = err_text
-                print(f"[YTDL] Error downloading {job_id}: {err_text}")
+                if job.get("cancelled"):
+                    job["status"] = "cancelled"
+                    job["progress"] = 0.0
+                else:
+                    job["status"] = "error"
+                    err_text = "\n".join(l for l in last_lines if "ERROR:" in l or "WARNING:" in l) or (last_lines[-1] if last_lines else "Download process exited with non-zero status")
+                    job["error"] = err_text
+                    print(f"[YTDL] Error downloading {job_id}: {err_text}")
             with history_lock:
                 _save_history()
         except Exception as e:

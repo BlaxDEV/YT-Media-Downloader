@@ -1,5 +1,5 @@
 /*
- * History Module - History Tab Rendering
+ * History Module - History Tab Rendering & Live Queue Cancellation
  * YT Media Downloader Extension
  */
 
@@ -7,18 +7,30 @@ window.YTDL = window.YTDL || {};
 
 window.YTDL.history = {
   currentPage: 1,
+  _pollTimer: null,
+
+  stopAutoRefresh() {
+    if (this._pollTimer) {
+      clearTimeout(this._pollTimer);
+      this._pollTimer = null;
+    }
+  },
 
   // ─── Load History Data ──────────────────────────────────────
   async loadHistoryData(panel) {
+    this.stopAutoRefresh();
     const listEl = panel?.querySelector("#ytdl-history-list");
     if (!listEl) return;
     const getLang = () => window.YTDL?.state?.defaultSettings?.defLang || "en";
     const t = (k) => typeof window.YTDL_I18N_get === "function" ? window.YTDL_I18N_get(getLang(), k) : k;
-    listEl.textContent = "";
-    const loadingDiv = document.createElement("div");
-    loadingDiv.className = "ytdl-history-empty";
-    loadingDiv.textContent = t("histLoading");
-    listEl.appendChild(loadingDiv);
+
+    if (!listEl.hasChildNodes() || listEl.querySelector(".ytdl-history-empty")) {
+      listEl.textContent = "";
+      const loadingDiv = document.createElement("div");
+      loadingDiv.className = "ytdl-history-empty";
+      loadingDiv.textContent = t("histLoading");
+      listEl.appendChild(loadingDiv);
+    }
 
     const res = await window.YTDL.serverRequest("/history");
     let items = res?.downloads || res?.history || [];
@@ -47,6 +59,17 @@ window.YTDL.history = {
 
     this.currentPage = 1;
     this.renderPage(panel, items, 1);
+
+    // Auto-refresh while there are active processing downloads and history tab is visible
+    const hasActive = items.some(item => item.status === "processing");
+    if (hasActive) {
+      this._pollTimer = setTimeout(() => {
+        const histContent = panel?.querySelector('[data-content="history"]');
+        if (histContent && histContent.classList.contains("active")) {
+          this.loadHistoryData(panel);
+        }
+      }, 1500);
+    }
   },
 
   // ─── Render Paginated History Page ──────────────────────────
@@ -137,12 +160,19 @@ window.YTDL.history = {
       infoCol.appendChild(tagsDiv);
 
       // Status Row
-      const stText = d.status === "complete" 
-        ? t("histComplete") 
-        : d.status === "processing" 
-        ? `${t("histProcessing")} (${Math.round(d.progress || 0)}%)` 
-        : d.status === "error" 
-        ? t("histError") 
+      const isProcessing = d.status === "processing";
+      const isCancelled = d.status === "cancelled";
+      const isComplete = d.status === "complete";
+      const isError = d.status === "error";
+
+      const stText = isComplete 
+        ? (t("histComplete") || "Completado")
+        : isProcessing 
+        ? `${t("histProcessing") || "Descargando..."} (${Math.round(d.progress || 0)}%)` 
+        : isCancelled
+        ? (t("histCancelled") || "Cancelado")
+        : isError 
+        ? (d.error ? `${t("histError") || "Error"}: ${d.error.slice(0, 30)}` : (t("histError") || "Error"))
         : `${Math.round(d.progress || 0)}%`;
 
       const statusDiv = document.createElement("div");
@@ -152,7 +182,7 @@ window.YTDL.history = {
 
       card.appendChild(infoCol);
 
-      // 3. Right Column (Date)
+      // 3. Right Column (Date, Cancel button if processing, Open button if complete)
       const rightCol = document.createElement("div");
       rightCol.className = "ytdl-hist-right-col";
 
@@ -160,6 +190,38 @@ window.YTDL.history = {
       dateDiv.className = "ytdl-hist-date";
       dateDiv.textContent = d.timestamp_str || d.date || "";
       rightCol.appendChild(dateDiv);
+
+      if (isProcessing && d.id) {
+        const cancelBtn = document.createElement("button");
+        cancelBtn.className = "ytdl-hist-cancel-btn";
+        cancelBtn.textContent = t("histCancelBtn") || "Cancelar";
+        cancelBtn.setAttribute("title", "Cancelar esta descarga");
+        cancelBtn.addEventListener("click", async (e) => {
+          e.stopPropagation();
+          cancelBtn.disabled = true;
+          cancelBtn.textContent = "...";
+          try {
+            await window.YTDL.serverPost("/cancel", { id: d.id });
+            d.status = "cancelled";
+            d.progress = 0;
+            this.loadHistoryData(panel);
+          } catch (err) {
+            cancelBtn.disabled = false;
+            cancelBtn.textContent = t("histCancelBtn") || "Cancelar";
+          }
+        });
+        rightCol.appendChild(cancelBtn);
+      } else if (isComplete && d.output_dir) {
+        const openBtn = document.createElement("button");
+        openBtn.className = "ytdl-hist-open-btn";
+        openBtn.textContent = "📁 " + (t("histOpenFolder") || "Abrir");
+        openBtn.setAttribute("title", t("histOpenFolder") || "Abrir carpeta");
+        openBtn.addEventListener("click", (e) => {
+          e.stopPropagation();
+          window.YTDL.serverPost("/open_folder", { id: d.id, path: d.output_dir });
+        });
+        rightCol.appendChild(openBtn);
+      }
 
       card.appendChild(rightCol);
       listEl.appendChild(card);

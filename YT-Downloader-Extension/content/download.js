@@ -152,8 +152,16 @@ window.YTDL.download = {
       if (window.YTDL.state.lastSelectedFolder || window.YTDL.state.customOutputDir) {
         body.output_dir = window.YTDL.state.lastSelectedFolder || window.YTDL.state.customOutputDir;
       }
+      body.is_playlist = true;
       await this.downloadPlaylistBatch(type, selectedPlaylist, body);
       return;
+    }
+
+    // Default: Single item download (Strictly exclude playlist mode and strip playlist query parameters)
+    body.is_playlist = false;
+    const vMatch = body.url ? body.url.match(/[?&]v=([a-zA-Z0-9_-]+)/) : null;
+    if (vMatch && vMatch[1]) {
+      body.url = `https://www.youtube.com/watch?v=${vMatch[1]}`;
     }
 
     if (window.YTDL.state[`selectedChapters_${prefix2}`] && window.YTDL.state[`selectedChapters_${prefix2}`].length > 0) {
@@ -180,6 +188,7 @@ window.YTDL.download = {
     const res = await window.YTDL.serverPost("/download", body);
 
     if (res?.id) {
+      window.YTDL.state.activeJobId = res.id;
       this.pollProgress(type, res.id);
     } else {
       if (pct) pct.textContent = `Error: ${res?.error || t("errUnknown")}`;
@@ -208,7 +217,8 @@ window.YTDL.download = {
         ...baseBody,
         url: item.url,
         title: item.title,
-        duration_str: item.duration_str || ""
+        duration_str: item.duration_str || "",
+        is_playlist: false
       };
 
       const res = await window.YTDL.serverPost("/download", itemBody);
@@ -262,7 +272,7 @@ window.YTDL.download = {
           if (pct) pct.textContent = `[${currentIdx}/${totalCount}] ${itemPct}% - ${itemTitle.slice(0, 20)}...`;
         }
 
-        if (data.status === "complete" || data.status === "error") {
+        if (data.status === "complete" || data.status === "error" || data.status === "cancelled") {
           resolve();
           return;
         }
@@ -379,9 +389,22 @@ window.YTDL.download = {
         return;
       }
 
+      if (data.status === "cancelled") {
+        if (pct) pct.textContent = t("histCancelled") || "Cancelado";
+        window.YTDL.state.isDownloading = false;
+        window.YTDL.state.activeJobId = null;
+        if (btn) btn.disabled = false;
+        window.YTDL.history?.loadHistoryData(panel);
+        setTimeout(() => {
+          if (progress) progress.style.display = "none";
+        }, 2500);
+        return;
+      }
+
       if (data.status === "error") {
         if (pct) pct.textContent = "Error";
         window.YTDL.state.isDownloading = false;
+        window.YTDL.state.activeJobId = null;
         if (btn) btn.disabled = false;
         return;
       }

@@ -98,6 +98,8 @@ window.YTDL.panelEvents = {
         panel.querySelector(`[data-content="${tab.dataset.tab}"]`).classList.add("active");
         if (tab.dataset.tab === "history") {
           window.YTDL.history.loadHistoryData(panel);
+        } else {
+          window.YTDL.history?.stopAutoRefresh();
         }
       });
     });
