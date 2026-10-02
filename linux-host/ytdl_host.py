@@ -257,7 +257,43 @@ def _extract_video_formats(info):
                     "filesize": f_size,
                     "type": "video"
                 })
+
+    # Also extract audio streams so extension can pair audio and display tracks
+    for fmt in info.get("formats", []):
+        acodec = fmt.get("acodec", "")
+        vcodec = fmt.get("vcodec", "none")
+        if acodec and acodec != "none" and (vcodec == "none" or not fmt.get("height")):
+            a_size = fmt.get("filesize") or fmt.get("filesize_approx") or 0
+            formats.append({
+                "format_id": fmt.get("format_id"),
+                "resolution": "audio only",
+                "ext": fmt.get("ext", "m4a"),
+                "filesize": a_size,
+                "type": "audio"
+            })
+
     return formats
+
+def _extract_audio_tracks(info):
+    tracks = []
+    seen = set()
+    for fmt in info.get("formats", []):
+        acodec = fmt.get("acodec", "")
+        vcodec = fmt.get("vcodec", "none")
+        if acodec and acodec != "none" and (vcodec == "none" or not fmt.get("height")):
+            fid = fmt.get("format_id")
+            if fid and fid not in seen:
+                seen.add(fid)
+                lang = fmt.get("language") or ""
+                note = fmt.get("format_note") or fmt.get("ext") or "Audio"
+                label = f"{note} ({lang})" if lang else f"{note}"
+                tracks.append({
+                    "format_id": fid,
+                    "label": label,
+                    "lang": lang,
+                    "ext": fmt.get("ext", "m4a")
+                })
+    return tracks
 
 DISCARD_COOKIES = {
     "SID", "HSID", "SSID", "APISID", "SAPISID",
@@ -579,7 +615,8 @@ class YTDLRequestHandler(BaseHTTPRequestHandler):
                     "formats": formats,
                     "title": info.get("title", "Video"),
                     "subtitles": list((info.get("subtitles") or {}).keys()),
-                    "automatic_captions": list((info.get("automatic_captions") or {}).keys())
+                    "automatic_captions": list((info.get("automatic_captions") or {}).keys()),
+                    "audio_tracks": _extract_audio_tracks(info)
                 })
             except Exception as e:
                 self._send_json({"error": f"Error fetching formats: {str(e)}"}, status_code=500)
@@ -685,7 +722,8 @@ class YTDLRequestHandler(BaseHTTPRequestHandler):
                     "formats": formats,
                     "title": info.get("title", "Video"),
                     "subtitles": list((info.get("subtitles") or {}).keys()),
-                    "automatic_captions": list((info.get("automatic_captions") or {}).keys())
+                    "automatic_captions": list((info.get("automatic_captions") or {}).keys()),
+                    "audio_tracks": _extract_audio_tracks(info)
                 })
             except Exception as e:
                 self._send_json({"error": f"Error fetching formats: {str(e)}"}, status_code=500)
@@ -917,8 +955,10 @@ class YTDLRequestHandler(BaseHTTPRequestHandler):
             if not split_chapters and not selected_chapters:
                 if trim_ranges and len(trim_ranges) > 0:
                     for tr in trim_ranges:
-                        if tr.get("start") is not None and tr.get("end") is not None:
+                        if isinstance(tr, dict) and tr.get("start") is not None and tr.get("end") is not None:
                             cmd.extend(["--download-sections", f"*{tr['start']}-{tr['end']}"])
+                        elif isinstance(tr, str) and "-" in tr:
+                            cmd.extend(["--download-sections", f"*{tr}"])
                 elif trim_a is not None and trim_b is not None and (str(trim_a) != "0:00" or str(trim_b) != ""):
                     cmd.extend(["--download-sections", f"*{trim_a}-{trim_b}"])
 
@@ -943,13 +983,30 @@ class YTDLRequestHandler(BaseHTTPRequestHandler):
                     quality = str(body.get("quality") or "1080p")
                     # Extract target height from quality field (e.g. "1080p" -> "1080")
                     target_h = quality.replace("p", "").strip() or "1080"
+                    no_audio = bool(body.get("no_audio", False))
+                    audio_track = body.get("audio_track")
 
-                    # Real numeric format_id from yt-dlp (e.g. "137+251")
                     has_real_fmt = fmt_id and not fmt_id.startswith("res:") and fmt_id not in ("", "undefined")
-                    if has_real_fmt:
-                        format_spec = f"{fmt_id}/bestvideo[height<={target_h}]+bestaudio/best"
+
+                    if no_audio:
+                        # User explicitly opted out of audio
+                        v_only_fmt = fmt_id.split("+")[0] if has_real_fmt else ""
+                        if v_only_fmt:
+                            format_spec = f"{v_only_fmt}/bestvideo[height<={target_h}]/bestvideo"
+                        else:
+                            format_spec = f"bestvideo[height<={target_h}]/bestvideo/best"
                     else:
-                        format_spec = f"bestvideo[height<={target_h}]+bestaudio/bestvideo[height<={target_h}]+best/best"
+                        # Default: Include sound. Merge requested video stream with audio stream.
+                        a_spec = f"{audio_track}/bestaudio" if audio_track else "bestaudio"
+                        if has_real_fmt:
+                            if "+" in fmt_id:
+                                # fmt_id already includes audio combination (e.g. "137+140")
+                                format_spec = f"{fmt_id}/bestvideo[height<={target_h}]+{a_spec}/bestvideo[height<={target_h}]+bestaudio/best"
+                            else:
+                                # fmt_id is video-only (e.g. "137") -> MUST append audio stream with +
+                                format_spec = f"{fmt_id}+{a_spec}/{fmt_id}+bestaudio/bestvideo[height<={target_h}]+{a_spec}/bestvideo[height<={target_h}]+bestaudio/best"
+                        else:
+                            format_spec = f"bestvideo[height<={target_h}]+{a_spec}/bestvideo[height<={target_h}]+bestaudio/bestvideo[height<={target_h}]+best/best"
 
                     cmd.extend(["-f", format_spec, "--merge-output-format", ext])
                 if audio_meta:

@@ -76,13 +76,13 @@ window.YTDL.download = {
       const selectedFmt = videoFormats.find(f => f.format_id === fmtId);
 
       const includeAudio = panel.querySelector("#ytdl-v-include-audio")?.checked !== false;
-      // Only combine format_ids when we have a real numeric yt-dlp format_id
-      if (selectedFmt?.type === "video" && !fmtId.startsWith("res:") && audioFormats.length > 0 && includeAudio) {
-        const bestAudio = audioFormats.find(f => f.ext === "m4a") || audioFormats[0];
-        body.format_id = `${fmtId}+${bestAudio.format_id}`;
-      }
       if (!includeAudio) {
         body.no_audio = true;
+      } else if (fmtId && !fmtId.startsWith("res:") && audioFormats.length > 0) {
+        const bestAudio = audioFormats.find(f => f.ext === "m4a") || audioFormats[0];
+        if (bestAudio?.format_id) {
+          body.format_id = `${fmtId}+${bestAudio.format_id}`;
+        }
       }
 
       const dur = window.YTDL.state.videoInfo?.duration || window.YTDL.preview?.getYouTubeVideo()?.duration || 600;
