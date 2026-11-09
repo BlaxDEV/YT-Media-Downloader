@@ -187,8 +187,16 @@ window.YTDL.updater = {
     if (titleEl) titleEl.textContent = t("updateTitle") || "¡Nueva actualización disponible!";
     if (verStrong) verStrong.textContent = `v${info.latest_version}`;
     if (verText) {
+      verText.textContent = "";
       const msgTpl = t("updateAvailableMsg") || "Está disponible la versión v{v} para su descarga.";
-      verText.innerHTML = msgTpl.replace("{v}", `<strong id="ytdl-update-new-ver" style="color: #4cd162;">v${info.latest_version}</strong>`);
+      const parts = msgTpl.split("{v}");
+      if (parts[0]) verText.appendChild(document.createTextNode(parts[0]));
+      const strongEl = document.createElement("strong");
+      strongEl.id = "ytdl-update-new-ver";
+      strongEl.style.color = "#4cd162";
+      strongEl.textContent = `v${info.latest_version}`;
+      verText.appendChild(strongEl);
+      if (parts[1]) verText.appendChild(document.createTextNode(parts[1]));
     }
 
     if (notesEl) {
