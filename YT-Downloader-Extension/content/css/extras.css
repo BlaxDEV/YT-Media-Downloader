@@ -211,6 +211,9 @@
 .ytdl-hist-status.processing {
   color: #ffb800;
 }
+.ytdl-hist-status.queued {
+  color: #3ea6ff;
+}
 .ytdl-hist-status.cancelled {
   color: #9aa0a6;
 }
@@ -622,4 +625,75 @@
   25% { opacity: 1; transform: translate(-50%, -50%) scale(1.15) rotate(180deg); }
   65% { opacity: 1; transform: translate(-50%, -50%) scale(1.0) rotate(360deg); }
   100% { opacity: 0; transform: translate(-50%, -50%) scale(1.25) rotate(450deg); }
+}
+
+/* ─── Update System Styles ───────────────────────────────────── */
+.ytdl-update-card {
+  max-width: 320px;
+  background: #181818;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.95);
+}
+
+.ytdl-update-btn-later {
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: #aaa;
+  border-radius: 8px;
+  padding: 8px 12px;
+  font-size: 11px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+.ytdl-update-btn-later:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: #fff;
+  border-color: rgba(255, 255, 255, 0.35);
+}
+
+.ytdl-update-btn-install {
+  width: auto !important;
+  background: linear-gradient(135deg, #2ba640 0%, #1e8731 100%) !important;
+  border: none !important;
+  border-radius: 8px !important;
+  color: #fff !important;
+  padding: 8px 16px !important;
+  font-size: 12px !important;
+  font-weight: 700 !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 4px !important;
+  cursor: pointer !important;
+  box-shadow: 0 4px 12px rgba(43, 166, 64, 0.35) !important;
+  transition: all 0.2s ease !important;
+}
+.ytdl-update-btn-install:hover:not(:disabled) {
+  opacity: 0.94 !important;
+  box-shadow: 0 6px 16px rgba(43, 166, 64, 0.5) !important;
+}
+.ytdl-update-btn-install:disabled {
+  opacity: 0.6 !important;
+  cursor: not-allowed !important;
+}
+
+.ytdl-check-updates-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 14px;
+  color: #bbb;
+  padding: 5px 12px;
+  font-size: 11px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+.ytdl-check-updates-btn:hover {
+  background: rgba(255, 255, 255, 0.12);
+  color: #fff;
+  border-color: rgba(255, 255, 255, 0.25);
 }

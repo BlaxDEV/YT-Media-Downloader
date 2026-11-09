@@ -48,7 +48,13 @@ window.YTDL.videoData = {
     
     window.YTDL.state.currentVideoUrl = currentUrl;
     
+    const dlBtnInit = document.getElementById("ytdl-dl-video");
+    const dlAudioBtnInit = document.getElementById("ytdl-dl-audio");
+    if (dlBtnInit) dlBtnInit.disabled = true;
+    if (dlAudioBtnInit) dlAudioBtnInit.disabled = true;
+
     const loadEl = document.getElementById("ytdl-loading");
+    const loadAudioEl = document.getElementById("ytdl-a-loading");
     const container = document.getElementById("ytdl-qualities");
     if (loadEl) { 
       loadEl.style.display = "flex"; 
@@ -59,6 +65,15 @@ window.YTDL.videoData = {
       span.id = "i18n-loading";
       span.textContent = "Cargando calidades...";
       loadEl.append(spinner, span);
+    }
+    if (loadAudioEl) {
+      loadAudioEl.style.display = "flex";
+      loadAudioEl.textContent = "";
+      const spinnerA = document.createElement("div");
+      spinnerA.className = "ytdl-spinner";
+      const spanA = document.createElement("span");
+      spanA.textContent = "Cargando información...";
+      loadAudioEl.append(spinnerA, spanA);
     }
     if (container) container.textContent = "";
 
@@ -101,8 +116,11 @@ window.YTDL.videoData = {
     const trimVideo = document.getElementById("ytdl-video-trim");
     const trimAudio = document.getElementById("ytdl-audio-trim");
     const dlBtn = document.getElementById("ytdl-dl-video");
+    const dlAudioBtn = document.getElementById("ytdl-dl-audio");
+    const loadingAudio = document.getElementById("ytdl-a-loading");
 
     if (loading) loading.style.display = "none";
+    if (loadingAudio) loadingAudio.style.display = "none";
 
     const targetRes = ["4K", "1440p", "1080p", "720p", "480p", "360p", "240p", "144p"];
     const selectedFmt = document.querySelector("#ytdl-v-fmt .ytdl-chip.active")?.dataset.v || "mp4";
@@ -176,6 +194,7 @@ window.YTDL.videoData = {
     if (trimVideo) trimVideo.style.display = "block";
     if (trimAudio) trimAudio.style.display = "block";
     if (dlBtn) dlBtn.disabled = false;
+    if (dlAudioBtn) dlAudioBtn.disabled = false;
     window.YTDL.buttons.injectScissorsButton();
     window.YTDL.buttons.showScissorsButton(true);
     window.YTDL.buttons.applyScissorsToPanel();

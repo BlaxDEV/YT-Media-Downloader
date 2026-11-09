@@ -10,11 +10,14 @@ import sys
 import json
 import time
 import uuid
+import queue
 import shutil
 import tempfile
 import platform
 import threading
 import subprocess
+import re
+import urllib.request
 from urllib.parse import urlparse, parse_qs
 from http.server import HTTPServer, BaseHTTPRequestHandler
 from socketserver import ThreadingMixIn
@@ -27,7 +30,7 @@ if sys.stderr is None:
 
 HOST = "127.0.0.1"
 PORT = 19836
-VERSION = "1.3.1"
+VERSION = "1.3.2"
 
 # Determine base directory and tools path
 if getattr(sys, 'frozen', False):
@@ -451,6 +454,155 @@ def _run_ytdlp_cmd(args, timeout=None):
 DOCUMENTS_DIR = os.path.join(os.path.expanduser("~"), "Documents")
 DEFAULT_DOWNLOAD_DIR = os.path.join(DOCUMENTS_DIR, "YTDownloader")
 os.makedirs(DEFAULT_DOWNLOAD_DIR, exist_ok=True)
+UPDATES_DIR = os.path.join(DEFAULT_DOWNLOAD_DIR, "Updates")
+os.makedirs(UPDATES_DIR, exist_ok=True)
+
+# ─── Update System (Safe, AV-Friendly) ───────────────────────────
+GITHUB_REPO = "BlaxDEV/YT-Media-Downloader"
+update_cache = {"timestamp": 0, "data": None}
+update_download_state = {
+    "status": "idle",
+    "progress": 0.0,
+    "downloaded_bytes": 0,
+    "total_bytes": 0,
+    "file_path": None,
+    "error": None
+}
+update_download_lock = threading.Lock()
+
+def _parse_version(v_str):
+    if not v_str:
+        return (0,)
+    clean = re.sub(r'^[vV]', '', str(v_str).strip())
+    parts = []
+    for p in clean.split('.'):
+        digits = re.match(r'^\d+', p)
+        if digits:
+            try:
+                parts.append(int(digits.group(0)))
+            except ValueError:
+                parts.append(0)
+        else:
+            parts.append(0)
+    return tuple(parts)
+
+def check_for_updates(force=False):
+    global update_cache
+    now = time.time()
+    if not force and update_cache["data"] and (now - update_cache["timestamp"] < 3600):
+        return update_cache["data"]
+
+    api_url = f"https://api.github.com/repos/{GITHUB_REPO}/releases/latest"
+    req = urllib.request.Request(
+        api_url,
+        headers={
+            "User-Agent": f"YT-Media-Downloader/{VERSION}",
+            "Accept": "application/vnd.github.v3+json"
+        }
+    )
+    try:
+        with urllib.request.urlopen(req, timeout=10) as response:
+            if response.status != 200:
+                raise Exception(f"GitHub API returned status {response.status}")
+            data = json.loads(response.read().decode("utf-8"))
+
+        tag = data.get("tag_name", "").strip()
+        latest_clean = re.sub(r'^[vV]', '', tag)
+        current_parsed = _parse_version(VERSION)
+        latest_parsed = _parse_version(latest_clean)
+        is_newer = latest_parsed > current_parsed
+
+        is_win = platform.system() == "Windows"
+        assets = data.get("assets") or []
+        target_asset = None
+        for asset in assets:
+            name = asset.get("name", "")
+            if is_win:
+                if name.endswith(".exe") and ("Win" in name or "Setup" in name or "YT_Downloader" in name):
+                    target_asset = asset
+                    break
+            else:
+                if (name.endswith(".tar.gz") or name.endswith(".sh")) and ("Linux" in name or "YT_Downloader" in name):
+                    target_asset = asset
+                    break
+
+        if not target_asset and assets:
+            target_asset = assets[0]
+
+        result = {
+            "status": "ok",
+            "update_available": is_newer,
+            "current_version": VERSION,
+            "latest_version": latest_clean,
+            "tag_name": tag,
+            "title": data.get("name") or f"Versión {tag}",
+            "notes": (data.get("body") or "").strip(),
+            "html_url": data.get("html_url") or f"https://github.com/{GITHUB_REPO}/releases/latest",
+            "asset_name": target_asset.get("name") if target_asset else "",
+            "download_url": target_asset.get("browser_download_url") if target_asset else "",
+            "asset_size": target_asset.get("size") if target_asset else 0,
+            "published_at": data.get("published_at", "")
+        }
+        update_cache["timestamp"] = now
+        update_cache["data"] = result
+        return result
+    except Exception as e:
+        if update_cache["data"]:
+            return update_cache["data"]
+        return {
+            "status": "error",
+            "update_available": False,
+            "current_version": VERSION,
+            "error": str(e)
+        }
+
+def _download_update_worker(download_url, dest_path):
+    global update_download_state
+    try:
+        req = urllib.request.Request(
+            download_url,
+            headers={"User-Agent": f"YT-Media-Downloader/{VERSION}"}
+        )
+        with urllib.request.urlopen(req, timeout=30) as resp:
+            total_size = int(resp.headers.get("Content-Length", 0))
+            with update_download_lock:
+                update_download_state["status"] = "downloading"
+                update_download_state["total_bytes"] = total_size
+                update_download_state["downloaded_bytes"] = 0
+                update_download_state["progress"] = 0.0
+                update_download_state["file_path"] = dest_path
+                update_download_state["error"] = None
+
+            downloaded = 0
+            chunk_size = 65536
+            temp_path = dest_path + ".part"
+            with open(temp_path, "wb") as f:
+                while True:
+                    chunk = resp.read(chunk_size)
+                    if not chunk:
+                        break
+                    f.write(chunk)
+                    downloaded += len(chunk)
+                    pct = round((downloaded / total_size) * 100, 1) if total_size > 0 else 50.0
+                    with update_download_lock:
+                        update_download_state["downloaded_bytes"] = downloaded
+                        update_download_state["progress"] = pct
+
+            if os.path.exists(dest_path):
+                try:
+                    os.remove(dest_path)
+                except Exception:
+                    pass
+            os.replace(temp_path, dest_path)
+
+        with update_download_lock:
+            update_download_state["status"] = "ready"
+            update_download_state["progress"] = 100.0
+            update_download_state["file_path"] = dest_path
+    except Exception as e:
+        with update_download_lock:
+            update_download_state["status"] = "error"
+            update_download_state["error"] = str(e)
 
 # In-memory job tracking and persistent disk history
 jobs = {}
@@ -466,14 +618,22 @@ def _load_history():
             with open(HISTORY_FILE, "r", encoding="utf-8") as f:
                 data = json.load(f)
                 if isinstance(data, list):
-                    history = data[:50]
+                    history = data[:100]
     except Exception:
         history = []
 
+def _clean_history_item(item):
+    if not isinstance(item, dict):
+        return {}
+    cleaned = dict(item)
+    cleaned.pop("process", None)
+    return cleaned
+
 def _save_history():
     try:
+        clean_list = [_clean_history_item(h) for h in history[:100]]
         with open(HISTORY_FILE, "w", encoding="utf-8") as f:
-            json.dump(history[:50], f, ensure_ascii=False, indent=2)
+            json.dump(clean_list, f, ensure_ascii=False, indent=2)
     except Exception:
         pass
 
@@ -504,52 +664,60 @@ def _check_item_exists(item):
 
 _load_history()
 
+download_queue = queue.Queue()
+
 def cancel_job(job_id):
-    """Cancels an active download job, terminating its process tree and updating history."""
+    """Cancels an active or queued download job, terminating any running process and updating history."""
     with jobs_lock:
         job = jobs.get(job_id)
-        if not job:
-            return False
-        job["cancelled"] = True
-        job["status"] = "cancelled"
-        job["progress"] = 0.0
+        if job:
+            job["cancelled"] = True
+            job["status"] = "cancelled"
+            job["progress"] = 0.0
+            job["error"] = "Cancelled by user"
 
-    proc = job.get("process")
-    if proc and proc.poll() is None:
-        try:
-            if IS_WINDOWS:
-                subprocess.run(
-                    ["taskkill", "/F", "/T", "/PID", str(proc.pid)],
-                    capture_output=True,
-                    creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0)
-                )
-            else:
-                proc.terminate()
-                try:
-                    proc.wait(timeout=2)
-                except subprocess.TimeoutExpired:
-                    proc.kill()
-        except Exception as e:
-            print(f"[YTDL] Error terminating process for {job_id}: {e}")
+    if job:
+        proc = job.get("process")
+        if proc and proc.poll() is None:
+            try:
+                if IS_WINDOWS:
+                    subprocess.run(
+                        ["taskkill", "/F", "/T", "/PID", str(proc.pid)],
+                        capture_output=True,
+                        creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0)
+                    )
+                else:
+                    proc.terminate()
+                    try:
+                        proc.wait(timeout=2)
+                    except subprocess.TimeoutExpired:
+                        proc.kill()
+            except Exception as e:
+                print(f"[YTDL] Error terminating process for {job_id}: {e}")
 
     with history_lock:
+        found = False
         for h in history:
             if h.get("id") == job_id:
                 h["status"] = "cancelled"
                 h["progress"] = 0.0
                 h["error"] = "Cancelled by user"
+                found = True
+                break
         _save_history()
 
-    fname = job.get("filename")
-    if fname:
-        part_file = f"{fname}.part"
-        for fpath in (fname, part_file):
-            if os.path.exists(fpath):
-                try:
-                    os.remove(fpath)
-                except Exception:
-                    pass
-    return True
+    if job:
+        fname = job.get("filename")
+        if fname:
+            part_file = f"{fname}.part"
+            for fpath in (fname, part_file):
+                if os.path.exists(fpath):
+                    try:
+                        os.remove(fpath)
+                    except Exception:
+                        pass
+        return True
+    return found
 
 class ThreadingHTTPServer(ThreadingMixIn, HTTPServer):
     daemon_threads = True
@@ -562,11 +730,13 @@ class YTDLRequestHandler(BaseHTTPRequestHandler):
         self.send_header("Access-Control-Allow-Headers", "Content-Type")
 
     def _send_json(self, data, status_code=200):
+        body = json.dumps(data).encode("utf-8")
         self.send_response(status_code)
         self._send_cors_headers()
         self.send_header("Content-Type", "application/json; charset=utf-8")
+        self.send_header("Content-Length", str(len(body)))
         self.end_headers()
-        self.wfile.write(json.dumps(data).encode("utf-8"))
+        self.wfile.write(body)
 
     def do_OPTIONS(self):
         self.send_response(204)
@@ -592,7 +762,7 @@ class YTDLRequestHandler(BaseHTTPRequestHandler):
             with history_lock:
                 history_data = []
                 for job in history:
-                    item = dict(job)
+                    item = _clean_history_item(job)
                     live_job = jobs.get(item.get("id"))
                     if live_job:
                         item["progress"] = live_job.get("progress", item.get("progress", 0))
@@ -671,6 +841,16 @@ class YTDLRequestHandler(BaseHTTPRequestHandler):
                 })
             except Exception as e:
                 self._send_json({"error": f"Error fetching formats: {str(e)}"}, status_code=500)
+
+        elif path == "/check_update":
+            force = query.get("force", ["false"])[0] == "true"
+            res = check_for_updates(force=force)
+            self._send_json(res)
+
+        elif path == "/update_progress":
+            with update_download_lock:
+                state_copy = dict(update_download_state)
+            self._send_json(state_copy)
 
         elif path == "/progress":
             job_id = query.get("id", [""])[0]
@@ -879,7 +1059,9 @@ class YTDLRequestHandler(BaseHTTPRequestHandler):
             fmt_ext = (body.get("ext") or body.get("audio_format") or "MP4").upper()
             duration_val = body.get("duration") or body.get("duration_str") or ""
 
-            jobs[job_id] = {
+            initial_status = "processing" if download_queue.empty() else "queued"
+
+            job_entry = {
                 "id": job_id,
                 "url": url,
                 "title": body.get("title", "Downloading..."),
@@ -892,21 +1074,125 @@ class YTDLRequestHandler(BaseHTTPRequestHandler):
                 "timestamp_str": timestamp_str,
                 "filesize_str": "",
                 "progress": 0.0,
-                "status": "processing",
+                "status": initial_status,
                 "output_dir": out_dir
             }
 
+            with jobs_lock:
+                jobs[job_id] = dict(job_entry)
+
             with history_lock:
-                history.insert(0, jobs[job_id])
-                while len(history) > 50:
-                    history.pop()
+                history.insert(0, dict(job_entry))
+                active_ids = {j_id for j_id, j in jobs.items() if j.get("status") in ("processing", "queued")}
+                while len(history) > 100:
+                    evicted = False
+                    for idx in range(len(history) - 1, -1, -1):
+                        if history[idx].get("id") not in active_ids:
+                            history.pop(idx)
+                            evicted = True
+                            break
+                    if not evicted:
+                        break
                 _save_history()
 
-            thread = threading.Thread(target=self._run_download_task, args=(job_id, body))
-            thread.daemon = True
-            thread.start()
+            download_queue.put((job_id, body))
 
-            self._send_json({"id": job_id, "status": "processing"})
+            self._send_json({"id": job_id, "status": initial_status})
+
+        elif path == "/download_batch":
+            items = body.get("items")
+            if not items or not isinstance(items, list):
+                self._send_json({"error": "Items list is required"}, status_code=400)
+                return
+
+            out_dir = body.get("output_dir") or DEFAULT_DOWNLOAD_DIR
+            os.makedirs(out_dir, exist_ok=True)
+
+            fmt_type = body.get("type", "video")
+            quality = body.get("quality", "1080p" if fmt_type == "video" else "320k")
+            fmt_ext = (body.get("ext") or body.get("audio_format") or "MP4").upper()
+
+            import datetime
+            now_dt = datetime.datetime.now()
+            date_str = now_dt.strftime("%d/%m/%Y")
+            time_str = now_dt.strftime("%H:%M")
+            timestamp_str = f"{date_str} {time_str}"
+
+            created_jobs = []
+            with history_lock, jobs_lock:
+                for idx, item in enumerate(items):
+                    item_url = item.get("url") or (f"https://www.youtube.com/watch?v={item.get('id')}" if item.get('id') else "")
+                    if not item_url:
+                        continue
+                    job_id = str(uuid.uuid4())[:8]
+                    v_id = item.get("id") or _extract_video_id(item_url)
+                    thumb_url = item.get("thumbnail") or (f"https://i.ytimg.com/vi/{v_id}/mqdefault.jpg" if v_id else "")
+
+                    item_body = dict(body)
+                    item_body.pop("items", None)
+                    item_body["url"] = item_url
+                    item_body["title"] = item.get("title") or f"Video {idx + 1}"
+                    item_body["duration_str"] = item.get("duration_str") or ""
+                    item_body["thumbnail"] = thumb_url
+                    item_body["is_playlist"] = False
+                    # Remove active-player-only parameters
+                    item_body.pop("format_id", None)
+                    item_body.pop("trim_a", None)
+                    item_body.pop("trim_b", None)
+                    item_body.pop("trim_start", None)
+                    item_body.pop("trim_end", None)
+                    item_body.pop("trim_ranges", None)
+                    item_body.pop("split_chapters", None)
+                    item_body.pop("chapters", None)
+
+                    initial_status = "processing" if (idx == 0 and download_queue.empty()) else "queued"
+
+                    job_entry = {
+                        "id": job_id,
+                        "url": item_url,
+                        "title": item_body["title"],
+                        "type": fmt_type,
+                        "quality": quality,
+                        "format": fmt_ext,
+                        "duration": item_body["duration_str"],
+                        "thumbnail": thumb_url,
+                        "date": date_str,
+                        "timestamp_str": timestamp_str,
+                        "filesize_str": "",
+                        "progress": 0.0,
+                        "status": initial_status,
+                        "output_dir": out_dir
+                    }
+                    jobs[job_id] = dict(job_entry)
+                    history.insert(0, dict(job_entry))
+                    download_queue.put((job_id, item_body))
+                    created_jobs.append({"id": job_id, "title": job_entry["title"], "url": item_url})
+
+                active_ids = {j_id for j_id, j in jobs.items() if j.get("status") in ("processing", "queued")}
+                while len(history) > 100:
+                    evicted = False
+                    for i in range(len(history) - 1, -1, -1):
+                        if history[i].get("id") not in active_ids:
+                            history.pop(i)
+                            evicted = True
+                            break
+                    if not evicted:
+                        break
+                _save_history()
+
+            self._send_json({
+                "status": "ok",
+                "count": len(created_jobs),
+                "jobs": created_jobs
+            })
+
+        elif path == "/select_folder":
+            curr = body.get("current_dir") or DEFAULT_DOWNLOAD_DIR
+            chosen = select_output_folder(curr)
+            if chosen:
+                self._send_json({"folder": chosen, "cancelled": False, "status": "ok"})
+            else:
+                self._send_json({"folder": None, "cancelled": True, "status": "cancelled"})
 
         elif path == "/clear_history":
             with history_lock:
@@ -921,6 +1207,51 @@ class YTDLRequestHandler(BaseHTTPRequestHandler):
                 return
             ok = cancel_job(job_id)
             self._send_json({"status": "ok" if ok else "not_found", "cancelled": ok})
+
+        elif path == "/download_update":
+            url = body.get("download_url")
+            name = body.get("asset_name")
+            if not url:
+                cached = update_cache.get("data") or {}
+                url = cached.get("download_url")
+                name = cached.get("asset_name")
+            if not url:
+                self._send_json({"error": "No download URL provided and no cached update found"}, status_code=400)
+                return
+            if not name:
+                name = f"Setup_YT_Downloader-Win-v{VERSION}.exe" if platform.system() == "Windows" else f"Setup_YT_Downloader-Linux-v{VERSION}.tar.gz"
+
+            dest_path = os.path.join(UPDATES_DIR, name)
+            with update_download_lock:
+                if update_download_state.get("status") == "downloading":
+                    self._send_json({"status": "already_downloading", "progress": update_download_state.get("progress", 0)})
+                    return
+                update_download_state["status"] = "downloading"
+                update_download_state["progress"] = 0.0
+                update_download_state["error"] = None
+                update_download_state["file_path"] = dest_path
+
+            t = threading.Thread(target=_download_update_worker, args=(url, dest_path), daemon=True)
+            t.start()
+            self._send_json({"status": "started", "file_path": dest_path})
+
+        elif path == "/install_update":
+            with update_download_lock:
+                file_path = update_download_state.get("file_path")
+            if not file_path or not os.path.exists(file_path):
+                file_path = body.get("file_path")
+            if not file_path or not os.path.exists(file_path):
+                self._send_json({"error": "No downloaded installer file found"}, status_code=400)
+                return
+            try:
+                abs_path = os.path.abspath(file_path)
+                if platform.system() == "Windows":
+                    os.startfile(abs_path)
+                else:
+                    subprocess.Popen(["xdg-open", abs_path])
+                self._send_json({"status": "ok", "message": "Installer launched", "file_path": abs_path})
+            except Exception as e:
+                self._send_json({"error": f"Failed to launch installer: {e}"}, status_code=500)
 
         elif path == "/open_folder":
             folder = body.get("path") or DEFAULT_DOWNLOAD_DIR
@@ -941,237 +1272,274 @@ class YTDLRequestHandler(BaseHTTPRequestHandler):
         else:
             self._send_json({"error": "Invalid POST path"}, status_code=404)
 
-    def _run_download_task(self, job_id, body):
-        job = jobs[job_id]
-        url = job.get("url") or body.get("url", "")
-        out_dir = job.get("output_dir") or body.get("out_dir") or DEFAULT_DOWNLOAD_DIR
-        temp_cookie_path = None
-        try:
-            fmt_type = body.get("type", "video") # "video" or "audio"
-            trim_a = body.get("trim_a") or body.get("trim_start")
-            trim_b = body.get("trim_b") or body.get("trim_end")
-            trim_ranges = body.get("trim_ranges", [])
-            split_chapters = body.get("split_chapters", False)
-            selected_chapters = body.get("chapters", [])
-            lufs_norm = body.get("lufs_norm", False)
-            audio_meta = body.get("audio_meta", False)
+def _run_download_task(job_id, body):
+    job = jobs[job_id]
+    url = job.get("url") or body.get("url", "")
+    out_dir = job.get("output_dir") or body.get("out_dir") or DEFAULT_DOWNLOAD_DIR
+    temp_cookie_path = None
+    try:
+        fmt_type = body.get("type", "video") # "video" or "audio"
+        trim_a = body.get("trim_a") or body.get("trim_start")
+        trim_b = body.get("trim_b") or body.get("trim_end")
+        trim_ranges = body.get("trim_ranges", [])
+        split_chapters = body.get("split_chapters", False)
+        selected_chapters = body.get("chapters", [])
+        lufs_norm = body.get("lufs_norm", False)
+        audio_meta = body.get("audio_meta", False)
 
-            if fmt_type == "audio":
-                ext = (body.get("ext") or body.get("audio_format") or "mp3").lower()
-                valid_audio = ("best", "aac", "alac", "flac", "m4a", "mka", "mp3", "ogg", "opus", "vorbis", "wav")
-                if ext not in valid_audio:
-                    ext = "mp3"
-            else:
-                ext = body.get("ext", "mp4").lower()
+        if fmt_type == "audio":
+            ext = (body.get("ext") or body.get("audio_format") or "mp3").lower()
+            valid_audio = ("best", "aac", "alac", "flac", "m4a", "mka", "mp3", "ogg", "opus", "vorbis", "wav")
+            if ext not in valid_audio:
+                ext = "mp3"
+        else:
+            ext = body.get("ext", "mp4").lower()
 
-            is_anim_export = ext in ("gif", "webp")
-            target_ext = ext
+        is_anim_export = ext in ("gif", "webp")
+        target_ext = ext
+        if is_anim_export:
+            ext = "mp4"
+
+        cmd = [YTDLP_BIN, "--no-warnings", "--newline", "--progress-template", "%(progress._percent_str)s"]
+
+        # Attach JS runtime for solving YouTube challenges (avoids 403 Forbidden)
+        js_args = get_js_runtime_args()
+        if js_args:
+            cmd.extend(js_args)
+
+        # Attach PO-Token if present in payload or global memory
+        po_token_val = body.get("po_token") or body.get("potoken")
+        if po_token_val:
+            update_po_token(po_token_val)
+        cur_po = _get_current_po_token()
+        if cur_po:
+            cmd.extend(["--extractor-args", f"youtube:po_token=web+{cur_po}"])
+
+        # Playlist & Rate Throttling
+        is_playlist = bool(body.get("is_playlist", False))
+        if is_playlist:
+            sleep_val = body.get("sleep_interval", 3)
+            cmd.extend([
+                "--sleep-requests", "1.5",
+                "--sleep-interval", str(sleep_val),
+                "--max-sleep-interval", str(int(sleep_val) + 3)
+            ])
+        else:
+            cmd.append("--no-playlist")
+            v_id = _extract_video_id(url)
+            if v_id and "list=" in url:
+                url = f"https://www.youtube.com/watch?v={v_id}"
+
+        netscape_str = _get_current_netscape_cookies()
+        browser_cookies = get_browser_cookies_args()
+        if browser_cookies:
+            cmd.extend(browser_cookies)
+        elif netscape_str:
+            try:
+                tmp = tempfile.NamedTemporaryFile(mode="w", suffix=".ytck", delete=False, encoding="utf-8")
+                tmp.write(netscape_str)
+                tmp.close()
+                temp_cookie_path = tmp.name
+                cmd.extend(["--cookies", temp_cookie_path])
+            except Exception as e:
+                print(f"[YTDL] Error creating ephemeral cookie temp file for download: {e}")
+
+        if FFMPEG_BIN != "ffmpeg":
+            cmd.extend(["--ffmpeg-location", os.path.dirname(FFMPEG_BIN)])
+
+        # Chapters handling
+        if split_chapters:
+            cmd.append("--split-chapters")
+        elif selected_chapters:
+            for ch in selected_chapters:
+                if ch.get("start") is not None and ch.get("end") is not None:
+                    cmd.extend(["--download-sections", f"*{ch['start']}-{ch['end']}"])
+
+        # Trimming arguments (Multi-cuts or single cut)
+        if not split_chapters and not selected_chapters:
+            if trim_ranges and len(trim_ranges) > 0:
+                for tr in trim_ranges:
+                    if isinstance(tr, dict) and tr.get("start") is not None and tr.get("end") is not None:
+                        cmd.extend(["--download-sections", f"*{tr['start']}-{tr['end']}"])
+                    elif isinstance(tr, str) and "-" in tr:
+                        cmd.extend(["--download-sections", f"*{tr}"])
+            elif trim_a is not None and trim_b is not None and (str(trim_a) != "0:00" or str(trim_b) != ""):
+                cmd.extend(["--download-sections", f"*{trim_a}-{trim_b}"])
+
+        if fmt_type == "audio":
+            cmd.extend(["-f", "bestaudio/best", "-x", "--audio-format", ext])
+            audio_q = body.get("audio_quality") or body.get("quality")
+            if audio_q:
+                cmd.extend(["--audio-quality", str(audio_q).lower()])
+            postprocessor_args = []
+            if lufs_norm:
+                postprocessor_args.extend(["-af", "loudnorm=I=-14:LRA=11:TP=-1.5"])
+            if postprocessor_args:
+                cmd.extend(["--postprocessor-args", f"ffmpeg:{' '.join(postprocessor_args)}"])
+            if audio_meta:
+                cmd.extend(["--embed-metadata", "--embed-thumbnail"])
+        else:
+            # Video format combining
             if is_anim_export:
-                ext = "mp4"
-
-            cmd = [YTDLP_BIN, "--no-warnings", "--newline", "--progress-template", "%(progress._percent_str)s"]
-
-            # Attach JS runtime for solving YouTube challenges (avoids 403 Forbidden)
-            js_args = get_js_runtime_args()
-            if js_args:
-                cmd.extend(js_args)
-
-            # Attach PO-Token if present in payload or global memory
-            po_token_val = body.get("po_token") or body.get("potoken")
-            if po_token_val:
-                update_po_token(po_token_val)
-            cur_po = _get_current_po_token()
-            if cur_po:
-                cmd.extend(["--extractor-args", f"youtube:po_token=web+{cur_po}"])
-
-            # Playlist & Rate Throttling
-            is_playlist = bool(body.get("is_playlist", False))
-            if is_playlist:
-                sleep_val = body.get("sleep_interval", 3)
-                cmd.extend([
-                    "--sleep-requests", "1.5",
-                    "--sleep-interval", str(sleep_val),
-                    "--max-sleep-interval", str(int(sleep_val) + 3)
-                ])
+                cmd.extend(["-f", "bestvideo[height<=1080]/best"])
             else:
-                cmd.append("--no-playlist")
-                v_id = _extract_video_id(url)
-                if v_id and "list=" in url:
-                    url = f"https://www.youtube.com/watch?v={v_id}"
+                fmt_id = str(body.get("format_id") or "")
+                quality = str(body.get("quality") or "1080p")
+                # Extract target height from quality field (e.g. "1080p" -> "1080")
+                target_h = quality.replace("p", "").strip() or "1080"
+                no_audio = bool(body.get("no_audio", False))
+                audio_track = body.get("audio_track")
 
-            netscape_str = _get_current_netscape_cookies()
-            browser_cookies = get_browser_cookies_args()
-            if browser_cookies:
-                cmd.extend(browser_cookies)
-            elif netscape_str:
-                try:
-                    tmp = tempfile.NamedTemporaryFile(mode="w", suffix=".ytck", delete=False, encoding="utf-8")
-                    tmp.write(netscape_str)
-                    tmp.close()
-                    temp_cookie_path = tmp.name
-                    cmd.extend(["--cookies", temp_cookie_path])
-                except Exception as e:
-                    print(f"[YTDL] Error creating ephemeral cookie temp file for download: {e}")
+                has_real_fmt = fmt_id and not fmt_id.startswith("res:") and fmt_id not in ("", "undefined")
 
-            if FFMPEG_BIN != "ffmpeg":
-                cmd.extend(["--ffmpeg-location", os.path.dirname(FFMPEG_BIN)])
-
-            # Chapters handling
-            if split_chapters:
-                cmd.append("--split-chapters")
-            elif selected_chapters:
-                for ch in selected_chapters:
-                    if ch.get("start") is not None and ch.get("end") is not None:
-                        cmd.extend(["--download-sections", f"*{ch['start']}-{ch['end']}"])
-
-            # Trimming arguments (Multi-cuts or single cut)
-            if not split_chapters and not selected_chapters:
-                if trim_ranges and len(trim_ranges) > 0:
-                    for tr in trim_ranges:
-                        if isinstance(tr, dict) and tr.get("start") is not None and tr.get("end") is not None:
-                            cmd.extend(["--download-sections", f"*{tr['start']}-{tr['end']}"])
-                        elif isinstance(tr, str) and "-" in tr:
-                            cmd.extend(["--download-sections", f"*{tr}"])
-                elif trim_a is not None and trim_b is not None and (str(trim_a) != "0:00" or str(trim_b) != ""):
-                    cmd.extend(["--download-sections", f"*{trim_a}-{trim_b}"])
-
-            if fmt_type == "audio":
-                cmd.extend(["-f", "bestaudio/best", "-x", "--audio-format", ext])
-                audio_q = body.get("audio_quality") or body.get("quality")
-                if audio_q:
-                    cmd.extend(["--audio-quality", str(audio_q).lower()])
-                postprocessor_args = []
-                if lufs_norm:
-                    postprocessor_args.extend(["-af", "loudnorm=I=-14:LRA=11:TP=-1.5"])
-                if postprocessor_args:
-                    cmd.extend(["--postprocessor-args", f"ffmpeg:{' '.join(postprocessor_args)}"])
-                if audio_meta:
-                    cmd.extend(["--embed-metadata", "--embed-thumbnail"])
-            else:
-                # Video format combining
-                if is_anim_export:
-                    cmd.extend(["-f", "bestvideo[height<=1080]/best"])
+                if no_audio:
+                    # User explicitly opted out of audio
+                    v_only_fmt = fmt_id.split("+")[0] if has_real_fmt else ""
+                    if v_only_fmt:
+                        format_spec = f"{v_only_fmt}/bestvideo[height<={target_h}]/bestvideo"
+                    else:
+                        format_spec = f"bestvideo[height<={target_h}]/bestvideo/best"
                 else:
-                    fmt_id = str(body.get("format_id") or "")
-                    quality = str(body.get("quality") or "1080p")
-                    # Extract target height from quality field (e.g. "1080p" -> "1080")
-                    target_h = quality.replace("p", "").strip() or "1080"
-                    no_audio = bool(body.get("no_audio", False))
-                    audio_track = body.get("audio_track")
-
-                    has_real_fmt = fmt_id and not fmt_id.startswith("res:") and fmt_id not in ("", "undefined")
-
-                    if no_audio:
-                        # User explicitly opted out of audio
-                        v_only_fmt = fmt_id.split("+")[0] if has_real_fmt else ""
-                        if v_only_fmt:
-                            format_spec = f"{v_only_fmt}/bestvideo[height<={target_h}]/bestvideo"
+                    # Default: Include sound. Merge requested video stream with audio stream.
+                    a_spec = f"{audio_track}/bestaudio" if audio_track else "bestaudio"
+                    if has_real_fmt:
+                        if "+" in fmt_id:
+                            # fmt_id already includes audio combination (e.g. "137+140")
+                            format_spec = f"{fmt_id}/bestvideo[height<={target_h}]+{a_spec}/bestvideo[height<={target_h}]+bestaudio/best"
                         else:
-                            format_spec = f"bestvideo[height<={target_h}]/bestvideo/best"
+                            # fmt_id is video-only (e.g. "137") -> MUST append audio stream with +
+                            format_spec = f"{fmt_id}+{a_spec}/{fmt_id}+bestaudio/bestvideo[height<={target_h}]+{a_spec}/bestvideo[height<={target_h}]+bestaudio/best"
                     else:
-                        # Default: Include sound. Merge requested video stream with audio stream.
-                        a_spec = f"{audio_track}/bestaudio" if audio_track else "bestaudio"
-                        if has_real_fmt:
-                            if "+" in fmt_id:
-                                # fmt_id already includes audio combination (e.g. "137+140")
-                                format_spec = f"{fmt_id}/bestvideo[height<={target_h}]+{a_spec}/bestvideo[height<={target_h}]+bestaudio/best"
-                            else:
-                                # fmt_id is video-only (e.g. "137") -> MUST append audio stream with +
-                                format_spec = f"{fmt_id}+{a_spec}/{fmt_id}+bestaudio/bestvideo[height<={target_h}]+{a_spec}/bestvideo[height<={target_h}]+bestaudio/best"
-                        else:
-                            format_spec = f"bestvideo[height<={target_h}]+{a_spec}/bestvideo[height<={target_h}]+bestaudio/bestvideo[height<={target_h}]+best/best"
+                        format_spec = f"bestvideo[height<={target_h}]+{a_spec}/bestvideo[height<={target_h}]+bestaudio/bestvideo[height<={target_h}]+best/best"
 
-                    cmd.extend(["-f", format_spec, "--merge-output-format", ext])
-                if audio_meta:
-                    cmd.extend(["--embed-metadata"])
+                cmd.extend(["-f", format_spec, "--merge-output-format", ext])
+            if audio_meta:
+                cmd.extend(["--embed-metadata"])
 
-            out_template = os.path.join(out_dir, "%(title)s.temp_conv.%(ext)s" if is_anim_export else "%(title)s.%(ext)s")
-            cmd.extend(["-o", out_template, url])
+        out_template = os.path.join(out_dir, "%(title)s.temp_conv.%(ext)s" if is_anim_export else "%(title)s.%(ext)s")
+        cmd.extend(["-o", out_template, url])
 
-            process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, **_subprocess_kwargs)
-            job["process"] = process
+        process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, **_subprocess_kwargs)
+        job["process"] = process
 
-            last_lines = []
-            while True:
-                if job.get("cancelled") or job.get("status") == "cancelled":
-                    break
-                line = process.stdout.readline()
-                if not line and process.poll() is not None:
-                    break
-                if line:
-                    line = line.strip()
-                    last_lines.append(line)
-                    if len(last_lines) > 20:
-                        last_lines.pop(0)
-                    if "%" in line:
-                        try:
-                            clean_pct = line.replace("%", "").strip()
-                            pct_val = float(clean_pct)
-                            job["progress"] = pct_val if not is_anim_export else (pct_val * 0.7)
-                        except:
-                            pass
-                    for prefix in ("[download] Destination:", "[Merger] Merging formats into", "[ExtractAudio] Destination:"):
-                        if prefix in line:
-                            fname = line.split(prefix)[-1].strip().strip('"').strip("'")
-                            if fname:
-                                job["filename"] = fname
-
+        last_lines = []
+        while True:
             if job.get("cancelled") or job.get("status") == "cancelled":
-                job["status"] = "cancelled"
-                job["progress"] = 0.0
-                with history_lock:
-                    _save_history()
-                return
-
-            if process.returncode == 0:
-                if is_anim_export and job.get("filename") and os.path.exists(job["filename"]):
-                    temp_mp4 = job["filename"]
-                    final_path = temp_mp4.replace(".temp_conv.mp4", f".{target_ext}")
-                    job["progress"] = 85.0
-                    if target_ext == "gif":
-                        ff_conv = [FFMPEG_BIN, "-y", "-i", temp_mp4, "-vf", "fps=15,scale=720:-1:flags=lanczos,split[s0][s1];[s0]palettegen[p];[s1][p]paletteuse", final_path]
-                    else:
-                        ff_conv = [FFMPEG_BIN, "-y", "-i", temp_mp4, "-vf", "fps=20,scale=1080:-1:flags=lanczos", "-vcodec", "libwebp", "-lossless", "0", "-qscale", "80", "-preset", "default", "-loop", "0", "-an", "-vsync", "0", final_path]
-                    subprocess.run(ff_conv, capture_output=True, **_subprocess_kwargs)
+                break
+            line = process.stdout.readline()
+            if not line and process.poll() is not None:
+                break
+            if line:
+                line = line.strip()
+                last_lines.append(line)
+                if len(last_lines) > 20:
+                    last_lines.pop(0)
+                if "%" in line:
                     try:
-                        os.remove(temp_mp4)
+                        clean_pct = line.replace("%", "").strip()
+                        pct_val = float(clean_pct)
+                        job["progress"] = pct_val if not is_anim_export else (pct_val * 0.7)
                     except:
                         pass
-                    job["filename"] = final_path
+                for prefix in ("[download] Destination:", "[Merger] Merging formats into", "[ExtractAudio] Destination:"):
+                    if prefix in line:
+                        fname = line.split(prefix)[-1].strip().strip('"').strip("'")
+                        if fname:
+                            job["filename"] = fname
 
-                job["progress"] = 100.0
-                job["status"] = "complete"
-                if job.get("filename") and os.path.exists(job["filename"]):
-                    try:
-                        size_b = os.path.getsize(job["filename"])
-                        if size_b >= 1073741824:
-                            job["filesize_str"] = f"{size_b / 1073741824:.2f} GB"
-                        else:
-                            job["filesize_str"] = f"{round(size_b / 1048576)} MB"
-                    except Exception:
-                        pass
-            else:
-                if job.get("cancelled"):
-                    job["status"] = "cancelled"
-                    job["progress"] = 0.0
+        if job.get("cancelled") or job.get("status") == "cancelled":
+            job["status"] = "cancelled"
+            job["progress"] = 0.0
+            with history_lock:
+                for h in history:
+                    if h.get("id") == job_id:
+                        h["status"] = job.get("status", "unknown")
+                        h["progress"] = job.get("progress", 0.0)
+                        h["filesize_str"] = job.get("filesize_str", "")
+                        if job.get("filename"):
+                            h["filename"] = job["filename"]
+                        if job.get("error"):
+                            h["error"] = job["error"]
+                        break
+                _save_history()
+            return
+
+        if process.returncode == 0:
+            if is_anim_export and job.get("filename") and os.path.exists(job["filename"]):
+                temp_mp4 = job["filename"]
+                final_path = temp_mp4.replace(".temp_conv.mp4", f".{target_ext}")
+                job["progress"] = 85.0
+                if target_ext == "gif":
+                    ff_conv = [FFMPEG_BIN, "-y", "-i", temp_mp4, "-vf", "fps=15,scale=720:-1:flags=lanczos,split[s0][s1];[s0]palettegen[p];[s1][p]paletteuse", final_path]
                 else:
-                    job["status"] = "error"
-                    err_text = "\n".join(l for l in last_lines if "ERROR:" in l or "WARNING:" in l) or (last_lines[-1] if last_lines else "Download process exited with non-zero status")
-                    job["error"] = err_text
-                    print(f"[YTDL] Error downloading {job_id}: {err_text}")
-            with history_lock:
-                _save_history()
-        except Exception as e:
-            job["status"] = "error"
-            job["error"] = str(e)
-            with history_lock:
-                _save_history()
-        finally:
-            if temp_cookie_path and os.path.exists(temp_cookie_path):
+                    ff_conv = [FFMPEG_BIN, "-y", "-i", temp_mp4, "-vf", "fps=20,scale=1080:-1:flags=lanczos", "-vcodec", "libwebp", "-lossless", "0", "-qscale", "80", "-preset", "default", "-loop", "0", "-an", "-vsync", "0", final_path]
+                subprocess.run(ff_conv, capture_output=True, **_subprocess_kwargs)
                 try:
-                    os.remove(temp_cookie_path)
+                    os.remove(temp_mp4)
+                except:
+                    pass
+                job["filename"] = final_path
+
+            job["progress"] = 100.0
+            job["status"] = "complete"
+            if job.get("filename") and os.path.exists(job["filename"]):
+                try:
+                    size_b = os.path.getsize(job["filename"])
+                    if size_b >= 1073741824:
+                        job["filesize_str"] = f"{size_b / 1073741824:.2f} GB"
+                    else:
+                        job["filesize_str"] = f"{round(size_b / 1048576)} MB"
                 except Exception:
                     pass
+        else:
+            if job.get("cancelled"):
+                job["status"] = "cancelled"
+                job["progress"] = 0.0
+            else:
+                job["status"] = "error"
+                err_text = "\n".join(l for l in last_lines if "ERROR:" in l or "WARNING:" in l) or (last_lines[-1] if last_lines else "Download process exited with non-zero status")
+                job["error"] = err_text
+                print(f"[YTDL] Error downloading {job_id}: {err_text}")
+        with history_lock:
+            _save_history()
+    except Exception as e:
+        job["status"] = "error"
+        job["error"] = str(e)
+        with history_lock:
+            _save_history()
+    finally:
+        if temp_cookie_path and os.path.exists(temp_cookie_path):
+            try:
+                os.remove(temp_cookie_path)
+            except Exception:
+                pass
+
+def _download_worker():
+    while True:
+        try:
+            job_id, body = download_queue.get()
+        except Exception:
+            break
+        try:
+            with jobs_lock:
+                job = jobs.get(job_id)
+                if not job or job.get("cancelled") or job.get("status") == "cancelled":
+                    continue
+                job["status"] = "processing"
+            with history_lock:
+                for h in history:
+                    if h.get("id") == job_id:
+                        h["status"] = "processing"
+                        break
+                _save_history()
+            _run_download_task(job_id, body)
+        except Exception as e:
+            print(f"[YTDL] Download worker error for {job_id}: {e}")
+        finally:
+            download_queue.task_done()
+
+_worker_thread = threading.Thread(target=_download_worker, daemon=True)
+_worker_thread.start()
 
 def main():
     print(f"=========================================================")

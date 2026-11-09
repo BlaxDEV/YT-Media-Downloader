@@ -351,6 +351,11 @@ window.YTDL.panelEvents = {
       window.YTDL.panelI18n.applyPanelTranslations(panel, window.YTDL.state.defaultSettings.defLang || "en");
     });
 
+    // Initialize updater module (check for updates and wire events)
+    if (window.YTDL?.updater?.init) {
+      window.YTDL.updater.init(panel);
+    }
+
     panel.addEventListener("mousedown", (e) => e.stopPropagation());
     panel.addEventListener("pointerdown", (e) => e.stopPropagation());
 

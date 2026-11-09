@@ -37,14 +37,14 @@ window.YTDL.history = {
 
     const storageAPI = typeof browser !== "undefined" ? browser?.storage?.local : chrome?.storage?.local;
     if (items.length > 0) {
-      items = items.slice(0, 50);
+      items = items.slice(0, 100);
       if (storageAPI) {
         try { storageAPI.set({ ytdl_history: items }); } catch (e) {}
       }
     } else if (storageAPI) {
       try {
         const stored = await new Promise(resolve => storageAPI.get(["ytdl_history"], data => resolve(data?.ytdl_history || [])));
-        if (stored && stored.length > 0) items = stored.slice(0, 50);
+        if (stored && stored.length > 0) items = stored.slice(0, 100);
       } catch (e) {}
     }
 
@@ -60,8 +60,8 @@ window.YTDL.history = {
     this.currentPage = 1;
     this.renderPage(panel, items, 1);
 
-    // Auto-refresh while there are active processing downloads and history tab is visible
-    const hasActive = items.some(item => item.status === "processing");
+    // Auto-refresh while there are active processing or queued downloads and history tab is visible
+    const hasActive = items.some(item => item.status === "processing" || item.status === "queued");
     if (hasActive) {
       this._pollTimer = setTimeout(() => {
         const histContent = panel?.querySelector('[data-content="history"]');
@@ -161,6 +161,7 @@ window.YTDL.history = {
 
       // Status Row
       const isProcessing = d.status === "processing";
+      const isQueued = d.status === "queued";
       const isCancelled = d.status === "cancelled";
       const isComplete = d.status === "complete";
       const isError = d.status === "error";
@@ -169,6 +170,8 @@ window.YTDL.history = {
         ? (t("histComplete") || "Completado")
         : isProcessing 
         ? `${t("histProcessing") || "Descargando..."} (${Math.round(d.progress || 0)}%)` 
+        : isQueued
+        ? (t("histQueued") || "En cola...")
         : isCancelled
         ? (t("histCancelled") || "Cancelado")
         : isError 
@@ -182,7 +185,7 @@ window.YTDL.history = {
 
       card.appendChild(infoCol);
 
-      // 3. Right Column (Date, Cancel button if processing, Open button if complete)
+      // 3. Right Column (Date, Cancel button if processing or queued, Open button if complete)
       const rightCol = document.createElement("div");
       rightCol.className = "ytdl-hist-right-col";
 
@@ -191,11 +194,11 @@ window.YTDL.history = {
       dateDiv.textContent = d.timestamp_str || d.date || "";
       rightCol.appendChild(dateDiv);
 
-      if (isProcessing && d.id) {
+      if ((isProcessing || isQueued) && d.id) {
         const cancelBtn = document.createElement("button");
         cancelBtn.className = "ytdl-hist-cancel-btn";
         cancelBtn.textContent = t("histCancelBtn") || "Cancelar";
-        cancelBtn.setAttribute("title", "Cancelar esta descarga");
+        cancelBtn.setAttribute("title", isQueued ? "Quitar de la cola" : "Cancelar esta descarga");
         cancelBtn.addEventListener("click", async (e) => {
           e.stopPropagation();
           cancelBtn.disabled = true;

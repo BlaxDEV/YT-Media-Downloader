@@ -17,6 +17,7 @@
  * - history.js: History tab rendering
  * - video-data.js: Video data loading and quality rendering
  * - download.js: Download execution and progress polling
+ * - updater.js: Update checking, notification modal and UAC installer launching
  * - observer.js: SPA navigation observer and initialization
  */
 

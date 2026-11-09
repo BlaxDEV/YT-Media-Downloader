@@ -90,6 +90,10 @@ window.YTDL.panelI18n = {
     if (panel.querySelector("#ytdl-lbl-gif")) panel.querySelector("#ytdl-lbl-gif").textContent = t("cfgGifExport") || "Activar exportación como GIF / WebP Animado";
     if (panel.querySelector("#ytdl-lbl-meta")) panel.querySelector("#ytdl-lbl-meta").textContent = t("cfgAudioMeta") || "Descarga automática de Metadata de Audio";
     if (panel.querySelector("#i18n-saveBtn")) panel.querySelector("#i18n-saveBtn").textContent = t("saveBtn") || "Guardar";
+    if (panel.querySelector("#ytdl-txt-check-updates")) panel.querySelector("#ytdl-txt-check-updates").textContent = t("updateCheckBtn") || "Buscar actualizaciones";
+    if (panel.querySelector("#ytdl-update-title")) panel.querySelector("#ytdl-update-title").textContent = t("updateTitle") || "¡Nueva actualización disponible!";
+    if (panel.querySelector("#ytdl-update-install-txt")) panel.querySelector("#ytdl-update-install-txt").textContent = t("updateInstallBtn") || "Instalar";
+    if (panel.querySelector("#ytdl-update-btn-later")) panel.querySelector("#ytdl-update-btn-later").textContent = t("updateLaterBtn") || "Recordarme más tarde";
 
     if (panel.querySelector("#ytdl-v-add-trim")) panel.querySelector("#ytdl-v-add-trim").setAttribute("title", t("optAddTrim") || "+");
     if (panel.querySelector("#ytdl-a-add-trim")) panel.querySelector("#ytdl-a-add-trim").setAttribute("title", t("optAddTrim") || "+");
@@ -159,22 +163,26 @@ window.YTDL.panelI18n = {
       let label = t("dlVideoBtn");
       if (vPlaylist.length > 0) {
         label = (t("dlMultiPlaylist") || "Descargar Playlist ({n})").replace("{n}", vPlaylist.length);
-      } else if (vChapters.length > 0) {
-        if (vChapters.length === 1) {
-          label = t("dlSingleChapter");
-        } else {
-          label = (t("dlMultiChapters") || "Descargar Capítulos ({n})").replace("{n}", vChapters.length);
+        vBtn.setAttribute("title", (t("dlMultiPlaylistTooltip") || "Descargar los {n} videos seleccionados de la playlist").replace("{n}", vPlaylist.length));
+      } else {
+        vBtn.setAttribute("title", t("dlSingleVideoTooltip") || "Descargar el video actual");
+        if (vChapters.length > 0) {
+          if (vChapters.length === 1) {
+            label = t("dlSingleChapter");
+          } else {
+            label = (t("dlMultiChapters") || "Descargar Capítulos ({n})").replace("{n}", vChapters.length);
+          }
+        } else if (vTrims.length > 0) {
+          if (vTrims.length === 1) {
+            label = t("dlSingleTrim");
+          } else {
+            label = (t("dlMultiTrims") || "Descargar Recortes ({n})").replace("{n}", vTrims.length);
+          }
         }
-      } else if (vTrims.length > 0) {
-        if (vTrims.length === 1) {
-          label = t("dlSingleTrim");
-        } else {
-          label = (t("dlMultiTrims") || "Descargar Recortes ({n})").replace("{n}", vTrims.length);
+        const audioToggle = panel.querySelector("#ytdl-v-include-audio");
+        if (audioToggle && !audioToggle.checked && vChapters.length === 0 && vTrims.length === 0) {
+          label += " " + (t("noAudioNotice") || "(Sin Audio)");
         }
-      }
-      const audioToggle = panel.querySelector("#ytdl-v-include-audio");
-      if (audioToggle && !audioToggle.checked && vPlaylist.length === 0 && vChapters.length === 0 && vTrims.length === 0) {
-        label += " " + (t("noAudioNotice") || "(Sin Audio)");
       }
       const textNode = vBtn.lastChild;
       if (textNode) textNode.textContent = " " + label;
@@ -189,17 +197,21 @@ window.YTDL.panelI18n = {
       let label = t("dlAudioBtn");
       if (aPlaylist.length > 0) {
         label = (t("dlMultiPlaylist") || "Descargar Playlist ({n})").replace("{n}", aPlaylist.length);
-      } else if (aChapters.length > 0) {
-        if (aChapters.length === 1) {
-          label = t("dlSingleChapter");
-        } else {
-          label = (t("dlMultiChapters") || "Descargar Capítulos ({n})").replace("{n}", aChapters.length);
-        }
-      } else if (aTrims.length > 0) {
-        if (aTrims.length === 1) {
-          label = t("dlSingleTrim");
-        } else {
-          label = (t("dlMultiAudios") || "Descargar Audios ({n})").replace("{n}", aTrims.length);
+        aBtn.setAttribute("title", (t("dlMultiPlaylistTooltip") || "Descargar los {n} audios seleccionados de la playlist").replace("{n}", aPlaylist.length));
+      } else {
+        aBtn.setAttribute("title", t("dlSingleAudioTooltip") || "Descargar el audio del video actual");
+        if (aChapters.length > 0) {
+          if (aChapters.length === 1) {
+            label = t("dlSingleChapter");
+          } else {
+            label = (t("dlMultiChapters") || "Descargar Capítulos ({n})").replace("{n}", aChapters.length);
+          }
+        } else if (aTrims.length > 0) {
+          if (aTrims.length === 1) {
+            label = t("dlSingleTrim");
+          } else {
+            label = (t("dlMultiAudios") || "Descargar Audios ({n})").replace("{n}", aTrims.length);
+          }
         }
       }
       const textNode = aBtn.lastChild;

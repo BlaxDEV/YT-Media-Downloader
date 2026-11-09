@@ -34,20 +34,19 @@ window.YTDL.download = {
         current_dir: window.YTDL.state.lastSelectedFolder || window.YTDL.state.customOutputDir || "" 
       });
 
-      if (!folderRes || folderRes.cancelled || !folderRes.folder) {
+      if (folderRes && folderRes.cancelled) {
         window.YTDL.state.isDownloading = false;
         btn.disabled = false;
         if (progress) progress.style.display = "none";
         return;
       }
 
-      window.YTDL.state.lastSelectedFolder = folderRes.folder;
-      window.YTDL.state.customOutputDir = folderRes.folder;
+      if (folderRes && folderRes.folder) {
+        window.YTDL.state.lastSelectedFolder = folderRes.folder;
+        window.YTDL.state.customOutputDir = folderRes.folder;
+      }
     } catch (e) {
-      window.YTDL.state.isDownloading = false;
-      btn.disabled = false;
-      if (progress) progress.style.display = "none";
-      return;
+      // Continue with existing default output dir if select_folder is unavailable
     }
 
     const pageTitle = document.title.replace(/^\(\d+\)\s*/, "").replace(/ - YouTube$/, "") || "Video";
@@ -64,12 +63,10 @@ window.YTDL.download = {
     };
     if (type === "video") {
       const fmtBtn = panel.querySelector("#ytdl-qualities .ytdl-q-btn.active");
-      if (!fmtBtn) { window.YTDL.state.isDownloading = false; btn.disabled = false; return; }
-
-      const fmtId = fmtBtn.dataset.fmt;
-      const resText = fmtBtn.querySelector(".ytdl-q-res")?.textContent || "1080p";
+      const fmtId = fmtBtn?.dataset?.fmt || "";
+      const resText = fmtBtn?.querySelector(".ytdl-q-res")?.textContent || window.YTDL.state.defaultSettings.videoQuality || "1080p";
       body.quality = resText;
-      body.format_id = fmtId;
+      if (fmtId) body.format_id = fmtId;
 
       const videoFormats = window.YTDL.state.formatsData?.formats?.filter(f => f.type === "video" && f.resolution && f.resolution !== "unknown") || [];
       const audioFormats = window.YTDL.state.formatsData?.formats?.filter(f => f.type === "audio") || [];
@@ -208,32 +205,115 @@ window.YTDL.download = {
     const getLang = () => window.YTDL?.state?.defaultSettings?.defLang || "en";
     const t = (k) => typeof window.YTDL_I18N_get === "function" ? window.YTDL_I18N_get(getLang(), k) : k;
 
-    for (let i = 0; i < items.length; i++) {
-      const item = items[i];
-      if (pct) pct.textContent = `[${i + 1}/${items.length}] ${item.title.slice(0, 20)}...`;
-      if (bar) bar.style.width = `${Math.round((i / items.length) * 100)}%`;
-
-      const itemBody = {
-        ...baseBody,
-        url: item.url,
-        title: item.title,
+    // Clean items list: strip any single-video format or trim pollution
+    const cleanItems = items.map((item, idx) => {
+      const vId = item.id || (item.url ? (item.url.match(/[?&]v=([a-zA-Z0-9_-]+)/)?.[1] || "") : "");
+      const itemUrl = item.url || (vId ? `https://www.youtube.com/watch?v=${vId}` : baseBody.url);
+      const thumb = vId ? `https://i.ytimg.com/vi/${vId}/mqdefault.jpg` : (item.thumbnail || baseBody.thumbnail || "");
+      return {
+        id: vId,
+        url: itemUrl,
+        title: item.title || `Video ${idx + 1}`,
         duration_str: item.duration_str || "",
-        is_playlist: false
+        thumbnail: thumb
       };
+    });
 
-      const res = await window.YTDL.serverPost("/download", itemBody);
-      if (res?.id) {
-        await this.pollProgressSync(type, res.id, i + 1, items.length, item.title);
+    const batchPayload = {
+      ...baseBody,
+      items: cleanItems,
+      type: type,
+      quality: baseBody.quality || (type === "video" ? "1080p" : "320k"),
+      ext: baseBody.ext || (type === "video" ? "mp4" : (baseBody.audio_format || "mp3")),
+      output_dir: baseBody.output_dir || window.YTDL.state.lastSelectedFolder || window.YTDL.state.customOutputDir || ""
+    };
+    // Strip active-player-only single video parameters
+    delete batchPayload.format_id;
+    delete batchPayload.trim_a;
+    delete batchPayload.trim_b;
+    delete batchPayload.trim_start;
+    delete batchPayload.trim_end;
+    delete batchPayload.trim_ranges;
+    delete batchPayload.split_chapters;
+    delete batchPayload.chapters;
+
+    let batchJobs = [];
+    try {
+      const batchRes = await window.YTDL.serverPost("/download_batch", batchPayload);
+      if (batchRes && batchRes.status === "ok" && Array.isArray(batchRes.jobs)) {
+        batchJobs = batchRes.jobs;
+      }
+    } catch (e) {}
+
+    // Immediately load history so all playlist jobs show in Historial right away!
+    window.YTDL.history?.loadHistoryData(panel);
+
+    let completedCount = 0;
+    let errorCount = 0;
+    let cancelledCount = 0;
+
+    if (batchJobs.length > 0) {
+      for (let i = 0; i < batchJobs.length; i++) {
+        const j = batchJobs[i];
+        window.YTDL.state.activeJobId = j.id;
+        if (pct) pct.textContent = `[${i + 1}/${batchJobs.length}] ${j.title.slice(0, 20)}...`;
+        if (bar) bar.style.width = `${Math.round((i / batchJobs.length) * 100)}%`;
+
+        const res = await this.pollProgressSync(type, j.id, i + 1, batchJobs.length, j.title);
+        if (res?.status === "complete") completedCount++;
+        else if (res?.status === "cancelled") cancelledCount++;
+        else if (res?.status === "error") errorCount++;
+      }
+    } else {
+      // Fallback for sequential execution if /download_batch is not available
+      for (let i = 0; i < cleanItems.length; i++) {
+        const item = cleanItems[i];
+        if (pct) pct.textContent = `[${i + 1}/${cleanItems.length}] ${item.title.slice(0, 20)}...`;
+        if (bar) bar.style.width = `${Math.round((i / cleanItems.length) * 100)}%`;
+
+        const itemBody = {
+          ...batchPayload,
+          url: item.url,
+          title: item.title,
+          thumbnail: item.thumbnail,
+          duration_str: item.duration_str,
+          is_playlist: false
+        };
+        delete itemBody.items;
+
+        const res = await window.YTDL.serverPost("/download", itemBody);
+        window.YTDL.history?.loadHistoryData(panel);
+        if (res?.id) {
+          window.YTDL.state.activeJobId = res.id;
+          const statusRes = await this.pollProgressSync(type, res.id, i + 1, cleanItems.length, item.title);
+          if (statusRes?.status === "complete") completedCount++;
+          else if (statusRes?.status === "cancelled") cancelledCount++;
+          else if (statusRes?.status === "error") errorCount++;
+        } else {
+          errorCount++;
+        }
       }
     }
 
-    if (bar) bar.style.width = "100%";
-    if (pct) pct.textContent = t("histComplete") || "¡Descarga de Playlist completada!";
+    window.YTDL.state.activeJobId = null;
     window.YTDL.state.isDownloading = false;
+    window.YTDL.history?.loadHistoryData(panel);
+
+    if (cancelledCount > 0 && completedCount === 0) {
+      if (pct) pct.textContent = t("histCancelled") || "Cancelado";
+    } else if (errorCount > 0 && completedCount === 0) {
+      if (pct) pct.textContent = t("histError") || "Error";
+    } else {
+      if (bar) bar.style.width = "100%";
+      if (pct) pct.textContent = t("histComplete") || "¡Descarga de Playlist completada!";
+    }
+
     if (btn) {
       btn.disabled = false;
-      btn.classList.add("ytdl-btn-success");
-      setTimeout(() => btn.classList.remove("ytdl-btn-success"), 3000);
+      if (completedCount > 0) {
+        btn.classList.add("ytdl-btn-success");
+        setTimeout(() => btn.classList.remove("ytdl-btn-success"), 3000);
+      }
     }
 
     // Reset selected playlist items after completion
@@ -257,7 +337,7 @@ window.YTDL.download = {
         if (!data || data.error) {
           errorCount++;
           if (errorCount > 5) {
-            resolve();
+            resolve({ status: "error", error: data?.error || "Connection lost" });
             return;
           }
           setTimeout(check, 1000);
@@ -265,7 +345,14 @@ window.YTDL.download = {
         }
 
         errorCount = 0;
-        if (data.progress !== undefined) {
+        const getLang = () => window.YTDL?.state?.defaultSettings?.defLang || "en";
+        const t = (k) => typeof window.YTDL_I18N_get === "function" ? window.YTDL_I18N_get(getLang(), k) : k;
+
+        if (data.status === "queued") {
+          const overallPct = Math.round(((currentIdx - 1) / totalCount) * 100);
+          if (bar) bar.style.width = overallPct + "%";
+          if (pct) pct.textContent = `[${currentIdx}/${totalCount}] ${t("histQueued") || "En cola..."} - ${itemTitle.slice(0, 20)}...`;
+        } else if (data.progress !== undefined) {
           const itemPct = Math.min(100, Math.round(data.progress));
           const overallPct = Math.round(((currentIdx - 1 + itemPct / 100) / totalCount) * 100);
           if (bar) bar.style.width = overallPct + "%";
@@ -273,7 +360,7 @@ window.YTDL.download = {
         }
 
         if (data.status === "complete" || data.status === "error" || data.status === "cancelled") {
-          resolve();
+          resolve(data);
           return;
         }
         setTimeout(check, 1000);

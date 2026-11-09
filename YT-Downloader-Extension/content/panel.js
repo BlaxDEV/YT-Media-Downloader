@@ -205,7 +205,11 @@ window.YTDL.panel = {
                 <div class="ytdl-chapters-breakdown" id="ytdl-a-playlist-breakdown" style="display:none;"></div>
               </div>
             </div>
-            <button class="ytdl-dl-btn" id="ytdl-dl-audio">
+            <div class="ytdl-loading" id="ytdl-a-loading" style="display:none">
+              <div class="ytdl-spinner"></div>
+              <span>Cargando información...</span>
+            </div>
+            <button class="ytdl-dl-btn" id="ytdl-dl-audio" disabled>
               <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></svg>
               Descargar Audio
             </button>
@@ -323,7 +327,14 @@ window.YTDL.panel = {
               <span id="i18n-saveBtn">Guardar</span>
             </button>
             <div class="ytdl-cfg-msg" id="ytdl-cfg-msg"></div>
-            <div class="ytdl-version" style="margin-top:16px;font-size:11px;color:#666;text-align:center;">v1.3.0</div>
+            <div class="ytdl-update-section" style="margin-top: 14px; padding-top: 10px; border-top: 1px solid rgba(255,255,255,0.08); display: flex; flex-direction: column; align-items: center; gap: 6px;">
+              <button type="button" class="ytdl-check-updates-btn" id="ytdl-btn-check-updates">
+                <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor"><path d="M12 4V1L8 5l4 4V6c3.31 0 6 2.69 6 6 0 1.01-.25 1.97-.7 2.8l1.46 1.46C19.54 15.03 20 13.57 20 12c0-4.42-3.58-8-8-8zm0 14c-3.31 0-6-2.69-6-6 0-1.01.25-1.97.7-2.8L5.24 7.74C4.46 8.97 4 10.43 4 12c0 4.42 3.58 8 8 8v3l4-4-4-4v3z"/></svg>
+                <span id="ytdl-txt-check-updates">Buscar actualizaciones</span>
+              </button>
+              <div id="ytdl-update-cfg-status" style="font-size: 11px; color: #888; display: none;"></div>
+            </div>
+            <div class="ytdl-version" id="ytdl-version-display" style="margin-top:8px;font-size:11px;color:#666;text-align:center;">v1.3.2</div>
           </div>
         </div>
       </div>
@@ -364,6 +375,41 @@ window.YTDL.panel = {
           </div>
           <div class="ytdl-modal-footer">
             <button type="button" class="ytdl-btn-apply" id="ytdl-pl-modal-btn-apply">Aplicar Selección</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Update Notification Modal Overlay -->
+      <div class="ytdl-modal-overlay" id="ytdl-update-modal" style="display:none;">
+        <div class="ytdl-modal-card ytdl-update-card">
+          <div class="ytdl-modal-header">
+            <div style="display:flex; align-items:center; gap:8px;">
+              <span style="font-size:18px;">🚀</span>
+              <h3 id="ytdl-update-title" style="margin:0; font-size:14px; font-weight:700; color:#ffffff;">¡Nueva actualización disponible!</h3>
+            </div>
+            <button type="button" class="ytdl-modal-close" id="ytdl-update-close">&times;</button>
+          </div>
+          <div class="ytdl-modal-body" style="padding: 10px 4px;">
+            <div id="ytdl-update-version-text" style="font-size: 13px; color: #eee; margin-bottom: 8px; line-height: 1.4;">
+              Está disponible la versión <strong id="ytdl-update-new-ver" style="color: #4cd162;">v1.3.2</strong> para su descarga.
+            </div>
+            <div id="ytdl-update-notes-container" style="display:none; max-height: 110px; overflow-y: auto; background: rgba(0,0,0,0.35); border: 1px solid rgba(255,255,255,0.08); border-radius: 6px; padding: 8px 10px; font-size: 11px; color: #aaa; margin-bottom: 10px; line-height: 1.4; white-space: pre-line;"></div>
+            <div id="ytdl-update-progress-wrap" style="display:none; margin-bottom: 8px;">
+              <div style="display:flex; justify-content:space-between; font-size:11px; color:#aaa; margin-bottom:4px;">
+                <span id="ytdl-update-progress-label">Descargando actualización...</span>
+                <span id="ytdl-update-progress-pct">0%</span>
+              </div>
+              <div class="ytdl-prog-bar" style="background: rgba(255,255,255,0.1); height: 6px; border-radius: 3px; overflow: hidden;">
+                <div id="ytdl-update-progress-fill" style="width: 0%; height: 100%; background: #2ba640; transition: width 0.2s ease;"></div>
+              </div>
+            </div>
+          </div>
+          <div class="ytdl-modal-footer" style="display:flex; justify-content:flex-end; gap:8px;">
+            <button type="button" class="ytdl-update-btn-later" id="ytdl-update-btn-later">Recordarme más tarde</button>
+            <button type="button" class="ytdl-btn-apply ytdl-update-btn-install" id="ytdl-update-btn-install">
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor" style="vertical-align:middle; margin-right:4px;"><path d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96zM17 13l-5 5-5-5h3V9h4v4h3z"/></svg>
+              <span id="ytdl-update-install-txt">Instalar</span>
+            </button>
           </div>
         </div>
       </div>
