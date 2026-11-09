@@ -10,6 +10,7 @@ window.YTDL.storage = typeof browser !== "undefined" ? browser.storage : chrome.
 
 // ─── Constants ────────────────────────────────────────────
 window.YTDL.SERVER_URL = "http://127.0.0.1:19836";
+window.YTDL.CURRENT_VERSION = (typeof chrome !== "undefined" && chrome?.runtime?.getManifest?.()?.version) || "1.3.2";
 
 // ─── State ────────────────────────────────────────────────
 window.YTDL.state = {
@@ -140,7 +141,7 @@ window.YTDL.utils = {
       try {
         const resp = await fetch(`${window.YTDL.SERVER_URL}${path}`);
         const resJson = await resp.json();
-        if (resJson && resJson.version && resJson.version !== "1.3.1") {
+        if (resJson && resJson.version && resJson.version !== window.YTDL.CURRENT_VERSION) {
           window.YTDL.state.companionOutdated = true;
           window.YTDL.state.companionVersion = resJson.version;
         }
@@ -171,7 +172,7 @@ window.YTDL.utils = {
           body: JSON.stringify(body)
         });
         const resJson = await resp.json();
-        if (resJson && resJson.version && resJson.version !== "1.3.1") {
+        if (resJson && resJson.version && resJson.version !== window.YTDL.CURRENT_VERSION) {
           window.YTDL.state.companionOutdated = true;
           window.YTDL.state.companionVersion = resJson.version;
         }

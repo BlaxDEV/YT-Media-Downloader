@@ -21,7 +21,7 @@ document.addEventListener("DOMContentLoaded", () => {
   let currentLang = getBrowserLang();
 
   function formatLocalDate(lang) {
-    const releaseDate = new Date(2026, 7, 10); // August 10, 2026
+    const releaseDate = new Date(2026, 10, 9); // November 9, 2026
     const localeMap = {
       en: 'en-US',
       es: 'es-ES',
@@ -37,7 +37,7 @@ document.addEventListener("DOMContentLoaded", () => {
       const loc = localeMap[lang] || navigator.language || 'en-US';
       return new Intl.DateTimeFormat(loc, { year: 'numeric', month: 'numeric', day: 'numeric' }).format(releaseDate);
     } catch (e) {
-      return "10/8/2026";
+      return "09/11/2026";
     }
   }
 

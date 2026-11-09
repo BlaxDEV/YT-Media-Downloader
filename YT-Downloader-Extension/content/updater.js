@@ -41,7 +41,7 @@ window.YTDL.updater = {
 
   // ─── Query Update API (Companion Host + Fallback to GitHub) ─
   async checkUpdateApi(force = false) {
-    const manifestVer = (typeof chrome !== "undefined" && chrome?.runtime?.getManifest?.()?.version) || "1.3.1";
+    const manifestVer = (typeof chrome !== "undefined" && chrome?.runtime?.getManifest?.()?.version) || "1.3.2";
     let res = null;
 
     // 1. Try local companion server first

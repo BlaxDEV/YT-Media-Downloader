@@ -168,7 +168,7 @@ window.YTDL_I18N = {
     faq4Desc: "Solution: The local companion server automatically handles high-res video and separate audio streams, merging them cleanly at maximum speed.",
     welcomeKoFiTitle: "Support Free & Ad-Free Software!",
     welcomeKoFiDesc: "YT Media Downloader is 100% free with no paywalls or ads. If it saves you time and frustration, consider treating BlaxDEV to a coffee on Ko-Fi!",
-    companionUpdateNotice: "⚠️ Companion Server v1.3.0 update required! Please download and run the latest installer to enable Anti-Bot (PO-Token) & Playlist support.",
+    companionUpdateNotice: "⚠️ Companion Server v1.3.2 update required! Please download and run the latest installer to enable automated updates, playlist fixes & anti-bot protection.",
     poTokenActive: "Anti-Bot Protection Active (PO-Token)",
     playlistQueueNotice: "Playlist Queue & Anti-Bot Protection Active"
   },
@@ -329,7 +329,7 @@ window.YTDL_I18N = {
     faq4Desc: "Solución: El servidor local acopla automáticamente las transmisiones de video en alta definición y audio sin pérdida de calidad y a máxima velocidad.",
     welcomeKoFiTitle: "¡Apoya el software libre y sin publicidad!",
     welcomeKoFiDesc: "YT Media Downloader es 100% gratis, sin paywalls ni anuncios. Si te ahorra tiempo y dolores de cabeza, ¡considera invitar un café a BlaxDEV en Ko-Fi!",
-    companionUpdateNotice: "⚠️ ¡Se requiere actualizar a Companion Server v1.3.0! Por favor descarga y ejecuta el último instalador para activar la protección Anti-Bot (PO-Token) y soporte de listas.",
+    companionUpdateNotice: "⚠️ ¡Se requiere actualizar a Companion Server v1.3.2! Por favor descarga y ejecuta el último instalador para activar actualizaciones automáticas, soporte de listas y protección Anti-Bot.",
     poTokenActive: "Protección Anti-Bot activa (PO-Token)",
     playlistQueueNotice: "Cola de reproducción y protección Anti-Bot activas"
   },
